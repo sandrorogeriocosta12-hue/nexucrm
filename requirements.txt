@@ -1,5 +1,5 @@
-# MINIMAL DEPENDENCIES FOR RENDER DEPLOYMENT
-# Python 3.12 - No C extensions that break on Py3.14
+# PRODUCTION MINIMAL - Render Deployment
+# Python 3.12 - Zero C extensions, zero numpy/pandas dependencies
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
@@ -12,10 +12,9 @@ cryptography==41.0.7
 python-dotenv==1.0.0
 httpx==0.25.0
 requests==2.31.0
-sqlalchemy==2.0.23
-langchain==0.1.9
-openai==1.3.8
 email-validator==2.1.0
 
-# Removed to prevent Python 3.14 compilation failures: pandas, numpy, alembic
-# Removed enterprise plugins: resend, sendgrid, stripe, sentry, redis, celery
+# REMOVED for Python 3.14 compatibility:
+# - langchain (pulls numpy, pandas, heavy ML stack)
+# - sqlalchemy (works but optional for MVP with in-memory data)
+# - pandas, numpy, alembic, stripe, sentry, redis, celery

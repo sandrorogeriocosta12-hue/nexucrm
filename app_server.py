@@ -43,6 +43,8 @@ async def startup_db():
 
         models.Base.metadata.create_all(bind=engine)
         logger.info("✓ Database schema ensured")
+    except ImportError:
+        logger.warning("⚠ SQLAlchemy not available - database features disabled")
     except Exception as e:
         logger.error(f"Error creating database schema: {e}")
 
@@ -50,26 +52,40 @@ async def startup_db():
 # Importar routers
 try:
     from vexus_crm.routes.knowledge_lab import router as knowledge_router
-    from vexus_crm.agents_api import router as agents_router
-    from vexus_crm.routes.auth import router as auth_router
-
-    # routers already declare their own prefixes to avoid double "/api"
-    app.include_router(auth_router)  # auth_router has prefix "/api/auth"
     app.include_router(knowledge_router, tags=["Knowledge Lab"])
-    # agents router does not declare a prefix, add "/api" so endpoints live under /api/agents
+except (ImportError, Exception) as e:
+    logger.warning(f"⚠ Knowledge Lab router not available: {e}")
+
+try:
+    from vexus_crm.agents_api import router as agents_router
     app.include_router(agents_router, prefix="/api", tags=["Agents"])
-    # leads and campaigns in same namespace
+except (ImportError, Exception) as e:
+    logger.warning(f"⚠ Agents router not available: {e}")
+
+try:
+    from vexus_crm.routes.auth import router as auth_router
+    app.include_router(auth_router)
+except (ImportError, Exception) as e:
+    logger.warning(f"⚠ Auth router not available: {e}")
+
+try:
     from vexus_crm.routes.leads import router as leads_router
-    from vexus_crm.routes.campaigns import router as campaigns_router
-    from vexus_crm.routes.whatsapp_business import router as whatsapp_router
-
     app.include_router(leads_router, prefix="/api")
-    app.include_router(campaigns_router, prefix="/api")
-    app.include_router(whatsapp_router)  # Already has /api/whatsapp prefix
+except (ImportError, Exception) as e:
+    logger.warning(f"⚠ Leads router not available: {e}")
 
-    logger.info("✓ Routers carregados com sucesso")
-except ImportError as e:
-    logger.warning(f"Alguns routers não puderam ser carregados: {e}")
+try:
+    from vexus_crm.routes.campaigns import router as campaigns_router
+    app.include_router(campaigns_router, prefix="/api")
+except (ImportError, Exception) as e:
+    logger.warning(f"⚠ Campaigns router not available: {e}")
+
+try:
+    from vexus_crm.routes.whatsapp_business import router as whatsapp_router
+    app.include_router(whatsapp_router)  # Already has /api/whatsapp prefix
+    logger.info("✓ WhatsApp Business router loaded")
+except (ImportError, Exception) as e:
+    logger.warning(f"⚠ WhatsApp Business router not available: {e}")
 
 
 # Rota raiz
