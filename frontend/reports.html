@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - Vexus CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; }
+        .sidebar {
+            width: 256px;
+            background-color: #4338ca;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar a { 
+            display: block; 
+            padding: 0.75rem; 
+            border-radius: 0.375rem; 
+            margin-bottom: 0.5rem;
+            color: white;
+            text-decoration: none;
+        }
+        .sidebar a:hover { background-color: rgba(255,255,255,0.1); }
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #4f46e5;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div style="font-weight: bold; margin-bottom: 1.5rem; font-size: 1.25rem;">📊 Vexus CRM</div>
+            <a href="/dashboard.html">🏠 Dashboard</a>
+            <a href="/contacts.html">👥 Contatos</a>
+            <a href="/pipeline.html">📊 Pipeline</a>
+            <a href="/tasks.html">✅ Tarefas</a>
+            <a href="/automations.html">⚙️ Automações</a>
+            <a href="/reports.html" style="background-color: rgba(255,255,255,0.2);">📈 Relatórios</a>
+            <a href="/settings.html">⚙️ Configurações</a>
+            <div style="flex: 1;"></div>
+            <button onclick="logout()" style="padding: 0.75rem; background-color: rgba(255,255,255,0.1); border: none; color: white; border-radius: 0.375rem; cursor: pointer;">🚪 Sair</button>
+        </nav>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="header">
+                <h1 style="font-size: 1.875rem; font-weight: 600; color: #1f2937;">Relatórios e Análises</h1>
+                <div>
+                    <select id="periodSelect" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="month">Este mês</option>
+                        <option value="last_month">Mês passado</option>
+                        <option value="year">Este ano</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- KPIs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="stat-card">
+                        <div class="stat-value">R$ 156.500</div>
+                        <div class="stat-label">Receita este mês</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">42</div>
+                        <div class="stat-label">Novos leads</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">18</div>
+                        <div class="stat-label">Negócios fechados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">28.5%</div>
+                        <div class="stat-label">Taxa de conversão</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Revenue by Stage -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 style="font-weight: 600; margin-bottom: 1rem;">Receita por Estágio</h3>
+                        <div id="stageChart" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="background-color: #4f46e5; width: 20px; height: 20px; border-radius: 0.25rem;"></div>
+                                <span>Lead: R$ 0</span>
+                                <div style="flex: 1; background-color: #e5e7eb; height: 8px; border-radius: 4px;"></div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="background-color: #7c3aed; width: 20px; height: 20px; border-radius: 0.25rem;"></div>
+                                <span>Qualificado: R$ 32.500</span>
+                                <div style="flex: 1; background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #7c3aed 30%, #e5e7eb 30%);"></div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="background-color: #a78bfa; width: 20px; height: 20px; border-radius: 0.25rem;"></div>
+                                <span>Proposta: R$ 65.000</span>
+                                <div style="flex: 1; background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #a78bfa 60%, #e5e7eb 60%);"></div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div style="background-color: #c4b5fd; width: 20px; height: 20px; border-radius: 0.25rem;"></div>
+                                <span>Fechado: R$ 59.000</span>
+                                <div style="flex: 1; background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #c4b5fd 95%, #e5e7eb 5%);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leads Source -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 style="font-weight: 600; margin-bottom: 1rem;">Origem de Leads</h3>
+                        <div id="sourceChart" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Website</span>
+                                <span style="font-weight: 600; color: #4f46e5;">35%</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>LinkedIn</span>
+                                <span style="font-weight: 600; color: #0ea5e9;">28%</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Indicação</span>
+                                <span style="font-weight: 600; color: #10b981;">22%</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Evento</span>
+                                <span style="font-weight: 600; color: #f59e0b;">10%</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Outro</span>
+                                <span style="font-weight: 600; color: #6b7280;">5%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                    <!-- Team Performance -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 style="font-weight: 600; margin-bottom: 1rem;">Performance da Equipe</h3>
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Victor Emanuel</span>
+                                    <span style="font-weight: 600;">R$ 45.000</span>
+                                </div>
+                                <div style="background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #4f46e5 100%, #e5e7eb 0%);"></div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Ana Silva</span>
+                                    <span style="font-weight: 600;">R$ 38.000</span>
+                                </div>
+                                <div style="background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #7c3aed 84%, #e5e7eb 16%);"></div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Carlos Mendes</span>
+                                    <span style="font-weight: 600;">R$ 32.000</span>
+                                </div>
+                                <div style="background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #a78bfa 71%, #e5e7eb 29%);"></div>
+                            </div>
+                            <div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                    <span>Beatriz Costa</span>
+                                    <span style="font-weight: 600;">R$ 28.000</span>
+                                </div>
+                                <div style="background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #c4b5fd 62%, #e5e7eb 38%);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Trend -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 style="font-weight: 600; margin-bottom: 1rem;">Tendência Mensal</h3>
+                        <div style="display: flex; align-items: flex-end; justify-content: space-around; height: 200px; gap: 0.5rem;">
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background-color: #e0e7ff; border-radius: 0.25rem; height: 60%;"></div>
+                                <span style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Jan</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background-color: #c7d2fe; border-radius: 0.25rem; height: 75%;"></div>
+                                <span style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Fev</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                                <div style="width: 100%; background-color: #a5b4fc; border-radius: 0.25rem; height: 85%;"></div>
+                                <span style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Mar</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        async function initPage() {
+            await checkAuth();
+        }
+
+        // logout() disponível em auth.js
+        initPage();
+    </script>
+</body>
+</html>

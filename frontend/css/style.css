@@ -1,0 +1,202 @@
+/* Customizações extras - Tailwind + estilos adicionais */
+
+/* Animações */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sidebar-link {
+    transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Tabulator customization */
+.tabulator {
+    border: none;
+    background-color: transparent;
+}
+
+.tabulator .tabulator-header {
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+}
+
+.tabulator .tabulator-header .tabulator-col {
+    color: #374151;
+    padding: 12px 8px;
+}
+
+.tabulator-row {
+    border-bottom: 1px solid #f3f4f6;
+    background-color: white;
+}
+
+.tabulator-row:hover {
+    background-color: #f9fafb;
+}
+
+.tabulator-row .tabulator-cell {
+    padding: 12px 8px;
+    color: #1f2937;
+}
+
+/* FullCalendar customization */
+.fc {
+    font-family: inherit;
+}
+
+.fc .fc-button-primary {
+    background-color: #6366f1;
+    border-color: #6366f1;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: #4338ca;
+    border-color: #4338ca;
+}
+
+.fc .fc-daygrid-day.fc-day-other {
+    background-color: #f9fafb;
+}
+
+/* Modal animations */
+.fixed.inset-0 {
+    animation: fadeIn 0.2s ease;
+}
+
+/* Card hover effects */
+.bg-white:hover {
+    transition: all 0.2s ease;
+}
+
+/* Focus states */
+input:focus,
+select:focus,
+textarea:focus {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Chart.js legend */
+.chartjs-tooltip {
+    background: rgba(0, 0, 0, 0.8) !important;
+    color: white !important;
+    border-radius: 4px;
+    padding: 8px !important;
+}
+
+/* Scroll customization */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f3f4f6;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Badge styles */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.badge-success {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-info {
+    background-color: #dbeafe;
+    color: #0c2340;
+}
+
+/* Loading state */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Error message */
+.alert-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border-left: 4px solid #dc2626;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.alert-success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border-left: 4px solid #10b981;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .kanban-column {
+        min-width: 260px;
+        max-width: 300px;
+    }
+    
+    #kanban {
+        margin-right: -20px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .sidebar,
+    .page-title,
+    button,
+    input {
+        display: none !important;
+    }
+    
+    main {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+}

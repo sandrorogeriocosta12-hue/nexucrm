@@ -1,0 +1,201 @@
+
+
+═══════════════════════════════════════════════════════════════════════════════
+🎯 ESTRATÉGIA: Demo Flow em 3 Telas (25 minutos)
+═══════════════════════════════════════════════════════════════════════════════
+
+FLUXO PROPOSTO (Com telas que va mostrar):
+
+  0:00-2:00  | TELA 1: LOGIN (Nexus Service branding)
+             ├─ Visual: Profissional, clean, logo "Nexus Service"
+             └─ Ação: Logar rapidamente
+
+  2:00-5:00  | TELA 2: INBOX / DASHBOARD (Conversas + Score)
+             ├─ Visual: CEO recebendo mensagem "Oi, quero orçamento"
+             ├─ Mostra: Classificação automática, score (HOT 🔥)
+             └─ Ação: Click para próxima tela
+
+  5:00-15:00 | TELA 3: DASHBOARD KPI (Números que impressionam)
+             ├─ Métrica 1: Leads processados (450+ este mês)
+             ├─ Métrica 2: Taxa conversão (12% vs 8% antes)
+             ├─ Métrica 3: Revenue potencial (R$ 85.000)
+             ├─ Métrica 4: Tempo de resposta (< 3 segundos)
+             └─ Visual: Gráficos bonitos que "falam"
+
+  15:00-25:00 | TELA 4: PIPELINE (Kanban com clientes em estágios)
+              ├─ Visual: Funil de vendas claro
+              ├─ Mostra: Quantos leads em cada fase
+              └─ Ação: "Vê quantos leads qualificados pra seu vendedor"
+
+═══════════════════════════════════════════════════════════════════════════════
+📋 TELAS ATUAIS VS NECESSÁRIO
+═══════════════════════════════════════════════════════════════════════════════
+
+TELA              | STATUS ATUAL      | AÇÃO NECESSÁRIA      | PRIORIDADE
+──────────────────┼───────────────────┼──────────────────────┼───────────
+login.html        | Existe            | UPDATE BRANDING      | 🔴 CRÍTICO
+index.html        | Existe (Inbox)    | REFINE layout        | 🔴 CRÍTICO
+dashboard.html    | Existe (v2.0)     | ADICIONAR KPIs       | 🔴 CRÍTICO
+pipeline.html     | Existe (Kanban)   | Polish estilo        | 🟡 IMPORTANTE
+contacts.html     | Existe            | NÃO mostrar (skip)   | 🟢 SKIP
+tasks.html        | Existe            | NÃO mostrar (skip)   | 🟢 SKIP
+reports.html      | Existe            | Pode complementar    | 🟡 OPCIONAL
+
+═══════════════════════════════════════════════════════════════════════════════
+🔴 ATUALIZAÇÕES CRÍTICAS (Fazer hoje)
+═══════════════════════════════════════════════════════════════════════════════
+
+1️⃣  Update BRANDING: "Vexus" → "Nexus Service"
+    Onde:
+      ├─ login.html (título da página)
+      ├─ index.html (ícone + nome)
+      ├─ dashboard.html (título)
+      └─ pipeline.html (título + branding)
+
+2️⃣  LOGIN VISUAL (Profissional)
+    Fazer:
+      ├─ Logo "Nexus Service" centralizado
+      ├─ Frase power: "Lead scoring em tempo real"
+      ├─ Botão login grande e colorido
+      └─ Error messages bonitas (se necessário)
+
+3️⃣  INBOX DASHBOARD (Conversa + Score)
+    Adicionar à esquerda:
+      ├─ Cada mensagem com SCORE visível (ex: 0.87 🔥)
+      ├─ Cor de fundo: vermelho=hot, verde=cold
+      └─ Button: "Ver proposta gerada" com PDF link
+
+4️⃣  KPI DASHBOARD (O que impressiona)
+    Componentes:
+      ├─ Card 1: "450 leads processados este mês"
+      ├─ Card 2: "12% conversão (era 8%)"
+      ├─ Card 3: "R$ 85.000 potencial"
+      ├─ Card 4: "< 3 segundos resposta"
+      ├─ Card 5: "87% acurácia scoring"
+      └─ Gráfico: Trending da conversão (linha crescente)
+
+5️⃣  PIPELINE KANBAN (Funil claro)
+    Colunas:
+      ├─ "Novo (50 leads)"
+      ├─ "Qualificado (30 leads)"
+      ├─ "Proposta Enviada (15 leads)"
+      └─ "Contrato (8 leads)"
+
+═══════════════════════════════════════════════════════════════════════════════
+🎨 DETALHES DE DESIGN (Que vai impressionar)
+═══════════════════════════════════════════════════════════════════════════════
+
+CORES:
+  ├─ Purple/Pink gradient (logo Nexus Service)
+  ├─ Dark theme (profissional, fácil nos olhos)
+  ├─ Accent colors: 
+  │  ├─ Verde: ✅ Positivo (conversão, lead qualificado)
+  │  ├─ Vermelho: 🔥 Hot (lead urgente)
+  │  └─ Amarelo: ⚠️ Atenção (lead em dúvida)
+  └─ Fundo: Gradient slate-900 to slate-950
+
+TIPOGRAFIA:
+  ├─ Headlines: Bold, grande, impactante
+  ├─ KPIs: Números GRANDES (48px+)
+  ├─ Labels: Pequenos, discretos
+  └─ Fonte: System fonts (Segoe UI, Roboto) - rápido carregamento
+
+ANIMAÇÕES:
+  ├─ Fade-in suave ao carregar
+  ├─ Número crescendo (contador) nos KPIs
+  └─ Sem animações que distraem
+
+═══════════════════════════════════════════════════════════════════════════════
+🚀 CHECKLIST DE IMPLEMENTAÇÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+HOJE (Sexta):
+  [ ] Atualizar login.html com branding Nexus Service
+  [ ] Atualizar index.html: Remove "Vexus" → "Nexus Service"
+  [ ] Criar dashboard KPI com 5 métricas principais
+  [ ] Polish pipeline.html: Limpar visual, adicionar números
+  [ ] Testar todas as telas abrindo no navegador (não erros!)
+  [ ] Tirar screenshots de cada tela (para backup offline)
+
+SÁBADO:
+  [ ] Refine CSS se necessário
+  [ ] Testar responsividade (celular view)
+  [ ] Adicionar animações suaves (se tempo)
+
+DOMINGO:
+  [ ] Deploy em VPS de teste
+  [ ] Verificar loading de imagens
+  [ ] Validação final: Tudo abrindo rápido
+
+SEGUNDA (Antes da reunião):
+  [ ] Abrir 4 abas do Firefox/Chrome lado a lado (as 4 telas)
+  [ ] Testar navegação entre telas
+  [ ] Screenshot final com navegação
+
+═══════════════════════════════════════════════════════════════════════════════
+📸 SCREENSHOTS PARA REFERÊNCIA (O que você vai mostrar)
+═══════════════════════════════════════════════════════════════════════════════
+
+DESKTOP SCREENSHOTS (Para backup offline, se Internet cair):
+  1. Screenshot login.html (30% da tela - profissional)
+  2. Screenshot index.html (Inbox com conversa + score)
+  3. Screenshot dashboard.html com KPIs (big numbers)
+  4. Screenshot pipeline.html (Kanban com 4 colunas)
+
+MOBILE SCREENSHOTS (Se quiser mostrar no celular também):
+  1. Login responsive
+  2. Inbox em portrait
+  3. KPI em mobile (números grandes mesmo assim)
+
+═══════════════════════════════════════════════════════════════════════════════
+⚡ ORDEM DE AÇÃO (HOJE)
+═══════════════════════════════════════════════════════════════════════════════
+
+1️⃣  (10 min) Criar nova tela: kpi-dashboard.html
+    └─ 5 métricas principais bonitas
+    └─ Com gráfico trending
+
+2️⃣  (10 min) Update login.html
+    └─ Trocar "Vexus" → "Nexus Service"
+    └─ Adicionar frase power
+
+3️⃣  (10 min) Update index.html
+    └─ Trocar título + logo
+    └─ Adicionar score visível em cada conversa
+
+4️⃣  (5 min) Update pipeline.html
+    └─ Trocar título
+    └─ Adicionar contador em cada coluna
+
+5️⃣  (10 min) Testar todas as 4 telas no navegador
+    └─ Não pode ter erros!
+    └─ Deve carregar rápido (< 2 segundos)
+
+═══════════════════════════════════════════════════════════════════════════════
+💡 WHAT NOT TO SHOW (Evitar segunda-feira)
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ NÃO MOSTRAR:
+  • contacts.html (chato demais, não diz nada)
+  • tasks.html (não é foco)
+  • settings.html (técnico demais)
+  • Erros na console (pressione F12 antes de apresentar!)
+  • Loading lento (otimizar antes)
+  • Telas incompletas (mostrar só o que está pronto)
+
+═══════════════════════════════════════════════════════════════════════════════
+✅ RESULTADO ESPERADO
+═══════════════════════════════════════════════════════════════════════════════
+
+Quando terminar hoje:
+
+✅ 4 telas polidas com branding "Nexus Service"
+✅ Demo flow claro: Login → Inbox → KPI → Pipeline
+✅ Números que impressionam visíveis
+✅ Sem erros, tudo carregando rápido
+✅ Screenshots de backup caso Internet caia
+✅ Navegação fluida entre telas
+
+CEO vai pensar: "Isto é profissional mesmo"
+
+═══════════════════════════════════════════════════════════════════════════════

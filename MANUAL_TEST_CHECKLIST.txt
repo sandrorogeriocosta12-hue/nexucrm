@@ -1,0 +1,473 @@
+═══════════════════════════════════════════════════════════════════════════════
+
+           🧪 TESTE MANUAL DA SPA - INSTRUÇÕES PASSO A PASSO
+
+═══════════════════════════════════════════════════════════════════════════════
+
+
+OBJETIVO:
+Verificar que a SPA (Single Page App) funciona perfeitamente com navegação
+sem reload, roteamento, e todas as 7 páginas respondendo corretamente.
+
+
+PRÉ-REQUISITOS:
+✅ Servidor FastAPI rodando em localhost:8000
+✅ Navegador moderno (Chrome, Firefox, Safari, Edge)
+✅ DevTools habilitadas (F12)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 1: VERIFICAR QUE SPA CARREGA
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Abra navegador
+2. Type: http://localhost:8000/frontend/app.html
+3. Pressione ENTER
+
+ESPERADO:
+✓ Página carrega SEM erros
+✓ Layout aparece com:
+  - Sidebar à esquerda (cinza escuro com ícones)
+  - Header no topo (com "Dashboard", search, user avatar)
+  - Conteúdo principal no centro (cartões de KPI)
+  - Fundo escuro roxo/rosa
+
+RESULTADO:
+[ ] PASSOU
+[ ] FALHOU - Descreva o erro: ___________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 2: NAVEGAÇÃO VIA CLIQUE EM ÍCONES
+═══════════════════════════════════════════════════════════════════════════════
+
+Clique em cada ícone da sidebar (esquerda) e verifique:
+
+1. CLIQUE EM 📋 (Pipeline)
+   ESPERADO:
+   ✓ URL muda para: ...app.html#pipeline
+   ✓ Conteúdo muda para: Kanban board com colunas
+   ✓ SEM reload de página (não pisca a página)
+   ✓ Header muda para: "Pipeline" + "📋 Kanban board de vendas"
+   ✓ Ícone 📋 fica destacado (roxo/rosa)
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+2. CLIQUE EM 👥 (Contatos)
+   ESPERADO:
+   ✓ URL muda para: ...app.html#contacts
+   ✓ Conteúdo muda para: Tabela com contatos (nome, email, empresa)
+   ✓ SEM reload
+   ✓ Header muda para: "Contatos"
+   ✓ Ícone 👥 destacado
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+3. CLIQUE EM ✓ (Tarefas)
+   ESPERADO:
+   ✓ URL muda para: ...app.html#tasks
+   ✓ Conteúdo muda para: 3 colunas (A Fazer, Em Progresso, Concluído)
+   ✓ SEM reload
+   ✓ Header muda para: "Tarefas"
+   ✓ Ícone ✓ destacado
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+4. CLIQUE EM 💬 (Inbox)
+   ESPERADO:
+   ✓ URL muda para: ...app.html#inbox
+   ✓ Conteúdo muda para: Chat interface
+   ✓ SEM reload
+   ✓ Header muda para: "Inbox"
+   ✓ Ícone 💬 destacado
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+5. CLIQUE EM 📚 (Knowledge Lab)
+   ESPERADO:
+   ✓ URL muda para: ...app.html#kb
+   ✓ Conteúdo muda para: Upload + Busca + Documentos
+   ✓ SEM reload
+   ✓ Header muda para: "Knowledge Lab"
+   ✓ Ícone 📚 destacado
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+6. CLIQUE EM ⚙️ (Configurações)
+   ESPERADO:
+   ✓ URL muda para: ...app.html#settings
+   ✓ Conteúdo muda para: Formulário de config
+   ✓ SEM reload
+   ✓ Header muda para: "Configurações"
+   ✓ Ícone ⚙️ destacado
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+7. CLIQUE EM V (volta ao Dashboard)
+   ESPERADO:
+   ✓ URL muda para: ...app.html#dashboard
+   ✓ Conteúdo volta ao: Dashboard com KPIs
+   ✓ SEM reload
+   ✓ Header muda para: "Dashboard"
+   ✓ Ícone 📊 destacado
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 3: ATALHOS DE TECLADO
+═══════════════════════════════════════════════════════════════════════════════
+
+Abra DevTools (F12) → Console. Teste cada combinação:
+
+1. Pressione: Ctrl + 1
+   ESPERADO:
+   ✓ URL muda para: #dashboard
+   ✓ Dashboard aparece SEM reload
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+2. Pressione: Ctrl + 2
+   ESPERADO:
+   ✓ URL muda para: #pipeline
+   ✓ Pipeline (Kanban) aparece SEM reload
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+3. Pressione: Ctrl + 3
+   ESPERADO:
+   ✓ URL muda para: #contacts
+   ✓ Contatos aparecem SEM reload
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+4. Pressione: Ctrl + 4
+   ESPERADO:
+   ✓ URL muda para: #tasks
+   ✓ Tarefas aparecem SEM reload
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+5. Pressione: Ctrl + 5
+   ESPERADO:
+   ✓ URL muda para: #inbox
+   ✓ Inbox aparece SEM reload
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+6. Pressione: Ctrl + 6
+   ESPERADO:
+   ✓ URL muda para: #kb
+   ✓ Knowledge Lab aparece SEM reload
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+7. Pressione: Ctrl + 7
+   ESPERADO:
+   ✓ URL muda para: #settings
+   ✓ Configurações aparecem SEM reload
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 4: BROWSER BACK/FORWARD BUTTONS
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Clique em Dashboard (📊)
+2. Clique em Pipeline (📋)
+3. Clique em Contatos (👥)
+4. Agora clique no botão BACK do navegador (← seta)
+
+ESPERADO:
+✓ Volta para Pipeline
+✓ Conteúdo muda SEM reload
+✓ URL muda para: #pipeline
+
+5. Clique BACK novamente
+
+ESPERADO:
+✓ Volta para Dashboard
+✓ Conteúdo muda SEM reload
+✓ URL muda para: #dashboard
+
+6. Agora clique FORWARD (→ seta)
+
+ESPERADO:
+✓ Avança para Pipeline
+✓ URL muda para: #pipeline
+
+RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 5: ANIMAÇÕES E TRANSIÇÕES
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Clique em Dashboard
+2. Clique em Pipeline
+
+ESPERADO:
+✓ Conteúdo desaparece com fade (não aparece abruptamente)
+✓ Novo conteúdo aparece com suavidade
+✓ Transição leva ~0.3 segundos
+✓ Animação não é abrupta/jumpy
+
+RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 6: RESPONSIVIDADE
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Abra DevTools (F12)
+2. Clique em "Toggle device toolbar" (📱 icon)
+3. Teste em tamanhos diferentes:
+
+   a) Mobile (375x667):
+      ESPERADO:
+      ✓ Sidebar visível (compacta)
+      ✓ Header responsivo
+      ✓ Conteúdo não espica horizontalmente
+      ✓ Todos os botões clicáveis
+
+      RESULTADO: [ ] PASSOU [ ] FALHOU
+
+   b) Tablet (768x1024):
+      ESPERADO:
+      ✓ Layout adapta bem
+      ✓ Cards em grid apropriado
+      ✓ Tabelas responsivas
+
+      RESULTADO: [ ] PASSOU [ ] FALHOU
+
+   c) Desktop (1920x1080):
+      ESPERADO:
+      ✓ Layout otimizado
+      ✓ Espaço bem distribuído
+      ✓ Sem overflow
+
+      RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 7: CONSOLE SEM ERROS
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Abra DevTools (F12)
+2. Vá para a aba "Console"
+3. Navegue entre todas as 7 páginas (clique nos ícones)
+
+ESPERADO:
+✓ NENHUMA mensagem de erro em vermelho
+✓ NENHUM "Uncaught" exception
+✓ No máximo avisos amarelos (warnings)
+
+Se encontrar erros, liste-os aqui:
+_________________________________________________________________
+_________________________________________________________________
+
+RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 8: PERFORMANCE
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Abra DevTools (F12)
+2. Vá para "Performance" ou "Network" tab
+3. Navegue entre páginas (clique nos ícones)
+
+ESPERADO:
+✓ Nenhuma requisição HTTP entre mudanças de página
+  (vai estar vazio ou apenas mostrando recursos que já foram carregados)
+✓ Tempo entre clique e mudança de página: <200ms
+✓ Apenas uma página HTML carregada (app.html)
+
+Se encontrar requisições HTTP extras entre páginas:
+_________________________________________________________________
+
+RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 9: LOGOUT FUNCIONANDO
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Localize o ícone 🚪 (logout) na sidebar
+2. Clique nele
+
+ESPERADO:
+✓ Pop-up de confirmação aparece
+✓ Mensagem: "Tem certeza que deseja sair?"
+✓ Se clicar "OK":
+   - Redireciona para login.html
+   - localStorage é limpo (token removido)
+
+RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 10: DADOS MOCKADOS APARECEM
+═══════════════════════════════════════════════════════════════════════════════
+
+Verifique que cada página mostra dados estruturados:
+
+1. DASHBOARD:
+   ✓ Cartão "Leads Abertos: 32"
+   ✓ Cartão "Conversões: 8"
+   ✓ Cartão "Revenue: R$ 45k"
+   ✓ Cartão "Taxa Sucesso: 75%"
+   ✓ Pipeline visual com progress bars
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+2. PIPELINE:
+   ✓ Coluna "Prospecção (12)"
+   ✓ Coluna "Qualificação (8)"
+   ✓ Coluna "Proposta (4)"
+   ✓ Coluna "Fechado (5)"
+   ✓ Cards com empresas e scores
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+3. CONTATOS:
+   ✓ Tabela com colunas: Nome, Email, Empresa, Telefone, Status
+   ✓ Pelo menos 2 contatos visíveis
+   ✓ Status "✅ Ativo" aparece
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+4. TAREFAS:
+   ✓ Seção "A Fazer (5)" com tasks
+   ✓ Seção "Em Progresso (3)" com tasks
+   ✓ Seção "Concluído (15)" esmaecida
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+5. INBOX:
+   ✓ Painel de conversas à esquerda
+   ✓ Chat area à direita
+   ✓ Histórico de mensagens
+   ✓ Input field para escrever
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+6. KNOWLEDGE LAB:
+   ✓ Botão "Upload Documento"
+   ✓ Botão "Buscar na Base"
+   ✓ Documentos listados com chunks
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+7. CONFIGURAÇÕES:
+   ✓ Input "Nome Completo"
+   ✓ Input "Email"
+   ✓ Select "Plano"
+   ✓ Botão "Salvar Alterações"
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 11: DESIGN & TEMA
+═══════════════════════════════════════════════════════════════════════════════
+
+Verifique que o design está correto:
+
+1. CORES:
+   ✓ Background: Dark (slate-900 → slate-950)
+   ✓ Sidebar: Mais escuro (slate-950)
+   ✓ Cards: Cinza médio (slate-800)
+   ✓ Acentos: Roxo (#a855f7) e Rosa (#ec4899)
+   ✓ Text: Branco/cinza claro
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+2. LAYOUT:
+   ✓ Sidebar à esquerda (compacta)
+   ✓ Header no topo
+   ✓ Conteúdo aproveita espaço disponível
+   ✓ Sem scrollbar afeio
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+3. TIPOGRAFIA:
+   ✓ Fontes legíveis
+   ✓ Tamanhos adequados
+   ✓ Bom contraste
+
+   RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTE 12: INTEGRAÇÃO COM API
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Abra DevTools (F12) → Console
+2. Cole este código:
+
+   fetch('/api/knowledge/health')
+     .then(r => r.json())
+     .then(console.log)
+
+3. Pressione ENTER
+
+ESPERADO:
+✓ Resposta JSON com status da API
+✓ Algo como: {status: "ok", version: "1.0.0", ...}
+
+4. Agora cole:
+
+   fetch('/api/agents/list')
+     .then(r => r.json())
+     .then(console.log)
+
+ESPERADO:
+✓ Resposta com lista de agentes
+✓ Array de objetos com dados
+
+RESULTADO: [ ] PASSOU [ ] FALHOU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+RESUMO DOS TESTES
+═══════════════════════════════════════════════════════════════════════════════
+
+Total de Testes Realizados: 12
+Testes Passados: ___ / 12
+
+Porcentagem de Sucesso: ___ %
+
+Problemas Encontrados:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                                                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+Notas Adicionais:
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                                                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+CONCLUSÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+Se todos os testes passaram:
+✅ A SPA está 100% funcional e pronta para uso!
+
+Se alguns testes falharam:
+⚠️ Consulte a seção de troubleshooting em SPA_GUIDE.md
+⚠️ Verifique DevTools (F12) para mensagens de erro
+⚠️ Confirme que localhost:8000 está respondendo
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Criado em: Fevereiro 2026
+Versão: 1.0.0
+Status: Production Ready

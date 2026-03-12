@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexus IA - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="vexus-theme.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0A1120 0%, #162538 50%, #0A1120 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #E2E8F0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, rgba(22, 31, 50, 0.95), rgba(15, 24, 36, 0.95));
+            border-radius: 15px;
+            padding: 35px;
+            margin-bottom: 35px;
+            box-shadow: 0 0 30px rgba(0, 209, 255, 0.15), 0 0 60px rgba(0, 209, 255, 0.05), inset 0 1px 0 rgba(0, 209, 255, 0.2);
+            border: 1px solid rgba(0, 209, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            color: #00D1FF;
+            font-size: 32px;
+            margin-bottom: 5px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header .subtitle {
+            color: #94A3B8;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .user-section {
+            text-align: right;
+        }
+
+        .user-info {
+            color: #94A3B8;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #DC2626 0%, #991b1b 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.3);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(220, 38, 38, 0.5);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(31, 45, 66, 0.8), rgba(22, 31, 50, 0.8));
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 25px rgba(0, 209, 255, 0.12), 0 0 50px rgba(0, 209, 255, 0.03), inset 0 1px 0 rgba(0, 209, 255, 0.2);
+            border: 1px solid rgba(0, 209, 255, 0.25);
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 209, 255, 0.5), transparent);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 0 40px rgba(0, 209, 255, 0.25), 0 0 80px rgba(0, 209, 255, 0.1), inset 0 1px 0 rgba(0, 209, 255, 0.3);
+            border-color: rgba(0, 209, 255, 0.4);
+        }
+
+        .card h2 {
+            color: #00D1FF;
+            margin-bottom: 25px;
+            font-size: 22px;
+            border-bottom: 2px solid rgba(0, 209, 255, 0.3);
+            padding-bottom: 12px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, rgba(0, 209, 255, 0.1), rgba(0, 98, 255, 0.08));
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1.5px solid rgba(0, 209, 255, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(0, 209, 255, 0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: linear-gradient(135deg, rgba(0, 209, 255, 0.15), rgba(0, 98, 255, 0.12));
+            border-color: rgba(0, 209, 255, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.15);
+        }
+
+        .stat-item:hover::after {
+            opacity: 1;
+        }
+
+        .stat-label {
+            display: block;
+            color: #94A3B8;
+            font-size: 11px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            display: block;
+            background: linear-gradient(135deg, #00D1FF 0%, #0062FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid rgba(0, 209, 255, 0.2);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            background: rgba(15, 24, 36, 0.6);
+            color: #E2E8F0;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="text"]::placeholder,
+        input[type="email"]::placeholder,
+        input[type="password"]::placeholder,
+        input[type="number"]::placeholder,
+        textarea::placeholder {
+            color: #64748B;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Inter', monospace;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #00D1FF;
+            background: rgba(15, 24, 36, 0.8);
+            box-shadow: 0 0 0 3px rgba(0, 209, 255, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #00D1FF 0%, #0062FF 100%);
+            color: #0A1120;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.3), 0 4px 15px rgba(0, 209, 255, 0.2);
+            letter-spacing: 0.3px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(0, 209, 255, 0.5), 0 6px 20px rgba(0, 209, 255, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #475569 0%, #334155 100%);
+            color: #E2E8F0;
+            box-shadow: 0 0 15px rgba(71, 85, 105, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #64748B 0%, #475569 100%);
+            box-shadow: 0 0 25px rgba(100, 116, 139, 0.3);
+        }
+
+        .response-box {
+            background: linear-gradient(135deg, rgba(0, 209, 255, 0.12), rgba(0, 98, 255, 0.08));
+            border-left: 4px solid #00D1FF;
+            padding: 18px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #A7D8DE;
+            border: 1px solid rgba(0, 209, 255, 0.25);
+            box-shadow: 0 0 15px rgba(0, 209, 255, 0.1);
+        }
+
+        .response-box.error {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.12), rgba(220, 38, 38, 0.08));
+            border-left-color: #DC2626;
+            border-color: rgba(220, 38, 38, 0.25);
+            color: #FCA5A5;
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.1);
+        }
+
+        .response-box.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.08));
+            border-left-color: #10B981;
+            border-color: rgba(16, 185, 129, 0.25);
+            color: #86EFAC;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+        }
+
+        .list-item {
+            background: linear-gradient(135deg, rgba(31, 45, 66, 0.7), rgba(22, 31, 50, 0.7));
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 4px solid #00D1FF;
+            border: 1px solid rgba(0, 209, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .list-item:hover {
+            background: linear-gradient(135deg, rgba(31, 45, 66, 0.9), rgba(22, 31, 50, 0.9));
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.15);
+            border-color: rgba(0, 209, 255, 0.35);
+            transform: translateX(4px);
+        }
+
+        .list-item strong {
+            color: #00D1FF;
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .list-item small {
+            color: #94A3B8;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .status.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #86EFAC;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .status.pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #FCD34D;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        .status.inactive {
+            background: rgba(220, 38, 38, 0.2);
+            color: #FCA5A5;
+            border: 1px solid rgba(220, 38, 38, 0.4);
+        }
+
+        .loading {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-section label {
+            display: block;
+            margin-bottom: 10px;
+            color: #E2E8F0;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.2px;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid transparent;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.08));
+            color: #86EFAC;
+            border-left-color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .alert.error {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.12), rgba(220, 38, 38, 0.08));
+            color: #FCA5A5;
+            border-left-color: #DC2626;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .alert.info {
+            background: linear-gradient(135deg, rgba(0, 209, 255, 0.12), rgba(0, 98, 255, 0.08));
+            color: #A7D8DE;
+            border-left-color: #00D1FF;
+            border: 1px solid rgba(0, 209, 255, 0.3);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .error-message {
+            color: #FCA5A5;
+            font-size: 13px;
+            margin-top: 8px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .user-section {
+                width: 100%;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        nav {
+            background: linear-gradient(135deg, rgba(22, 31, 50, 0.95), rgba(15, 24, 36, 0.95));
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.1), inset 0 1px 0 rgba(0, 209, 255, 0.15);
+            border-bottom: 1px solid rgba(0, 209, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            margin-bottom: 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00D1FF;
+            text-decoration: none;
+            padding: 15px 0;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #94A3B8;
+            font-weight: 600;
+            padding: 15px 0;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            display: block;
+            font-size: 14px;
+            letter-spacing: 0.2px;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #00D1FF;
+            border-bottom-color: #00D1FF;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="index.html" class="logo">Vexus CRM</a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html" class="nav-link active">Dashboard</a></li>
+                <li><a href="admin.html" class="nav-link">Admin</a></li>
+                <li><a href="leads.html" class="nav-link">Leads</a></li>
+                <li><a href="appointments.html" class="nav-link">Appointments</a></li>
+                <li><a href="agents.html" class="nav-link">Agents</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>🚀 Vexus IA</h1>
+                <p class="subtitle">Sistema Operacional de Crescimento para PMEs</p>
+            </div>
+            <div class="user-section">
+                <div class="user-info" id="userInfo">Carregando...</div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div id="alertContainer"></div>
+
+        <div class="dashboard">
+            <!-- Visão Geral -->
+            <div class="card">
+                <h2>📊 Visão Geral</h2>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Leads Totais</span>
+                        <span class="stat-value" id="totalLeads">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Taxa Conversão</span>
+                        <span class="stat-value" id="conversionRate">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Receita Mês</span>
+                        <span class="stat-value" id="monthlyRevenue">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login/Signup -->
+            <div class="card" id="authCard" style="display: none;">
+                <h2>🔐 Autenticação</h2>
+                <div class="form-section">
+                    <label>Email</label>
+                    <input type="email" id="authEmail" placeholder="seu@email.com">
+                </div>
+                <div class="form-section">
+                    <label>Senha</label>
+                    <input type="password" id="authPassword" placeholder="Digite sua senha">
+                </div>
+                <div class="form-section" id="nameField" style="display: none;">
+                    <label>Nome</label>
+                    <input type="text" id="authName" placeholder="Seu nome completo">
+                </div>
+                <div class="button-group">
+                    <button onclick="login()">Entrar</button>
+                    <button class="btn-secondary" onclick="toggleSignup()">Criar conta</button>
+                </div>
+                <div id="authResponse" class="response-box"></div>
+            </div>
+
+            <!-- Leads -->
+            <div class="card">
+                <h2>📋 Leads</h2>
+                <div id="leadsList" style="max-height: 300px; overflow-y: auto;">
+                    <p style="text-align: center; color: #999;">Clique em "Carregar Leads" para visualizar</p>
+                </div>
+                <button style="width: 100%; margin-top: 15px;" onclick="loadLeads()">Carregar Leads</button>
+            </div>
+
+            <!-- Propostas -->
+            <div class="card">
+                <h2>📝 Gerar Proposta</h2>
+                <div class="form-section">
+                    <label>ID do Lead</label>
+                    <input type="number" id="proposalLeadId" placeholder="1" min="1">
+                </div>
+                <div class="form-section">
+                    <label>Template</label>
+                    <select id="proposalTemplate" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="basic">Básico</option>
+                        <option value="premium">Premium</option>
+                        <option value="enterprise">Enterprise</option>
+                    </select>
+                </div>
+                <button style="width: 100%;" onclick="generateProposal()">Gerar Proposta</button>
+                <div id="proposalResponse" class="response-box"></div>
+            </div>
+
+            <!-- Agentes IA -->
+            <div class="card">
+                <h2>🤖 Agentes IA</h2>
+                <div id="agentsList" style="max-height: 300px; overflow-y: auto;">
+                    <p style="text-align: center; color: #999;">Carregando agentes...</p>
+                </div>
+                <button style="width: 100%; margin-top: 15px;" onclick="loadAgents()">Atualizar</button>
+            </div>
+
+            <!-- Chat com IA -->
+            <div class="card full-width">
+                <h2>💬 Chat com IA</h2>
+                <div id="chatHistory" style="background: #f9fafb; padding: 15px; border-radius: 5px; height: 200px; overflow-y: auto; margin-bottom: 15px;">
+                    <p style="text-align: center; color: #999;">Inicie uma conversa...</p>
+                </div>
+                <div class="form-section">
+                    <textarea id="chatMessage" placeholder="Escreva sua pergunta aqui..."></textarea>
+                </div>
+                <button style="width: 100%;" onclick="sendChatMessage()">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080';
+        let isSignupMode = false;
+
+        async function apiFetch(endpoint, options = {}) {
+            const url = `${API_URL}${endpoint}`;
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+
+            const response = await fetch(url, { ...defaultOptions, ...options });
+            
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                showAlert(`Erro: ${error.detail || response.statusText}`, 'error');
+                throw new Error(error.detail || response.statusText);
+            }
+
+            return response.json();
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type} show`;
+            alert.innerHTML = message;
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 300);
+            }, 5000);
+        }
+
+        async function login() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+
+            if (!email || !password) {
+                showAlert('Preencha email e senha', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiFetch('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                showAlert('Login realizado com sucesso!', 'success');
+                document.getElementById('authCard').style.display = 'none';
+                loadUserInfo();
+                loadAnalytics();
+            } catch (error) {
+                console.error('Login error:', error);
+            }
+        }
+
+        async function signup() {
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const name = document.getElementById('authName').value;
+
+            if (!email || !password || !name) {
+                showAlert('Preencha todos os campos', 'error');
+                return;
+            }
+
+            try {
+                const data = await apiFetch('/auth/signup', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password, name })
+                });
+                showAlert('Conta criada com sucesso! Fazendo login...', 'success');
+                isSignupMode = false;
+                document.getElementById('nameField').style.display = 'none';
+                await login();
+            } catch (error) {
+                console.error('Signup error:', error);
+            }
+        }
+
+        function toggleSignup() {
+            isSignupMode = !isSignupMode;
+            const nameField = document.getElementById('nameField');
+            const btn = event.target;
+            
+            if (isSignupMode) {
+                nameField.style.display = 'block';
+                btn.textContent = 'Já tenho conta';
+                btn.onclick = toggleSignup;
+                event.target.parentElement.querySelector('button:first-child').textContent = 'Criar conta';
+                event.target.parentElement.querySelector('button:first-child').onclick = signup;
+            } else {
+                nameField.style.display = 'none';
+                btn.textContent = 'Criar conta';
+                event.target.parentElement.querySelector('button:first-child').textContent = 'Entrar';
+                event.target.parentElement.querySelector('button:first-child').onclick = login;
+            }
+        }
+
+        async function logout() {
+            try {
+                await apiFetch('/auth/logout', { method: 'POST' });
+                document.getElementById('authCard').style.display = 'block';
+                document.getElementById('userInfo').textContent = 'Não autenticado';
+                showAlert('Logout realizado', 'info');
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        async function loadUserInfo() {
+            try {
+                const user = await apiFetch('/me');
+                document.getElementById('userInfo').textContent = `👤 ${user.name} (${user.email})`;
+            } catch (error) {
+                document.getElementById('authCard').style.display = 'block';
+            }
+        }
+
+        async function loadAnalytics() {
+            try {
+                const analytics = await apiFetch('/analytics/summary');
+                document.getElementById('totalLeads').textContent = analytics.total_leads.toLocaleString('pt-BR');
+                document.getElementById('conversionRate').textContent = (analytics.conversion_rate * 100).toFixed(1) + '%';
+                document.getElementById('monthlyRevenue').textContent = 'R$ ' + analytics.revenue_month.toLocaleString('pt-BR');
+            } catch (error) {
+                console.error('Analytics error:', error);
+            }
+        }
+
+        async function loadLeads() {
+            const container = document.getElementById('leadsList');
+            container.innerHTML = '<p style="text-align: center;"><span class="loading">⏳</span> Carregando...</p>';
+
+            try {
+                const data = await apiFetch('/leads');
+                container.innerHTML = '';
+
+                if (data.leads.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #999;">Nenhum lead encontrado</p>';
+                    return;
+                }
+
+                data.leads.forEach(lead => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <strong>${lead.name}</strong>
+                        <small>${lead.email}</small>
+                        <br><small>Score: ${lead.score}/100</small>
+                        <span class="status active">${lead.stage}</span>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Load leads error:', error);
+                container.innerHTML = '<p style="color: #e74c3c;">Erro ao carregar leads</p>';
+            }
+        }
+
+        async function generateProposal() {
+            const leadId = document.getElementById('proposalLeadId').value;
+            const template = document.getElementById('proposalTemplate').value;
+            const responseBox = document.getElementById('proposalResponse');
+
+            if (!leadId) {
+                showAlert('Preencha o ID do lead', 'error');
+                return;
+            }
+
+            responseBox.innerHTML = '<span class="loading">⏳</span> Gerando proposta...';
+            responseBox.style.display = 'block';
+
+            try {
+                const data = await apiFetch('/proposals/generate', {
+                    method: 'POST',
+                    body: JSON.stringify({ lead_id: parseInt(leadId), template })
+                });
+                responseBox.innerHTML = `
+                    <strong>✅ Proposta gerada com sucesso!</strong><br>
+                    ID: ${data.id}<br>
+                    Template: ${data.template}<br>
+                    Criado em: ${new Date(data.created_at).toLocaleDateString('pt-BR')}
+                `;
+                responseBox.classList.add('success');
+            } catch (error) {
+                responseBox.innerHTML = '❌ Erro ao gerar proposta';
+                responseBox.classList.add('error');
+                console.error('Generate proposal error:', error);
+            }
+        }
+
+        async function loadAgents() {
+            const container = document.getElementById('agentsList');
+            
+            try {
+                const data = await apiFetch('/agents');
+                container.innerHTML = '';
+
+                data.agents.forEach(agent => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <strong>${agent.name}</strong>
+                        <small>Modelo: ${agent.model} | Performance: ${(agent.performance * 100).toFixed(0)}%</small>
+                        <span class="status active">${agent.status}</span>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Load agents error:', error);
+                container.innerHTML = '<p style="color: #e74c3c;">Erro ao carregar agentes</p>';
+            }
+        }
+
+        async function sendChatMessage() {
+            const message = document.getElementById('chatMessage').value;
+            const history = document.getElementById('chatHistory');
+
+            if (!message.trim()) {
+                showAlert('Digite uma mensagem', 'error');
+                return;
+            }
+
+            // Add user message to history
+            const userMsgDiv = document.createElement('div');
+            userMsgDiv.style.marginBottom = '10px';
+            userMsgDiv.innerHTML = `<strong style="color: #00D1FF;">Você:</strong><br>${escapeHtml(message)}`;
+            history.appendChild(userMsgDiv);
+            history.scrollTop = history.scrollHeight;
+
+            document.getElementById('chatMessage').value = '';
+
+            try {
+                const data = await apiFetch('/chat/send', {
+                    method: 'POST',
+                    body: JSON.stringify({ content: message, sender: 'user' })
+                });
+
+                // Add AI response
+                const aiMsgDiv = document.createElement('div');
+                aiMsgDiv.style.marginBottom = '10px';
+                aiMsgDiv.innerHTML = `<strong style="color: #0062FF;">🤖 IA:</strong><br>Resposta processada com sucesso`;
+                history.appendChild(aiMsgDiv);
+                history.scrollTop = history.scrollHeight;
+            } catch (error) {
+                console.error('Send message error:', error);
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set active nav link
+            const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === currentPage || (currentPage === '' && href === 'dashboard.html')) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+
+            loadUserInfo();
+            loadAnalytics();
+            loadAgents();
+        });
+    </script>
+</body>
+</html>

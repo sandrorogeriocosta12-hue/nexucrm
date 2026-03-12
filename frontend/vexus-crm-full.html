@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexus CRM - Sistema Completo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; }
+        .notification { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .screen-hidden { display: none !important; }
+        .screen-visible { display: flex !important; }
+        .chart-bar { animation: growBar 1s ease-out; }
+        @keyframes growBar { from { height: 0; } to { height: 100%; } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-950 text-gray-100">
+
+<div class="flex h-screen overflow-hidden">
+    <!-- SIDEBAR -->
+    <nav class="w-16 bg-slate-950 border-r border-slate-700 flex flex-col items-center py-4 space-y-6">
+        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold text-white">V</div>
+        
+        <button class="screen-nav w-12 h-12 flex items-center justify-center rounded-lg bg-purple-600 text-white" data-screen="inbox" title="Inbox">💬</button>
+        <button class="screen-nav w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-screen="pipeline" title="Pipeline">📊</button>
+        <button class="screen-nav w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-screen="agents" title="Agentes">🤖</button>
+        <button class="screen-nav w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-screen="contacts" title="Contatos">👥</button>
+        <button class="screen-nav w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-screen="analytics" title="Analytics">📈</button>
+        <button class="screen-nav w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-screen="kb" title="Knowledge Hub">📚</button>
+        
+        <div class="flex-1"></div>
+        <button class="screen-nav w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-screen="config" title="Config">⚙️</button>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-auto">
+
+        <!-- SCREEN 1: INBOX (PADRÃO) -->
+        <div id="screen-inbox" class="screen-visible w-full h-full flex">
+            <aside class="w-80 bg-slate-800 border-r border-slate-700 flex flex-col">
+                <div class="p-4 border-b border-slate-700">
+                    <input type="text" id="searchInput" placeholder="🔍 Buscar..." class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div class="px-4 py-3 border-b border-slate-700 flex gap-2">
+                    <button class="filter-btn px-3 py-1 text-xs rounded-full font-semibold bg-purple-600 text-white">Todos</button>
+                    <button class="filter-btn px-3 py-1 text-xs rounded-full font-semibold bg-slate-700 text-gray-300 hover:bg-slate-600">⏳ Aguard.</button>
+                    <button class="filter-btn px-3 py-1 text-xs rounded-full font-semibold bg-slate-700 text-gray-300 hover:bg-slate-600">🔥 Quentes</button>
+                </div>
+                <div class="flex-1 overflow-y-auto space-y-2 p-2">
+                    <div class="chat-item p-3 cursor-pointer border-l-4 border-l-purple-500 bg-slate-700 rounded-lg" data-chat="joao">
+                        <p class="font-semibold text-white text-sm">João Silva 🔥</p>
+                        <p class="text-xs text-gray-400">Qual é o valor?</p>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-900 text-emerald-300 inline-block mt-1">85</span>
+                    </div>
+                    <div class="chat-item p-3 cursor-pointer border-l-4 border-l-transparent hover:bg-slate-750 rounded-lg" data-chat="maria">
+                        <p class="font-semibold text-white text-sm">Maria Santos</p>
+                        <p class="text-xs text-gray-400">Cotação para 50 unidades</p>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-amber-900 text-amber-300 inline-block mt-1">62</span>
+                    </div>
+                    <div class="chat-item p-3 cursor-pointer border-l-4 border-l-transparent hover:bg-slate-750 rounded-lg" data-chat="carlos">
+                        <p class="font-semibold text-white text-sm">Carlos Mendes</p>
+                        <p class="text-xs text-gray-400">Enviaram o orçamento?</p>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-blue-900 text-blue-300 inline-block mt-1">45</span>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="flex-1 flex flex-col">
+                <header class="bg-gradient-to-r from-slate-800 to-slate-750 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+                    <div id="chatHeader" class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-emerald-500 to-emerald-600">JS</div>
+                        <div>
+                            <h1 class="text-lg font-bold text-white">João Silva</h1>
+                            <p class="text-sm text-gray-400">WhatsApp • 🟢 Online</p>
+                        </div>
+                    </div>
+                    <button class="whisper-btn flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-blue-600 text-white">🎙️ Whisper</button>
+                </header>
+
+                <div class="flex-1 overflow-y-auto flex flex-col gap-4 p-6">
+                    <div class="flex justify-end">
+                        <div class="max-w-xs p-3 rounded-lg bg-purple-600 text-white rounded-br-none">
+                            <p class="text-sm">Olá! Estou interessado em consultoria</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-start">
+                        <div class="max-w-xs p-3 rounded-lg bg-slate-700 text-gray-100 rounded-bl-none">
+                            <p class="text-sm">Ótimo! Temos 3 planos:</p>
+                            <p class="text-sm">• Básico: R$500/mês</p>
+                            <p class="text-sm">• Premium: R$1500/mês</p>
+                            <div class="mt-2 pt-2 border-t border-opacity-30 border-current">
+                                <p class="text-xs opacity-80">📚 Fonte: Tabela de Preços.pdf</p>
+                                <p class="text-xs opacity-70">✓ Confiança: 94%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 p-6 bg-slate-800 border-t border-slate-700">
+                    <input type="text" id="messageInput" placeholder="Digite sua mensagem..." class="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-purple-500">
+                    <button class="inbox-send bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold">Enviar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: PIPELINE -->
+        <div id="screen-pipeline" class="screen-hidden w-full h-full flex flex-col">
+            <header class="bg-gradient-to-r from-slate-800 to-slate-750 border-b border-slate-700 px-6 py-4">
+                <h1 class="text-2xl font-bold text-white">📊 Pipeline de Vendas</h1>
+                <p class="text-sm text-gray-400">Funil de conversão em tempo real</p>
+            </header>
+
+            <div class="flex-1 overflow-x-auto overflow-y-hidden p-6">
+                <div class="flex gap-4 min-w-max">
+                    <!-- ETAPA 1: NOVOS LEADS -->
+                    <div class="bg-slate-800 rounded-lg p-4 min-w-80 border border-slate-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-white">📥 Novos Leads</h3>
+                            <span class="bg-blue-600 text-white px-2 py-1 rounded text-xs">8</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="pipeline-card bg-slate-700 p-3 rounded-lg cursor-pointer hover:bg-slate-600 transition">
+                                <p class="text-sm font-semibold text-white">Pedro Costa</p>
+                                <p class="text-xs text-gray-400">Contato: LinkedIn</p>
+                                <p class="text-xs text-blue-400 mt-1">Score: 45</p>
+                            </div>
+                            <div class="pipeline-card bg-slate-700 p-3 rounded-lg cursor-pointer hover:bg-slate-600 transition">
+                                <p class="text-sm font-semibold text-white">Ana Gomes</p>
+                                <p class="text-xs text-gray-400">Contato: Website</p>
+                                <p class="text-xs text-blue-400 mt-1">Score: 38</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ETAPA 2: QUALIFICAÇÃO -->
+                    <div class="bg-slate-800 rounded-lg p-4 min-w-80 border border-slate-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-white">🎯 Qualificação</h3>
+                            <span class="bg-amber-600 text-white px-2 py-1 rounded text-xs">5</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="pipeline-card bg-slate-700 p-3 rounded-lg cursor-pointer hover:bg-slate-600 transition">
+                                <p class="text-sm font-semibold text-white">Carlos Mendes</p>
+                                <p class="text-xs text-gray-400">Email: Respondeu</p>
+                                <p class="text-xs text-amber-400 mt-1">Score: 62</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ETAPA 3: PROPOSTA -->
+                    <div class="bg-slate-800 rounded-lg p-4 min-w-80 border border-slate-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-white">📄 Proposta</h3>
+                            <span class="bg-purple-600 text-white px-2 py-1 rounded text-xs">3</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="pipeline-card bg-slate-700 p-3 rounded-lg cursor-pointer hover:bg-slate-600 transition">
+                                <p class="text-sm font-semibold text-white">Maria Santos</p>
+                                <p class="text-xs text-gray-400">Proposta enviada</p>
+                                <p class="text-xs text-purple-400 mt-1">Score: 75</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ETAPA 4: NEGOCIAÇÃO -->
+                    <div class="bg-slate-800 rounded-lg p-4 min-w-80 border border-slate-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-white">💬 Negociação</h3>
+                            <span class="bg-orange-600 text-white px-2 py-1 rounded text-xs">2</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="pipeline-card bg-slate-700 p-3 rounded-lg cursor-pointer hover:bg-slate-600 transition">
+                                <p class="text-sm font-semibold text-white">João Silva</p>
+                                <p class="text-xs text-gray-400">Negociando termos</p>
+                                <p class="text-xs text-orange-400 mt-1">Score: 85 🔥</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ETAPA 5: FECHADO -->
+                    <div class="bg-slate-800 rounded-lg p-4 min-w-80 border border-emerald-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-emerald-400">✅ Fechado</h3>
+                            <span class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">12</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="pipeline-card bg-emerald-900 p-3 rounded-lg cursor-pointer hover:bg-emerald-800 transition">
+                                <p class="text-sm font-semibold text-emerald-200">Empresa Tech Ltda</p>
+                                <p class="text-xs text-emerald-300">Contrato assinado</p>
+                                <p class="text-xs text-emerald-400 mt-1">Valor: R$15.000</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border-t border-slate-700 px-6 py-4 grid grid-cols-4 gap-4">
+                <div class="bg-slate-700 p-4 rounded-lg">
+                    <p class="text-xs text-gray-400">Taxa Conversão</p>
+                    <p class="text-2xl font-bold text-white">32%</p>
+                </div>
+                <div class="bg-slate-700 p-4 rounded-lg">
+                    <p class="text-xs text-gray-400">Lead Médio</p>
+                    <p class="text-2xl font-bold text-white">R$8.5k</p>
+                </div>
+                <div class="bg-slate-700 p-4 rounded-lg">
+                    <p class="text-xs text-gray-400">Total Pipeline</p>
+                    <p class="text-2xl font-bold text-white">R$238k</p>
+                </div>
+                <div class="bg-slate-700 p-4 rounded-lg">
+                    <p class="text-xs text-gray-400">Ciclo Médio</p>
+                    <p class="text-2xl font-bold text-white">18 dias</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: AGENTES -->
+        <div id="screen-agents" class="screen-hidden w-full h-full flex flex-col">
+            <header class="bg-gradient-to-r from-slate-800 to-slate-750 border-b border-slate-700 px-6 py-4">
+                <h1 class="text-2xl font-bold text-white">🤖 Agentes IA</h1>
+                <p class="text-sm text-gray-400">Gerenciamento de assistentes inteligentes</p>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- AGENTE 1 -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">🎯 Agente Vendas</h3>
+                                <p class="text-sm text-gray-400">Especializado em closing</p>
+                            </div>
+                            <span class="bg-emerald-900 text-emerald-300 px-3 py-1 rounded-full text-xs font-semibold">🟢 ATIVO</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Mensagens Processadas</p>
+                                <div class="bg-slate-700 rounded-lg h-2">
+                                    <div class="bg-emerald-500 h-2 rounded-lg" style="width: 92%"></div>
+                                </div>
+                                <p class="text-xs text-gray-300 mt-1">2,450 / 2,500</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Taxa de Sucesso</p>
+                                <p class="text-2xl font-bold text-emerald-400">87%</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Últimas 24h</p>
+                                <p class="text-sm text-gray-300">245 conversas | 42 propostas geradas</p>
+                            </div>
+                        </div>
+                        <button class="agent-btn w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold text-sm">⚙️ Configurar</button>
+                    </div>
+
+                    <!-- AGENTE 2 -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">📚 Agente Knowledge</h3>
+                                <p class="text-sm text-gray-400">Responde dúvidas técnicas</p>
+                            </div>
+                            <span class="bg-emerald-900 text-emerald-300 px-3 py-1 rounded-full text-xs font-semibold">🟢 ATIVO</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Documentos Indexados</p>
+                                <p class="text-2xl font-bold text-blue-400">1,247</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Precisão de Respostas</p>
+                                <p class="text-2xl font-bold text-blue-400">94%</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Últimas 24h</p>
+                                <p class="text-sm text-gray-300">1,820 consultas | 89% satisfação</p>
+                            </div>
+                        </div>
+                        <button class="agent-btn w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold text-sm">⚙️ Configurar</button>
+                    </div>
+
+                    <!-- AGENTE 3 -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">🎬 Agente Conteúdo</h3>
+                                <p class="text-sm text-gray-400">Gera conteúdo marketing</p>
+                            </div>
+                            <span class="bg-blue-900 text-blue-300 px-3 py-1 rounded-full text-xs font-semibold">🟡 PAUSADO</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Posts Gerados</p>
+                                <p class="text-2xl font-bold text-orange-400">567</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Engajamento Médio</p>
+                                <p class="text-2xl font-bold text-orange-400">12.4%</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Status</p>
+                                <p class="text-sm text-gray-300">Pausado para manutenção</p>
+                            </div>
+                        </div>
+                        <button class="agent-btn w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold text-sm">▶️ Retomar</button>
+                    </div>
+
+                    <!-- AGENTE 4 -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-white">📧 Agente Email</h3>
+                                <p class="text-sm text-gray-400">Automação de campanhas</p>
+                            </div>
+                            <span class="bg-emerald-900 text-emerald-300 px-3 py-1 rounded-full text-xs font-semibold">🟢 ATIVO</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Emails Enviados</p>
+                                <p class="text-2xl font-bold text-green-400">8,945</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Taxa Abertura</p>
+                                <p class="text-2xl font-bold text-green-400">34%</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Conversões</p>
+                                <p class="text-sm text-gray-300">245 cliques | 18 vendas</p>
+                            </div>
+                        </div>
+                        <button class="agent-btn w-full mt-4 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold text-sm">⚙️ Configurar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: CONTATOS -->
+        <div id="screen-contacts" class="screen-hidden w-full h-full flex flex-col">
+            <header class="bg-gradient-to-r from-slate-800 to-slate-750 border-b border-slate-700 px-6 py-4">
+                <h1 class="text-2xl font-bold text-white">👥 Contatos</h1>
+                <p class="text-sm text-gray-400">Gestão centralizada de leads e clientes</p>
+            </header>
+
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-6">
+                    <div class="mb-4 flex gap-2">
+                        <input type="text" placeholder="🔍 Buscar contato..." class="flex-1 bg-slate-800 text-white px-4 py-2 rounded-lg border border-slate-700 focus:ring-2 focus:ring-purple-500">
+                        <select class="bg-slate-800 text-white px-4 py-2 rounded-lg border border-slate-700">
+                            <option>Todos os Segmentos</option>
+                            <option>Prospects</option>
+                            <option>Clientes</option>
+                            <option>Parceiros</option>
+                        </select>
+                    </div>
+
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-700">
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Nome</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Empresa</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Email</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Telefone</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Status</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700">
+                            <tr class="hover:bg-slate-800 transition cursor-pointer">
+                                <td class="py-3 px-4">João Silva</td>
+                                <td class="py-3 px-4">TechFlow Solutions</td>
+                                <td class="py-3 px-4 text-purple-400">joao@techflow.com</td>
+                                <td class="py-3 px-4">(11) 99999-9999</td>
+                                <td class="py-3 px-4"><span class="bg-orange-900 text-orange-300 px-2 py-1 rounded text-xs">Negociação</span></td>
+                                <td class="py-3 px-4"><span class="text-orange-400 font-bold">85</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800 transition cursor-pointer">
+                                <td class="py-3 px-4">Maria Santos</td>
+                                <td class="py-3 px-4">Inovação Tech</td>
+                                <td class="py-3 px-4 text-purple-400">maria@inovacao.com</td>
+                                <td class="py-3 px-4">(11) 98888-8888</td>
+                                <td class="py-3 px-4"><span class="bg-purple-900 text-purple-300 px-2 py-1 rounded text-xs">Proposta</span></td>
+                                <td class="py-3 px-4"><span class="text-purple-400 font-bold">75</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800 transition cursor-pointer">
+                                <td class="py-3 px-4">Carlos Mendes</td>
+                                <td class="py-3 px-4">Data Solutions</td>
+                                <td class="py-3 px-4 text-purple-400">carlos@data.com</td>
+                                <td class="py-3 px-4">(11) 97777-7777</td>
+                                <td class="py-3 px-4"><span class="bg-amber-900 text-amber-300 px-2 py-1 rounded text-xs">Qualificação</span></td>
+                                <td class="py-3 px-4"><span class="text-amber-400 font-bold">62</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800 transition cursor-pointer">
+                                <td class="py-3 px-4">Ana Silva</td>
+                                <td class="py-3 px-4">Marketing Pro</td>
+                                <td class="py-3 px-4 text-purple-400">ana@mktpro.com</td>
+                                <td class="py-3 px-4">(11) 96666-6666</td>
+                                <td class="py-3 px-4"><span class="bg-emerald-900 text-emerald-300 px-2 py-1 rounded text-xs">Cliente</span></td>
+                                <td class="py-3 px-4"><span class="text-emerald-400 font-bold">92</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800 transition cursor-pointer">
+                                <td class="py-3 px-4">Roberto Costa</td>
+                                <td class="py-3 px-4">Consultoria 360</td>
+                                <td class="py-3 px-4 text-purple-400">roberto@cons360.com</td>
+                                <td class="py-3 px-4">(11) 95555-5555</td>
+                                <td class="py-3 px-4"><span class="bg-blue-900 text-blue-300 px-2 py-1 rounded text-xs">Novo Lead</span></td>
+                                <td class="py-3 px-4"><span class="text-blue-400 font-bold">38</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 5: ANALYTICS -->
+        <div id="screen-analytics" class="screen-hidden w-full h-full flex flex-col">
+            <header class="bg-gradient-to-r from-slate-800 to-slate-750 border-b border-slate-700 px-6 py-4">
+                <h1 class="text-2xl font-bold text-white">📈 Analytics</h1>
+                <p class="text-sm text-gray-400">Métricas e Performance em tempo real</p>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- KPIs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-4">
+                        <p class="text-xs text-gray-400 mb-1">Total Leads</p>
+                        <p class="text-3xl font-bold text-white">1,247</p>
+                        <p class="text-xs text-emerald-400 mt-2">↑ 12% vs semana anterior</p>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-4">
+                        <p class="text-xs text-gray-400 mb-1">Taxa Conversão</p>
+                        <p class="text-3xl font-bold text-white">32%</p>
+                        <p class="text-xs text-emerald-400 mt-2">↑ 5% vs meta</p>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-4">
+                        <p class="text-xs text-gray-400 mb-1">Receita Mês</p>
+                        <p class="text-3xl font-bold text-white">R$127k</p>
+                        <p class="text-xs text-emerald-400 mt-2">↑ 23% crescimento</p>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-4">
+                        <p class="text-xs text-gray-400 mb-1">Ciclo Médio</p>
+                        <p class="text-3xl font-bold text-white">18 dias</p>
+                        <p class="text-xs text-red-400 mt-2">↓ 3 dias vs média</p>
+                    </div>
+                </div>
+
+                <!-- Gráficos -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Gráfico 1 -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                        <h3 class="text-lg font-bold text-white mb-4">Leads por Fonte</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-gray-300">WhatsApp</span>
+                                    <span class="text-sm font-bold text-white">35%</span>
+                                </div>
+                                <div class="bg-slate-700 rounded-lg h-2">
+                                    <div class="chart-bar bg-green-500 h-2 rounded-lg" style="width: 35%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-gray-300">LinkedIn</span>
+                                    <span class="text-sm font-bold text-white">28%</span>
+                                </div>
+                                <div class="bg-slate-700 rounded-lg h-2">
+                                    <div class="chart-bar bg-blue-500 h-2 rounded-lg" style="width: 28%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-gray-300">Website</span>
+                                    <span class="text-sm font-bold text-white">22%</span>
+                                </div>
+                                <div class="bg-slate-700 rounded-lg h-2">
+                                    <div class="chart-bar bg-purple-500 h-2 rounded-lg" style="width: 22%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-gray-300">Email</span>
+                                    <span class="text-sm font-bold text-white">15%</span>
+                                </div>
+                                <div class="bg-slate-700 rounded-lg h-2">
+                                    <div class="chart-bar bg-orange-500 h-2 rounded-lg" style="width: 15%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico 2 -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                        <h3 class="text-lg font-bold text-white mb-4">Performance por Agente</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-gray-300">Agente Vendas</span>
+                                    <span class="text-sm font-bold text-emerald-400">87%</span>
+                                </div>
+                                <div class="bg-slate-700 rounded-lg h-2">
+                                    <div class="chart-bar bg-emerald-500 h-2 rounded-lg" style="width: 87%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-gray-300">Agente Knowledge</span>
+                                    <span class="text-sm font-bold text-blue-400">94%</span>
+                                </div>
+                                <div class="bg-slate-700 rounded-lg h-2">
+                                    <div class="chart-bar bg-blue-500 h-2 rounded-lg" style="width: 94%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm text-gray-300">Agente Email</span>
+                                    <span class="text-sm font-bold text-green-400">82%</span>
+                                </div>
+                                <div class="bg-slate-700 rounded-lg h-2">
+                                    <div class="chart-bar bg-green-500 h-2 rounded-lg" style="width: 82%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 6: KNOWLEDGE HUB -->
+        <div id="screen-kb" class="screen-hidden w-full h-full flex flex-col">
+            <header class="bg-gradient-to-r from-slate-800 to-slate-750 border-b border-slate-700 px-6 py-4">
+                <h1 class="text-2xl font-bold text-white">📚 Knowledge Hub</h1>
+                <p class="text-sm text-gray-400">Base de conhecimento centralizada com RAG</p>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Upload -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                        <h3 class="text-lg font-bold text-white mb-4">📤 Upload de Documentos</h3>
+                        <div class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center cursor-pointer hover:border-purple-500 transition">
+                            <p class="text-4xl mb-2">📄</p>
+                            <p class="text-white font-semibold mb-2">Arraste arquivos aqui</p>
+                            <p class="text-xs text-gray-400">PDF, DOCX, TXT até 50MB</p>
+                            <button class="kb-upload mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold w-full">Selecionar Arquivo</button>
+                        </div>
+                    </div>
+
+                    <!-- Query -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 lg:col-span-2">
+                        <h3 class="text-lg font-bold text-white mb-4">🔍 Consultar Base de Conhecimento</h3>
+                        <div class="space-y-3">
+                            <input type="text" id="kbQueryInput" placeholder="Digite sua pergunta..." class="w-full bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 focus:ring-2 focus:ring-purple-500">
+                            <button class="kb-query w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold">Consultar</button>
+                        </div>
+
+                        <div id="kbResults" class="mt-4 space-y-3 hidden">
+                            <div class="bg-slate-700 p-3 rounded-lg">
+                                <p class="text-sm text-white font-semibold mb-1">📖 Resultado 1: Tabela de Preços.pdf</p>
+                                <p class="text-xs text-gray-400">Confiança: 94% | Página 3</p>
+                                <p class="text-sm text-gray-300 mt-2">"Os planos disponíveis incluem Básico (R$500/mês), Premium (R$1500/mês) e Enterprise com customização..."</p>
+                            </div>
+                            <div class="bg-slate-700 p-3 rounded-lg">
+                                <p class="text-sm text-white font-semibold mb-1">📖 Resultado 2: Catálogo 2026.pdf</p>
+                                <p class="text-xs text-gray-400">Confiança: 87% | Página 1</p>
+                                <p class="text-sm text-gray-300 mt-2">"Para empresas em crescimento, recomendamos o plano Premium que inclui suporte prioritário..."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documentos Indexados -->
+                <div class="mt-6 bg-slate-800 border border-slate-700 rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">📑 Documentos Indexados (1,247)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-slate-700 p-4 rounded-lg">
+                            <p class="text-2xl mb-2">📄</p>
+                            <p class="text-sm text-gray-300">Tabela de Preços.pdf</p>
+                            <p class="text-xs text-gray-500 mt-1">485 KB | Indexado há 2h</p>
+                        </div>
+                        <div class="bg-slate-700 p-4 rounded-lg">
+                            <p class="text-2xl mb-2">📄</p>
+                            <p class="text-sm text-gray-300">Catálogo 2026.pdf</p>
+                            <p class="text-xs text-gray-500 mt-1">2.3 MB | Indexado há 1d</p>
+                        </div>
+                        <div class="bg-slate-700 p-4 rounded-lg">
+                            <p class="text-2xl mb-2">📄</p>
+                            <p class="text-sm text-gray-300">FAQ.docx</p>
+                            <p class="text-xs text-gray-500 mt-1">145 KB | Indexado há 3d</p>
+                        </div>
+                        <div class="bg-slate-700 p-4 rounded-lg">
+                            <p class="text-2xl mb-2">📄</p>
+                            <p class="text-sm text-gray-300">Termos de Serviço.pdf</p>
+                            <p class="text-xs text-gray-500 mt-1">215 KB | Indexado há 5d</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 7: CONFIG -->
+        <div id="screen-config" class="screen-hidden w-full h-full flex flex-col">
+            <header class="bg-gradient-to-r from-slate-800 to-slate-750 border-b border-slate-700 px-6 py-4">
+                <h1 class="text-2xl font-bold text-white">⚙️ Configurações</h1>
+                <p class="text-sm text-gray-400">Gerenciamento do sistema Vexus</p>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-2xl">
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-4">
+                        <h3 class="text-lg font-bold text-white mb-4">🔐 Segurança</h3>
+                        <label class="flex items-center gap-3 mb-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4">
+                            <span class="text-sm text-gray-300">Autenticação de dois fatores</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4">
+                            <span class="text-sm text-gray-300">Criptografia de dados</span>
+                        </label>
+                    </div>
+
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-4">
+                        <h3 class="text-lg font-bold text-white mb-4">🤖 Agentes IA</h3>
+                        <label class="block mb-3">
+                            <span class="text-sm text-gray-300 mb-2 block">Modelo de IA Padrão</span>
+                            <select class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600">
+                                <option>GPT-4 (Recomendado)</option>
+                                <option>GPT-3.5</option>
+                                <option>Claude 3</option>
+                            </select>
+                        </label>
+                        <label class="block">
+                            <span class="text-sm text-gray-300 mb-2 block">Temperatura IA (0-1)</span>
+                            <input type="range" min="0" max="1" step="0.1" value="0.7" class="w-full">
+                        </label>
+                    </div>
+
+                    <div class="bg-slate-800 border border-slate-700 rounded-lg p-6">
+                        <h3 class="text-lg font-bold text-white mb-4">📊 Sistema</h3>
+                        <button class="config-btn w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold mb-2">💾 Fazer Backup</button>
+                        <button class="config-btn w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-semibold">🔄 Limpar Cache</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</div>
+
+<!-- Notifications -->
+<div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+<!-- Modal Configuração de Agentes -->
+<div id="agentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-lg p-8 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 id="modalTitle" class="text-2xl font-bold text-white">⚙️ Configurar Agente</h2>
+            <button id="closeModal" class="text-gray-400 hover:text-gray-200 text-2xl">✕</button>
+        </div>
+        
+        <div id="modalContent" class="space-y-4">
+            <!-- Conteúdo será preenchido dinamicamente -->
+        </div>
+        
+        <button id="saveConfigBtn" class="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold">💾 Salvar Configuração</button>
+    </div>
+</div>
+
+<!-- Modal para ações do Pipeline -->
+<div id="pipelineModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-lg p-8 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h2 id="pipelineModalTitle" class="text-2xl font-bold text-white">📊 Lead</h2>
+            <button id="closePipelineModal" class="text-gray-400 hover:text-gray-200 text-2xl">✕</button>
+        </div>
+        
+        <div id="pipelineModalContent" class="space-y-3 mb-6">
+            <!-- Conteúdo será preenchido dinamicamente -->
+        </div>
+        
+        <div class="space-y-2">
+            <button class="pipeline-action w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold text-sm">📄 Ver Detalhes</button>
+            <button class="pipeline-action w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold text-sm">⬆️ Mover Etapa</button>
+            <button class="pipeline-action w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold text-sm">📞 Ligar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function notify(message) {
+        const container = document.getElementById('notificationContainer');
+        const notif = document.createElement('div');
+        notif.className = 'notification bg-purple-600 text-white px-6 py-3 rounded-lg shadow-lg';
+        notif.textContent = message;
+        container.appendChild(notif);
+        console.log('🔔', message);
+        setTimeout(() => notif.remove(), 3000);
+    }
+
+    function openAgentConfig(agentName, agentIdx) {
+        const modal = document.getElementById('agentModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        
+        modalTitle.textContent = `⚙️ Configurar ${agentName}`;
+        
+        const configs = [
+            { label: 'Modelo IA', value: 'GPT-4', options: ['GPT-4', 'GPT-3.5', 'Claude 3'] },
+            { label: 'Temperatura', value: '0.7', type: 'range', min: '0', max: '1', step: '0.1' },
+            { label: 'Max Tokens', value: '2048', type: 'number' },
+            { label: 'Auto-resposta', value: 'true', type: 'checkbox' }
+        ];
+        
+        modalContent.innerHTML = configs.map((config, i) => {
+            if (config.type === 'range') {
+                return `
+                    <div>
+                        <label class="text-sm text-gray-300 block mb-2">${config.label}</label>
+                        <input type="range" min="${config.min}" max="${config.max}" step="${config.step}" value="${config.value}" class="w-full">
+                        <p class="text-xs text-gray-500 mt-1">Valor: ${config.value}</p>
+                    </div>
+                `;
+            } else if (config.type === 'checkbox') {
+                return `
+                    <div>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" ${config.value === 'true' ? 'checked' : ''} class="w-4 h-4">
+                            <span class="text-sm text-gray-300">${config.label}</span>
+                        </label>
+                    </div>
+                `;
+            } else if (config.options) {
+                return `
+                    <div>
+                        <label class="text-sm text-gray-300 block mb-2">${config.label}</label>
+                        <select class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600">
+                            ${config.options.map(opt => `<option ${opt === config.value ? 'selected' : ''}>${opt}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div>
+                        <label class="text-sm text-gray-300 block mb-2">${config.label}</label>
+                        <input type="text" value="${config.value}" class="w-full bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-600">
+                    </div>
+                `;
+            }
+        }).join('');
+        
+        modal.classList.remove('hidden');
+        notify(`⚙️ Configurando ${agentName}...`);
+    }
+
+    function openPipelineModal(name, score, stage) {
+        const modal = document.getElementById('pipelineModal');
+        const title = document.getElementById('pipelineModalTitle');
+        const content = document.getElementById('pipelineModalContent');
+        
+        title.textContent = `📊 ${name}`;
+        content.innerHTML = `
+            <div class="bg-slate-700 p-3 rounded-lg">
+                <p class="text-sm text-gray-300"><strong>Nome:</strong> ${name}</p>
+                <p class="text-sm text-gray-300 mt-2"><strong>Score:</strong> ${score}</p>
+                <p class="text-sm text-gray-300 mt-2"><strong>Etapa:</strong> ${stage}</p>
+                <p class="text-sm text-gray-300 mt-2"><strong>Atualizado:</strong> Há 2 horas</p>
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+        notify(`📊 Abrindo detalhes de ${name}...`);
+    }
+
+    function switchScreen(screenName) {
+        console.log('🔄 Mudando para:', screenName);
+        
+        // Hide all screens
+        document.querySelectorAll('[id^="screen-"]').forEach(screen => {
+            screen.classList.add('screen-hidden');
+            screen.classList.remove('screen-visible');
+        });
+
+        // Show selected screen
+        const screen = document.getElementById(`screen-${screenName}`);
+        if (screen) {
+            screen.classList.remove('screen-hidden');
+            screen.classList.add('screen-visible');
+        }
+
+        // Update nav button colors
+        document.querySelectorAll('.screen-nav').forEach(btn => {
+            btn.classList.remove('bg-purple-600');
+            btn.classList.add('text-gray-400', 'hover:bg-slate-700');
+        });
+        document.querySelector(`[data-screen="${screenName}"]`).classList.add('bg-purple-600');
+        document.querySelector(`[data-screen="${screenName}"]`).classList.remove('text-gray-400', 'hover:bg-slate-700');
+
+        notify(`📺 ${screenName.toUpperCase()}`);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Screen Navigation
+        document.querySelectorAll('.screen-nav').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const screen = this.dataset.screen;
+                switchScreen(screen);
+            });
+        });
+
+        // Chat Selection
+        document.querySelectorAll('.chat-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const chatKey = this.dataset.chat;
+                notify(`✅ Chat selecionado`);
+                
+                document.querySelectorAll('.chat-item').forEach(i => {
+                    i.classList.remove('border-l-purple-500', 'bg-slate-700');
+                    i.classList.add('border-l-transparent');
+                });
+                this.classList.add('border-l-purple-500', 'bg-slate-700');
+                this.classList.remove('border-l-transparent');
+            });
+        });
+
+        // Filter Buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                notify(`🔽 Filtro aplicado`);
+            });
+        });
+
+        // Send Message
+        document.querySelector('.inbox-send').addEventListener('click', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('messageInput');
+            if (input.value.trim()) {
+                notify(`✅ Mensagem enviada`);
+                input.value = '';
+            }
+        });
+
+        // Pipeline Cards
+        document.querySelectorAll('.pipeline-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                e.preventDefault();
+                const name = this.querySelector('p').textContent;
+                const score = this.querySelector('p:last-child').textContent;
+                const parent = this.closest('[class*="bg-slate-800"]');
+                const stage = parent.querySelector('h3').textContent;
+                openPipelineModal(name, score, stage);
+            });
+        });
+
+        // Agents
+        document.querySelectorAll('.agent-btn').forEach((btn, idx) => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const agentNames = ['Agente Vendas', 'Agente Knowledge', 'Agente Conteúdo', 'Agente Email'];
+                const agentName = agentNames[idx] || 'Agente';
+                openAgentConfig(agentName, idx);
+            });
+        });
+
+        // KB Upload
+        document.querySelector('.kb-upload').addEventListener('click', function(e) {
+            e.preventDefault();
+            notify(`📤 Selecionando arquivo...`);
+        });
+
+        // KB Query
+        document.querySelector('.kb-query').addEventListener('click', function(e) {
+            e.preventDefault();
+            const query = document.getElementById('kbQueryInput').value;
+            if (query.trim()) {
+                document.getElementById('kbResults').classList.remove('hidden');
+                notify(`✅ Consultando base de conhecimento...`);
+            }
+        });
+
+        // Config Buttons
+        document.querySelectorAll('.config-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                notify(`⚙️ Executando ação...`);
+            });
+        });
+
+        notify('🎉 Vexus CRM v2.0');
+
+        // Modal Handlers
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('agentModal').classList.add('hidden');
+        });
+
+        document.getElementById('closePipelineModal').addEventListener('click', function() {
+            document.getElementById('pipelineModal').classList.add('hidden');
+        });
+
+        document.getElementById('saveConfigBtn').addEventListener('click', function() {
+            notify('✅ Configuração salva com sucesso!');
+            document.getElementById('agentModal').classList.add('hidden');
+        });
+
+        document.querySelectorAll('.pipeline-action').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const action = this.textContent.trim();
+                notify(`✅ ${action}`);
+            });
+        });
+
+        // Close modals when clicking outside
+        document.getElementById('agentModal').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.add('hidden');
+        });
+
+        document.getElementById('pipelineModal').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.add('hidden');
+        });
+    });
+</script>
+
+</body>
+</html>

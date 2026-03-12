@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contatos - Vexus CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; overflow-x: hidden; }
+        .contact-card { transition: all 0.3s ease; }
+        .contact-card:hover { transform: translateY(-4px); }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 16px; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-visible { display: flex !important; }
+        .modal-hidden { display: none !important; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-950 text-gray-100">
+    <!-- CONTAINER PRINCIPAL -->
+    <div class="flex h-screen">
+        <!-- SIDEBAR VAZIO -->
+        <div class="w-16 bg-slate-950 border-r border-slate-700"></div>
+        
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- HEADER VAZIO -->
+            <div class="h-16 bg-slate-800 border-b border-slate-700"></div>
+            
+            <!-- CONTEÚDO PRINCIPAL -->
+            <main class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- HEADER DA PÁGINA -->
+                <div class="flex justify-between items-start gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">📇 Contatos</h1>
+                        <p class="text-gray-400">Gerencie e organize todos os seus contatos</p>
+                    </div>
+                    <button onclick="openContactModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition shadow-lg">
+                        ➕ Novo Contato
+                    </button>
+                </div>
+
+                <!-- CARDS DE ESTATÍSTICAS -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                        <p class="text-gray-400 text-sm">Total de Contatos</p>
+                        <p class="text-3xl font-bold text-white mt-2" id="total-contacts">6</p>
+                    </div>
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                        <p class="text-gray-400 text-sm">Contatos Ativos</p>
+                        <p class="text-3xl font-bold text-green-400 mt-2" id="active-contacts">5</p>
+                    </div>
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                        <p class="text-gray-400 text-sm">Novos (7 dias)</p>
+                        <p class="text-3xl font-bold text-blue-400 mt-2" id="new-contacts">3</p>
+                    </div>
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                        <p class="text-gray-400 text-sm">Com Email</p>
+                        <p class="text-3xl font-bold text-purple-400 mt-2" id="email-contacts">6</p>
+                    </div>
+                </div>
+
+                <!-- FILTROS E BUSCA -->
+                <div class="bg-slate-800 rounded-lg p-4 border border-slate-700 space-y-4">
+                    <div class="flex gap-4 flex-wrap">
+                        <div class="flex-1 min-w-64">
+                            <input 
+                                type="text" 
+                                id="searchInput" 
+                                placeholder="🔍 Buscar por nome, email ou empresa..." 
+                                class="w-full bg-slate-700 text-white placeholder-gray-400 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:outline-none"
+                                onkeyup="filterContacts()"
+                            >
+                        </div>
+                        <select id="filterStatus" class="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none" onchange="filterContacts()">
+                            <option value="">Todos os Status</option>
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Inativo</option>
+                            <option value="prospect">Prospect</option>
+                        </select>
+                        <button onclick="exportContacts()" class="bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 hover:bg-slate-600 transition">
+                            📥 Exportar
+                        </button>
+                    </div>
+
+                    <!-- VISUALIZAÇÃO DE RESULTADOS -->
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm text-gray-400">
+                            Mostrando <span id="results-count">6</span> contatos
+                        </p>
+                        <div class="flex gap-2">
+                            <button onclick="toggleView('grid')" class="px-3 py-2 bg-blue-600 text-white rounded" title="Visualização em grade">
+                                ◼️ Grade
+                            </button>
+                            <button onclick="toggleView('list')" class="px-3 py-2 bg-slate-700 text-white rounded" title="Visualização em lista">
+                                ☰ Lista
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRID DE CONTATOS -->
+                <div id="contactsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+                <!-- LISTA DE CONTATOS -->
+                <div id="contactsList" class="hidden space-y-2"></div>
+
+                <!-- PAGINAÇÃO -->
+                <div class="flex justify-center gap-2" id="pagination"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOVO CONTATO -->
+    <div id="contactModal" class="modal-hidden fixed inset-0 bg-black bg-opacity-70 items-center justify-center z-50 p-4">
+        <div class="bg-slate-800 rounded-lg w-full max-w-2xl border border-slate-700 overflow-hidden">
+            <!-- HEADER DO MODAL -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white">✏️ Novo Contato</h3>
+                <button type="button" onclick="closeContactModal()" class="text-gray-300 hover:text-white text-2xl bg-transparent border-0">✕</button>
+            </div>
+
+            <!-- BODY DO MODAL -->
+            <form id="contactForm" class="space-y-6 p-6 max-h-96 overflow-y-auto">
+                <!-- INFORMAÇÕES BÁSICAS -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">👤 Informações Básicas</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Nome Completo *</label>
+                            <input 
+                                type="text" 
+                                id="name" 
+                                required 
+                                placeholder="Ex: João Silva"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">E-mail</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                placeholder="email@example.com"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Telefone</label>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                placeholder="(11) 99999-9999"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EMPRESA -->
+                <div class="border-t border-slate-700 pt-6">
+                    <h4 class="text-lg font-semibold text-white mb-4">🏢 Empresa</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Empresa</label>
+                            <input 
+                                type="text" 
+                                id="company" 
+                                placeholder="Nome da empresa"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Cargo</label>
+                            <input 
+                                type="text" 
+                                id="position" 
+                                placeholder="Ex: Gerente"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADICIONAIS -->
+                <div class="border-t border-slate-700 pt-6">
+                    <h4 class="text-lg font-semibold text-white mb-4">📋 Informações Adicionais</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Fonte</label>
+                            <select 
+                                id="source" 
+                                class="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
+                            >
+                                <option value="">Selecione...</option>
+                                <option value="web">Website</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="email">Email</option>
+                                <option value="referral">Referência</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                            <select 
+                                id="status" 
+                                class="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
+                            >
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                                <option value="prospect">Prospect</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="flex justify-end gap-3 pt-6 border-t border-slate-700">
+                    <button 
+                        type="button"
+                        onclick="closeContactModal()" 
+                        class="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition font-medium"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition font-medium"
+                    >
+                        ✓ Salvar Contato
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // DADOS MOCKADOS
+        const mockContacts = [
+            {
+                id: 1,
+                name: "João Silva",
+                email: "joao@empresa1.com",
+                phone: "(11) 98765-4321",
+                company: "Tech Solutions",
+                position: "Gerente de Vendas",
+                status: "ativo",
+                source: "linkedin",
+                avatar: "JS",
+                color: "bg-blue-600"
+            },
+            {
+                id: 2,
+                name: "Maria Santos",
+                email: "maria@empresa2.com",
+                phone: "(21) 97654-3210",
+                company: "Digital Marketing",
+                position: "Diretora",
+                status: "ativo",
+                source: "web",
+                avatar: "MS",
+                color: "bg-purple-600"
+            },
+            {
+                id: 3,
+                name: "Carlos Mendes",
+                email: "carlos@empresa3.com",
+                phone: "(85) 96543-2109",
+                company: "StartUp XYZ",
+                position: "CEO",
+                status: "prospect",
+                source: "referral",
+                avatar: "CM",
+                color: "bg-green-600"
+            },
+            {
+                id: 4,
+                name: "Ana Costa",
+                email: "ana@empresa4.com",
+                phone: "(31) 95432-1098",
+                company: "Consultoria Geral",
+                position: "Consultora",
+                status: "ativo",
+                source: "email",
+                avatar: "AC",
+                color: "bg-pink-600"
+            },
+            {
+                id: 5,
+                name: "Pedro Oliveira",
+                email: "pedro@empresa5.com",
+                phone: "(47) 94321-0987",
+                company: "Desenvolvimento",
+                position: "Tech Lead",
+                status: "inativo",
+                source: "linkedin",
+                avatar: "PO",
+                color: "bg-orange-600"
+            },
+            {
+                id: 6,
+                name: "Lucia Ferreira",
+                email: "lucia@empresa6.com",
+                phone: "(71) 93210-9876",
+                company: "Inovação Labs",
+                position: "Gerente",
+                status: "ativo",
+                source: "web",
+                avatar: "LF",
+                color: "bg-red-600"
+            }
+        ];
+
+        let contacts = [...mockContacts];
+        let currentView = 'grid';
+        let currentPage = 1;
+        const itemsPerPage = 12;
+
+        // MODAL
+        function openContactModal() {
+            document.getElementById('contactModal').classList.remove('modal-hidden');
+            document.getElementById('contactModal').classList.add('modal-visible');
+            document.getElementById('contactForm').reset();
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.remove('modal-visible');
+            document.getElementById('contactModal').classList.add('modal-hidden');
+            document.getElementById('contactForm').reset();
+        }
+
+        // RENDERIZAR GRID
+        function renderContactsGrid(data) {
+            const grid = document.getElementById('contactsGrid');
+            grid.innerHTML = data.map(c => `
+                <div class="contact-card bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500">
+                    <div class="bg-gradient-to-r from-slate-700 to-slate-800 p-4 flex justify-between items-start">
+                        <div class="flex items-center gap-3">
+                            <div class="${c.color} avatar">${c.avatar}</div>
+                            <div>
+                                <h4 class="font-semibold text-white">${c.name}</h4>
+                                <p class="text-sm text-gray-400">${c.position || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div class="badge ${c.status === 'ativo' ? 'bg-green-900 text-green-200' : c.status === 'prospect' ? 'bg-blue-900 text-blue-200' : 'bg-gray-700 text-gray-200'}">
+                            ${c.status}
+                        </div>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">EMPRESA</p>
+                            <p class="text-sm font-medium text-white">${c.company}</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-400">
+                            <span>📧</span>
+                            <a href="mailto:${c.email}" class="text-blue-400 hover:underline">${c.email}</a>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-400">
+                            <span>☎️</span>
+                            <span>${c.phone}</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 p-3 flex gap-2 border-t border-slate-700">
+                        <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">✎ Editar</button>
+                        <button class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // RENDERIZAR LISTA
+        function renderContactsList(data) {
+            const list = document.getElementById('contactsList');
+            list.innerHTML = data.map(c => `
+                <div class="bg-slate-800 rounded-lg border border-slate-700 p-4 flex justify-between items-center">
+                    <div class="flex items-center gap-4 flex-1">
+                        <div class="${c.color} avatar">${c.avatar}</div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-white">${c.name}</h4>
+                            <div class="flex gap-4 text-sm text-gray-400">
+                                <span>${c.email}</span>
+                                <span>${c.phone}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">✎</button>
+                </div>
+            `).join('');
+        }
+
+        // FILTRAR
+        function filterContacts() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+
+            contacts = mockContacts.filter(c => {
+                const match = c.name.toLowerCase().includes(search) || c.email.toLowerCase().includes(search) || c.company.toLowerCase().includes(search);
+                const statusMatch = !status || c.status === status;
+                return match && statusMatch;
+            });
+
+            document.getElementById('results-count').textContent = contacts.length;
+            currentPage = 1;
+            renderPage();
+        }
+
+        // TROCAR VIEW
+        function toggleView(view) {
+            currentView = view;
+            document.getElementById('contactsGrid').classList.toggle('hidden', view !== 'grid');
+            document.getElementById('contactsList').classList.toggle('hidden', view !== 'list');
+            renderPage();
+        }
+
+        // RENDERIZAR PÁGINA
+        function renderPage() {
+            const start = (currentPage - 1) * itemsPerPage;
+            const data = contacts.slice(start, start + itemsPerPage);
+            
+            if (currentView === 'grid') {
+                renderContactsGrid(data);
+            } else {
+                renderContactsList(data);
+            }
+        }
+
+        // EXPORTAR
+        function exportContacts() {
+            let csv = 'Nome,Email,Telefone,Empresa,Cargo,Status\n';
+            contacts.forEach(c => {
+                csv += `"${c.name}","${c.email}","${c.phone}","${c.company}","${c.position}","${c.status}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `contatos-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        // SALVAR CONTATO
+        document.getElementById('contactForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newContact = {
+                id: mockContacts.length + 1,
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                company: document.getElementById('company').value,
+                position: document.getElementById('position').value,
+                status: document.getElementById('status').value,
+                source: document.getElementById('source').value,
+                avatar: document.getElementById('name').value.split(' ').map(n => n[0]).join('').substring(0, 2),
+                color: ['bg-blue-600', 'bg-purple-600', 'bg-green-600', 'bg-pink-600', 'bg-orange-600', 'bg-red-600'][Math.floor(Math.random() * 6)]
+            };
+            
+            mockContacts.push(newContact);
+            closeContactModal();
+            filterContacts();
+            alert('✓ Contato adicionado com sucesso!');
+        });
+
+        // INICIALIZAR
+        window.addEventListener('DOMContentLoaded', () => {
+            renderPage();
+        });
+    </script>
+</body>
+</html>
+            
+            <main class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- HEADER DA PÁGINA -->
+                <div class="flex justify-between items-start gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">Contatos</h1>
+                        <p class="text-gray-400">Gerencie e organize todos os seus contatos</p>
+                    </div>
+                    <button onclick="openContactModal()" class="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition shadow-lg">
+                        ➕ Novo Contato
+                    </button>
+                </div>
+
+                <!-- CARDS DE ESTATÍSTICAS -->
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                        <p class="text-gray-400 text-sm">Total de Contatos</p>
+                        <p class="text-3xl font-bold text-white mt-2" id="total-contacts">--</p>
+                    </div>
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                        <p class="text-gray-400 text-sm">Contatos Ativos</p>
+                        <p class="text-3xl font-bold text-green-400 mt-2" id="active-contacts">--</p>
+                    </div>
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                        <p class="text-gray-400 text-sm">Novos (7 dias)</p>
+                        <p class="text-3xl font-bold text-blue-400 mt-2" id="new-contacts">--</p>
+                    </div>
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                        <p class="text-gray-400 text-sm">Com Email</p>
+                        <p class="text-3xl font-bold text-purple-400 mt-2" id="email-contacts">--</p>
+                    </div>
+                </div>
+
+                <!-- FILTROS E BUSCA -->
+                <div class="bg-slate-800 rounded-lg p-4 border border-slate-700 space-y-4">
+                    <div class="flex gap-4 flex-wrap">
+                        <div class="flex-1 min-w-64">
+                            <input 
+                                type="text" 
+                                id="searchInput" 
+                                placeholder="🔍 Buscar por nome, email ou empresa..." 
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                                onkeyup="filterContacts()"
+                            >
+                        </div>
+                        <select id="filterStatus" class="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500" onchange="filterContacts()">
+                            <option value="">Todos os Status</option>
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Inativo</option>
+                            <option value="prospect">Prospect</option>
+                        </select>
+                        <select id="filterSource" class="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500" onchange="filterContacts()">
+                            <option value="">Todas as Fontes</option>
+                            <option value="web">Website</option>
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="email">Email</option>
+                            <option value="referral">Referência</option>
+                        </select>
+                        <button onclick="exportContacts()" class="bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 hover:bg-slate-600 transition" title="Exportar CSV">
+                            📥 Exportar
+                        </button>
+                    </div>
+
+                    <!-- VISUALIZAÇÃO DE RESULTADOS -->
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm text-gray-400">
+                            Mostrando <span id="results-count">0</span> de <span id="total-count">0</span> contatos
+                        </p>
+                        <div class="flex gap-2">
+                            <button onclick="toggleView('grid')" class="px-3 py-2 bg-blue-600 text-white rounded" title="Visualização em grade">
+                                ◼️ Grade
+                            </button>
+                            <button onclick="toggleView('list')" class="px-3 py-2 bg-slate-700 text-white rounded" title="Visualização em lista">
+                                ☰ Lista
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRID DE CONTATOS (VIEW PADRÃO) -->
+                <div id="contactsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Contatos serão carregados aqui -->
+                </div>
+
+                <!-- LISTA DE CONTATOS (ALTERNATIVA) -->
+                <div id="contactsList" class="hidden space-y-2">
+                    <!-- Contatos em lista serão carregados aqui -->
+                </div>
+
+                <!-- PAGINAÇÃO -->
+                <div class="flex justify-center gap-2" id="pagination"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOVO CONTATO -->
+    <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4 fade-in">
+        <div class="bg-slate-800 rounded-lg w-full max-w-2xl border border-slate-700 overflow-hidden">
+            <!-- HEADER DO MODAL -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white">Novo Contato</h3>
+                <button onclick="closeContactModal()" class="text-gray-300 hover:text-white text-2xl">✕</button>
+            </div>
+
+            <!-- BODY DO MODAL -->
+            <form id="contactForm" class="space-y-6 p-6 max-h-96 overflow-y-auto">
+                <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <span>👤</span> Informações Básicas
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Nome Completo *</label>
+                            <input 
+                                type="text" 
+                                id="name" 
+                                required 
+                                placeholder="Ex: João Silva"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">E-mail</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                placeholder="email@example.com"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Telefone</label>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                placeholder="(11) 99999-9999"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 2: EMPRESA E CARGO -->
+                <div class="border-t border-slate-700 pt-6">
+                    <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <span>🏢</span> Empresa
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Empresa</label>
+                            <input 
+                                type="text" 
+                                id="company" 
+                                placeholder="Nome da empresa"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Cargo</label>
+                            <input 
+                                type="text" 
+                                id="position" 
+                                placeholder="Ex: Gerente"
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEÇÃO 3: INFORMAÇÕES ADICIONAIS -->
+                <div class="border-t border-slate-700 pt-6">
+                    <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <span>📋</span> Informações Adicionais
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Fonte</label>
+                            <select 
+                                id="source" 
+                                class="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                            >
+                                <option value="">Selecione...</option>
+                                <option value="web">Website</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="email">Email</option>
+                                <option value="referral">Referência</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                            <select 
+                                id="status" 
+                                class="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                            >
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                                <option value="prospect">Prospect</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Notas</label>
+                            <textarea 
+                                id="notes" 
+                                rows="3"
+                                placeholder="Adicione notas sobre este contato..."
+                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition resize-none"
+                            ></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER DO MODAL -->
+                <div class="flex justify-end gap-3 pt-6 border-t border-slate-700">
+                    <button 
+                        type="button" 
+                        onclick="closeContactModal()" 
+                        class="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition font-medium"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition font-medium"
+                    >
+                        ✓ Salvar Contato
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        // DADOS MOCKADOS DE CONTATOS
+        const mockContacts = [
+            {
+                id: 1,
+                name: "João Silva",
+                email: "joao@empresa1.com",
+                phone: "(11) 98765-4321",
+                company: "Tech Solutions",
+                position: "Gerente de Vendas",
+                status: "ativo",
+                source: "linkedin",
+                notes: "Cliente potencial com alto interesse",
+                avatar: "JS",
+                color: "bg-blue-600"
+            },
+            {
+                id: 2,
+                name: "Maria Santos",
+                email: "maria@empresa2.com",
+                phone: "(21) 97654-3210",
+                company: "Digital Marketing",
+                position: "Diretora",
+                status: "ativo",
+                source: "web",
+                notes: "Reunião agendada para próxima semana",
+                avatar: "MS",
+                color: "bg-purple-600"
+            },
+            {
+                id: 3,
+                name: "Carlos Mendes",
+                email: "carlos@empresa3.com",
+                phone: "(85) 96543-2109",
+                company: "StartUp XYZ",
+                position: "CEO",
+                status: "prospect",
+                source: "referral",
+                notes: "Indicação do João Silva",
+                avatar: "CM",
+                color: "bg-green-600"
+            },
+            {
+                id: 4,
+                name: "Ana Costa",
+                email: "ana@empresa4.com",
+                phone: "(31) 95432-1098",
+                company: "Consultoria Geral",
+                position: "Consultora",
+                status: "ativo",
+                source: "email",
+                notes: "Preocupada com implementação",
+                avatar: "AC",
+                color: "bg-pink-600"
+            },
+            {
+                id: 5,
+                name: "Pedro Oliveira",
+                email: "pedro@empresa5.com",
+                phone: "(47) 94321-0987",
+                company: "Desenvolvimento",
+                position: "Tech Lead",
+                status: "inativo",
+                source: "linkedin",
+                notes: "Sem atividade recente",
+                avatar: "PO",
+                color: "bg-orange-600"
+            },
+            {
+                id: 6,
+                name: "Lucia Ferreira",
+                email: "lucia@empresa6.com",
+                phone: "(71) 93210-9876",
+                company: "Inovação Labs",
+                position: "Gerente",
+                status: "ativo",
+                source: "web",
+                notes: "Interessada em parceria",
+                avatar: "LF",
+                color: "bg-red-600"
+            }
+        ];
+
+        let contacts = [...mockContacts];
+        let currentView = 'grid';
+        let currentPage = 1;
+        const itemsPerPage = 12;
+
+        // CARREGAR SIDEBAR E HEADER
+        fetch('/components/sidebar.html').then(r => r.text()).then(html => {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.innerHTML = html;
+        }).catch(err => console.log('Sidebar não encontrada'));
+
+        fetch('/components/header.html').then(r => r.text()).then(html => {
+            const header = document.getElementById('header');
+            if (header) header.innerHTML = html;
+        }).catch(err => console.log('Header não encontrado'));
+
+        checkAuth();
+
+        // ATUALIZAR ESTATÍSTICAS
+        function updateStats() {
+            document.getElementById('total-contacts').textContent = mockContacts.length;
+            document.getElementById('active-contacts').textContent = mockContacts.filter(c => c.status === 'ativo').length;
+            document.getElementById('new-contacts').textContent = mockContacts.filter(c => c.status === 'ativo').length;
+            document.getElementById('email-contacts').textContent = mockContacts.filter(c => c.email).length;
+        }
+
+        // MODAL FUNCTIONS
+        function openContactModal() {
+            document.getElementById('contactModal').classList.remove('hidden');
+            document.getElementById('contactModal').classList.add('flex');
+            document.getElementById('contactForm').reset();
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.add('hidden');
+            document.getElementById('contactModal').classList.remove('flex');
+        }
+
+        // RENDERIZAR GRID DE CONTATOS
+        function renderContactsGrid(data) {
+            const grid = document.getElementById('contactsGrid');
+            grid.innerHTML = data.map(contact => `
+                <div class="contact-card bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500">
+                    <!-- HEADER DO CARD -->
+                    <div class="bg-gradient-to-r from-slate-700 to-slate-800 p-4 flex justify-between items-start">
+                        <div class="flex items-center gap-3">
+                            <div class="${contact.color} avatar font-bold text-lg">${contact.avatar}</div>
+                            <div>
+                                <h4 class="font-semibold text-white">${contact.name}</h4>
+                                <p class="text-sm text-gray-400">${contact.position || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div class="badge ${contact.status === 'ativo' ? 'bg-green-900 text-green-200' : contact.status === 'prospect' ? 'bg-blue-900 text-blue-200' : 'bg-gray-700 text-gray-200'}">
+                            ${contact.status}
+                        </div>
+                    </div>
+
+                    <!-- CONTEÚDO DO CARD -->
+                    <div class="p-4 space-y-3">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">EMPRESA</p>
+                            <p class="text-sm font-medium text-white">${contact.company}</p>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 text-sm text-gray-400">
+                            <span>📧</span>
+                            <a href="mailto:${contact.email}" class="text-blue-400 hover:underline truncate">${contact.email}</a>
+                        </div>
+
+                        <div class="flex items-center gap-2 text-sm text-gray-400">
+                            <span>☎️</span>
+                            <a href="tel:${contact.phone}" class="text-blue-400 hover:underline">${contact.phone}</a>
+                        </div>
+
+                        ${contact.source ? `
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="bg-slate-700 text-gray-300 px-2 py-1 rounded">📌 ${contact.source}</span>
+                            </div>
+                        ` : ''}
+
+                        ${contact.notes ? `
+                            <div class="bg-slate-700 rounded p-2 text-xs text-gray-300 italic border-l-2 border-blue-500">
+                                "${contact.notes}"
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- AÇÕES DO CARD -->
+                    <div class="bg-slate-900 p-3 flex gap-2 border-t border-slate-700">
+                        <button onclick="alert('Editar: ${contact.name}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition">✎ Editar</button>
+                        <button onclick="alert('Chamar ${contact.name}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition">☎️</button>
+                        <button onclick="alert('Deletar ${contact.name}?')" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // RENDERIZAR LISTA DE CONTATOS
+        function renderContactsList(data) {
+            const list = document.getElementById('contactsList');
+            list.innerHTML = data.map(contact => `
+                <div class="bg-slate-800 rounded-lg border border-slate-700 p-4 flex justify-between items-center hover:border-blue-500 transition">
+                    <div class="flex items-center gap-4 flex-1">
+                        <div class="${contact.color} avatar font-bold text-lg">${contact.avatar}</div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-white">${contact.name}</h4>
+                            <div class="flex gap-4 text-sm text-gray-400 mt-1">
+                                <span>📧 ${contact.email}</span>
+                                <span>☎️ ${contact.phone}</span>
+                                <span>🏢 ${contact.company}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <div class="badge ${contact.status === 'ativo' ? 'bg-green-900 text-green-200' : contact.status === 'prospect' ? 'bg-blue-900 text-blue-200' : 'bg-gray-700 text-gray-200'}">
+                            ${contact.status}
+                        </div>
+                        <button onclick="alert('Editar: ${contact.name}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition">✎</button>
+                        <button onclick="alert('Deletar ${contact.name}?')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // FILTRAR CONTATOS
+        function filterContacts() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+            const source = document.getElementById('filterSource').value;
+
+            contacts = mockContacts.filter(contact => {
+                const matchSearch = contact.name.toLowerCase().includes(search) ||
+                                  contact.email.toLowerCase().includes(search) ||
+                                  contact.company.toLowerCase().includes(search);
+                const matchStatus = !status || contact.status === status;
+                const matchSource = !source || contact.source === source;
+                return matchSearch && matchStatus && matchSource;
+            });
+
+            document.getElementById('results-count').textContent = contacts.length;
+            document.getElementById('total-count').textContent = mockContacts.length;
+            currentPage = 1;
+            renderPage();
+        }
+
+        // TROCAR VISUALIZAÇÃO
+        function toggleView(view) {
+            currentView = view;
+            document.getElementById('contactsGrid').classList.toggle('hidden', view !== 'grid');
+            document.getElementById('contactsList').classList.toggle('hidden', view !== 'list');
+            
+            const buttons = document.querySelectorAll('[onclick*="toggleView"]');
+            buttons.forEach(btn => btn.classList.remove('bg-blue-600'));
+            buttons.forEach(btn => btn.classList.add('bg-slate-700'));
+            event.target.classList.remove('bg-slate-700');
+            event.target.classList.add('bg-blue-600');
+            
+            renderPage();
+        }
+
+        // RENDERIZAR PÁGINA COM PAGINAÇÃO
+        function renderPage() {
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageData = contacts.slice(start, end);
+
+            if (currentView === 'grid') {
+                renderContactsGrid(pageData);
+            } else {
+                renderContactsList(pageData);
+            }
+
+            renderPagination();
+        }
+
+        // RENDERIZAR PAGINAÇÃO
+        function renderPagination() {
+            const totalPages = Math.ceil(contacts.length / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `
+                    <button 
+                        onclick="goToPage(${i})" 
+                        class="px-3 py-2 rounded ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-slate-700 text-gray-300 hover:bg-slate-600'} transition"
+                    >
+                        ${i}
+                    </button>
+                `;
+            }
+            pagination.innerHTML = html || '<p class="text-gray-400">Nenhum contato encontrado</p>';
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderPage();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // EXPORTAR CONTATOS
+        function exportContacts() {
+            let csv = 'Nome,Email,Telefone,Empresa,Cargo,Status,Fonte\n';
+            contacts.forEach(contact => {
+                csv += `"${contact.name}","${contact.email}","${contact.phone}","${contact.company}","${contact.position}","${contact.status}","${contact.source}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `contatos-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        // SALVAR NOVO CONTATO
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const newContact = {
+                id: mockContacts.length + 1,
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                company: document.getElementById('company').value,
+                position: document.getElementById('position').value,
+                status: document.getElementById('status').value,
+                source: document.getElementById('source').value,
+                notes: document.getElementById('notes').value,
+                avatar: document.getElementById('name').value.split(' ').map(n => n[0]).join(''),
+                color: ['bg-blue-600', 'bg-purple-600', 'bg-green-600', 'bg-pink-600', 'bg-orange-600', 'bg-red-600'][Math.floor(Math.random() * 6)]
+            };
+
+            mockContacts.push(newContact);
+            closeContactModal();
+            updateStats();
+            filterContacts();
+            
+            alert('✓ Contato adicionado com sucesso!');
+        });
+
+        // INICIALIZAR PÁGINA
+        window.addEventListener('load', () => {
+            updateStats();
+            renderPage();
+        });
+    </script>
+</body>
+</html>

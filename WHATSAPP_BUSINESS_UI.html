@@ -1,0 +1,320 @@
+<!-- 
+   INTEGRAÇÃO WHATSAPP BUSINESS - Adicionar ao frontend/app.html
+   Coloque este HTML dentro da seção de "Canais de Comunicação" do template settings
+-->
+
+<!-- NOVA SEÇÃO: WhatsApp Business API - DETALHADO -->
+<div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg border border-slate-700 p-6 mb-8">
+    <h3 class="text-xl font-bold mb-2 flex items-center gap-2">💬 WhatsApp Business API</h3>
+    <p class="text-gray-400 text-sm mb-6">Integração completa com a plataforma comercial do WhatsApp</p>
+    
+    <!-- Abas de Configuração -->
+    <div class="flex gap-2 mb-6 border-b border-slate-700">
+        <button class="whatsapp-tab px-4 py-2 border-b-2 border-purple-500 font-semibold" data-tab="config" onclick="switchWhatsAppTab('config')">
+            ⚙️ Configuração
+        </button>
+        <button class="whatsapp-tab px-4 py-2 text-gray-400 hover:text-gray-300" data-tab="messages" onclick="switchWhatsAppTab('messages')">
+            💬 Mensagens
+        </button>
+        <button class="whatsapp-tab px-4 py-2 text-gray-400 hover:text-gray-300" data-tab="docs" onclick="switchWhatsAppTab('docs')">
+            📚 Como Configurar
+        </button>
+    </div>
+    
+    <!-- Tab: Configuração -->
+    <div id="whatsapp-config-tab" class="whatsapp-tab-content">
+        <div class="space-y-6">
+            <!-- Phone Number ID -->
+            <div>
+                <label class="block text-sm font-medium mb-2">📱 Phone Number ID</label>
+                <input type="text" id="wa-phone-number-id" placeholder="Seu Phone Number ID do WhatsApp" 
+                    class="w-full bg-slate-700 text-white placeholder-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 border border-slate-600">
+                <p class="text-xs text-gray-400 mt-1">Encontre em: Meta Business Suite → WhatsApp Settings</p>
+            </div>
+            
+            <!-- Business Account ID -->
+            <div>
+                <label class="block text-sm font-medium mb-2">🏢 Business Account ID</label>
+                <input type="text" id="wa-business-account-id" placeholder="Seu Business Account ID" 
+                    class="w-full bg-slate-700 text-white placeholder-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 border border-slate-600">
+                <p class="text-xs text-gray-400 mt-1">ID da sua conta empresarial do Meta</p>
+            </div>
+            
+            <!-- Access Token -->
+            <div>
+                <label class="block text-sm font-medium mb-2">🔐 Access Token</label>
+                <div class="relative">
+                    <input type="password" id="wa-access-token" placeholder="Seu token de acesso" 
+                        class="w-full bg-slate-700 text-white placeholder-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 border border-slate-600">
+                    <button type="button" onclick="toggleWAPassword()" class="absolute inset-y-0 right-3 text-gray-400">👁️</button>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">Token gerado em: Meta Developers → Apps → Settings → Token</p>
+            </div>
+            
+            <!-- Webhook Verify Token -->
+            <div>
+                <label class="block text-sm font-medium mb-2">🔗 Webhook Verify Token</label>
+                <input type="text" id="wa-webhook-token" placeholder="Seu Webhook Verify Token (qualquer string aleatória)" 
+                    class="w-full bg-slate-700 text-white placeholder-gray-400 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 border border-slate-600">
+                <p class="text-xs text-gray-400 mt-1">Crie um token aleatório (ex: abc123xyz) para segurança</p>
+            </div>
+            
+            <!-- Webhook URL (read-only) -->
+            <div>
+                <label class="block text-sm font-medium mb-2">🌐 Webhook URL (Copie para Meta)</label>
+                <div class="flex gap-2">
+                    <input type="text" id="wa-webhook-url" readonly value="https://seu-dominio.com/api/whatsapp/webhook" 
+                        class="flex-1 bg-slate-700 text-gray-300 rounded-lg px-4 py-2 border border-slate-600">
+                    <button onclick="copyToClipboard('wa-webhook-url')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg border border-slate-600 transition">
+                        📋 Copiar
+                    </button>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">Configure em: Meta Developers → Apps → WhatsApp → Webhooks</p>
+            </div>
+            
+            <!-- Status Indicator -->
+            <div class="bg-slate-700 p-4 rounded-lg flex items-center justify-between">
+                <div>
+                    <p class="font-semibold">Status da Conexão</p>
+                    <p id="wa-status" class="text-sm text-gray-400">Não configurado</p>
+                </div>
+                <span id="wa-status-icon" class="text-3xl">❌</span>
+            </div>
+            
+            <!-- Botões de Ação -->
+            <div class="flex gap-3">
+                <button onclick="saveWhatsAppConfig()" class="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105">
+                    ✅ Salvar Configuração
+                </button>
+                <button onclick="testWhatsAppConnection()" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105">
+                    🧪 Testar Conexão
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab: Mensagens -->
+    <div id="whatsapp-messages-tab" class="whatsapp-tab-content hidden">
+        <div class="space-y-6">
+            <!-- Enviar Mensagem -->
+            <div class="bg-slate-700 p-4 rounded-lg">
+                <label class="block text-sm font-medium mb-2">Enviar Mensagem</label>
+                <div class="space-y-2">
+                    <input type="text" id="wa-recipient" placeholder="Número do destinatário (ex: 5511999999999)" 
+                        class="w-full bg-slate-600 text-white placeholder-gray-400 rounded-lg px-4 py-2 border border-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <textarea id="wa-message-text" placeholder="Sua mensagem..." rows="4" 
+                        class="w-full bg-slate-600 text-white placeholder-gray-400 rounded-lg px-4 py-2 border border-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                    <button onclick="sendWhatsAppMessage()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition">
+                        📤 Enviar Mensagem
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Histórico de Mensagens -->
+            <div class="bg-slate-700 p-4 rounded-lg">
+                <p class="font-semibold mb-3">📬 Últimas Mensagens Recebidas</p>
+                <div id="wa-messages-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    <p class="text-gray-400 text-sm">Nenhuma mensagem recebida ainda...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab: Documentação -->
+    <div id="whatsapp-docs-tab" class="whatsapp-tab-content hidden">
+        <div class="bg-slate-700 p-4 rounded-lg space-y-4 text-sm">
+            <div>
+                <p class="font-bold text-green-300 mb-2">📖 Passo 1: Criar Aplicativo no Meta</p>
+                <ol class="list-decimal list-inside ml-2 space-y-1 text-gray-300">
+                    <li>Acesse <span class="font-mono bg-slate-800 px-2 py-1">developers.facebook.com</span></li>
+                    <li>Crie um novo aplicativo do tipo "Business"</li>
+                    <li>Adicione o produto WhatsApp</li>
+                    <li>Configure sua conta comercial do WhatsApp</li>
+                </ol>
+            </div>
+            
+            <div>
+                <p class="font-bold text-green-300 mb-2">🔑 Passo 2: Gerar Tokens</p>
+                <ol class="list-decimal list-inside ml-2 space-y-1 text-gray-300">
+                    <li>Em Settings → User Token, gere um novo token</li>
+                    <li>Copie o <span class="font-mono bg-slate-800 px-2 py-1">Access Token</span></li>
+                    <li>Vá para WhatsApp → API Setup</li>
+                    <li>Anote seu <span class="font-mono bg-slate-800 px-2 py-1">Phone Number ID</span></li>
+                </ol>
+            </div>
+            
+            <div>
+                <p class="font-bold text-green-300 mb-2">🔗 Passo 3: Configurar Webhook</p>
+                <ol class="list-decimal list-inside ml-2 space-y-1 text-gray-300">
+                    <li>Em WhatsApp → Webhooks, clique em "Edit"</li>
+                    <li>Cole a URL acima em "Callback URL"</li>
+                    <li>Cole seu "Verify Token" abaixo</li>
+                    <li>Subscreva aos eventos: <span class="font-mono bg-slate-800 px-2 py-1">messages,message_template_status_update</span></li>
+                </ol>
+            </div>
+            
+            <div class="bg-slate-600 p-3 rounded border border-green-500 border-opacity-30">
+                <p class="font-bold text-green-300">💡 Teste Rápido</p>
+                <p class="text-gray-300 mt-2">Após configurar, clique em "Testar Conexão" para validar tudo está funcionando corretamente.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS DE CONTROLE WHATSAPP -->
+<script>
+function switchWhatsAppTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.whatsapp-tab-content').forEach(el => el.classList.add('hidden'));
+    
+    // Remove active state from buttons
+    document.querySelectorAll('.whatsapp-tab').forEach(el => {
+        el.classList.remove('border-b-2', 'border-purple-500', 'font-semibold');
+        el.classList.add('text-gray-400', 'hover:text-gray-300');
+    });
+    
+    // Show selected tab
+    document.getElementById(`whatsapp-${tabName}-tab`).classList.remove('hidden');
+    
+    // Add active state to button
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('border-b-2', 'border-purple-500', 'font-semibold');
+    document.querySelector(`[data-tab="${tabName}"]`).classList.remove('text-gray-400', 'hover:text-gray-300');
+}
+
+function toggleWAPassword() {
+    const input = document.getElementById('wa-access-token');
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    document.execCommand('copy');
+    alert('✅ Copiado para o clipboard!');
+}
+
+async function saveWhatsAppConfig() {
+    const config = {
+        phone_number_id: document.getElementById('wa-phone-number-id').value,
+        business_account_id: document.getElementById('wa-business-account-id').value,
+        access_token: document.getElementById('wa-access-token').value,
+        webhook_verify_token: document.getElementById('wa-webhook-token').value
+    };
+    
+    if (!config.phone_number_id || !config.access_token) {
+        alert('❌ Por favor, preencha os campos obrigatórios');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/whatsapp/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+        
+        if (response.ok) {
+            alert('✅ Configuração salva com sucesso!');
+            localStorage.setItem('whatsappConfig', JSON.stringify(config));
+            updateWhatsAppStatus(true);
+        } else {
+            alert('❌ Erro ao salvar configuração');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('❌ Erro: ' + error.message);
+    }
+}
+
+async function testWhatsAppConnection() {
+    const btn = event.target;
+    btn.innerHTML = '⏳ Testando...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/whatsapp/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            alert('✅ Conexão com WhatsApp Business verificada com sucesso!');
+            updateWhatsAppStatus(true);
+        } else {
+            alert('❌ Erro: ' + data.message);
+            updateWhatsAppStatus(false);
+        }
+    } catch (error) {
+        alert('❌ Erro ao testar: ' + error.message);
+        updateWhatsAppStatus(false);
+    } finally {
+        btn.innerHTML = '🧪 Testar Conexão';
+        btn.disabled = false;
+    }
+}
+
+async function sendWhatsAppMessage() {
+    const to = document.getElementById('wa-recipient').value;
+    const message = document.getElementById('wa-message-text').value;
+    
+    if (!to || !message) {
+        alert('❌ Preencha número e mensagem');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/whatsapp/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to, message, message_type: 'text' })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ Mensagem enviada com ID: ' + data.message_id);
+            document.getElementById('wa-message-text').value = '';
+        } else {
+            alert('❌ Erro ao enviar: ' + data.detail);
+        }
+    } catch (error) {
+        alert('❌ Erro: ' + error.message);
+    }
+}
+
+function updateWhatsAppStatus(isConnected) {
+    const statusEl = document.getElementById('wa-status');
+    const iconEl = document.getElementById('wa-status-icon');
+    
+    if (isConnected) {
+        statusEl.textContent = '✅ Conectado ao WhatsApp Business';
+        statusEl.className = 'text-sm text-green-400';
+        iconEl.textContent = '✅';
+    } else {
+        statusEl.textContent = '❌ Não conectado';
+        statusEl.className = 'text-sm text-red-400';
+        iconEl.textContent = '❌';
+    }
+}
+
+// Carregar configuração salva ao iniciar
+async function loadWhatsAppConfig() {
+    try {
+        const response = await fetch('/api/whatsapp/config');
+        if (response.ok) {
+            const config = await response.json();
+            if (config.configured) {
+                document.getElementById('wa-phone-number-id').value = config.phone_number_id || '';
+                updateWhatsAppStatus(true);
+            }
+        }
+    } catch (error) {
+        console.log('WhatsApp não configurado ainda');
+    }
+}
+
+// Carregar ao inicializar página
+document.addEventListener('DOMContentLoaded', loadWhatsAppConfig);
+</script>

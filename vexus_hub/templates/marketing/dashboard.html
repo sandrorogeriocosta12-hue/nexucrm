@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Marketing - Vexus Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .metric-card {
+            background: linear-gradient(135deg, #00D1FF 0%, #0062FF 100%);
+            border-radius: 15px;
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .metric-card.success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        .metric-card.warning {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        }
+        .metric-card.danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .campaign-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #00D1FF;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .campaign-card.active {
+            border-left-color: #4CAF50;
+        }
+        .campaign-card.paused {
+            border-left-color: #FF9800;
+        }
+        .campaign-card.completed {
+            border-left-color: #9C27B0;
+        }
+        .prediction-card {
+            background: linear-gradient(135deg, #00D1FF 0%, #0062FF 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .performance-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .performance-indicator.good { background-color: #4CAF50; }
+        .performance-indicator.warning { background-color: #FF9800; }
+        .performance-indicator.critical { background-color: #f44336; }
+        .refresh-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0"><i class="fas fa-chart-line me-2"></i>Dashboard de Marketing</h1>
+                        <p class="text-muted mb-0">Análise em tempo real das campanhas e performance</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary refresh-btn" onclick="refreshDashboard()">
+                            <i class="fas fa-sync-alt me-2"></i>Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métricas Principais -->
+        <div class="row mb-4" id="metrics-row">
+            <!-- Métricas serão carregadas dinamicamente -->
+        </div>
+
+        <!-- Gráficos de Performance -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-chart-area me-2"></i>Performance das Campanhas</h5>
+                    <canvas id="campaignPerformanceChart" height="300"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-pie-chart me-2"></i>Distribuição por Canal</h5>
+                    <canvas id="channelDistributionChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análises Preditivas -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="prediction-card">
+                    <h5 class="mb-3"><i class="fas fa-brain me-2"></i>Previsão de Churn</h5>
+                    <div id="churn-prediction">
+                        <!-- Previsões serão carregadas dinamicamente -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="prediction-card">
+                    <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i>Previsão de Receita</h5>
+                    <div id="revenue-prediction">
+                        <!-- Previsões serão carregadas dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campanhas Ativas -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="chart-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="fas fa-bullhorn me-2"></i>Campanhas Ativas</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showCreateCampaignModal()">
+                            <i class="fas fa-plus me-1"></i>Nova Campanha
+                        </button>
+                    </div>
+                    <div id="active-campaigns">
+                        <!-- Campanhas serão carregadas dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análise de Conteúdo -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-robot me-2"></i>Conteúdo Gerado por IA</h5>
+                    <canvas id="contentGenerationChart" height="250"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-share-alt me-2"></i>Engajamento nas Redes Sociais</h5>
+                    <canvas id="socialEngagementChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance do Sistema -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-server me-2"></i>Performance do Sistema</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="performance-indicator good"></div>
+                                <strong>CPU</strong><br>
+                                <span id="cpu-usage">0%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="performance-indicator good"></div>
+                                <strong>Memória</strong><br>
+                                <span id="memory-usage">0%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="performance-indicator good"></div>
+                                <strong>Disco</strong><br>
+                                <span id="disk-usage">0%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="performance-indicator good"></div>
+                                <strong>Rede</strong><br>
+                                <span id="network-usage">0 MB/s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recomendações de Otimização -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-lightbulb me-2"></i>Recomendações de Otimização</h5>
+                    <div id="optimization-recommendations">
+                        <!-- Recomendações serão carregadas dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Criar Campanha -->
+    <div class="modal fade" id="createCampaignModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Criar Nova Campanha</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="campaign-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Nome da Campanha</label>
+                                    <input type="text" class="form-control" id="campaign-name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo</label>
+                                    <select class="form-select" id="campaign-type" required>
+                                        <option value="welcome">Boas-vindas</option>
+                                        <option value="follow_up">Acompanhamento</option>
+                                        <option value="promotion">Promoção</option>
+                                        <option value="recall">Recall</option>
+                                        <option value="birthday">Aniversário</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Canal</label>
+                                    <select class="form-select" id="campaign-channel" required>
+                                        <option value="whatsapp">WhatsApp</option>
+                                        <option value="email">Email</option>
+                                        <option value="sms">SMS</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Segmento de Pacientes</label>
+                                    <select class="form-select" id="campaign-segment">
+                                        <option value="all">Todos</option>
+                                        <option value="new">Novos</option>
+                                        <option value="inactive">Inativos</option>
+                                        <option value="high_value">Alto Valor</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mensagem</label>
+                            <textarea class="form-control" id="campaign-message" rows="4" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Data de Início</label>
+                                    <input type="datetime-local" class="form-control" id="campaign-start" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Data de Fim</label>
+                                    <input type="datetime-local" class="form-control" id="campaign-end">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="createCampaign()">Criar Campanha</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let campaignPerformanceChart;
+        let channelDistributionChart;
+        let contentGenerationChart;
+        let socialEngagementChart;
+
+        // Inicializar dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadDashboardData();
+            setInterval(loadDashboardData, 30000); // Atualizar a cada 30 segundos
+        });
+
+        function initializeCharts() {
+            // Gráfico de Performance das Campanhas
+            const ctx1 = document.getElementById('campaignPerformanceChart').getContext('2d');
+            campaignPerformanceChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Mensagens Enviadas',
+                        data: [],
+                        borderColor: '#00D1FF',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Respostas Recebidas',
+                        data: [],
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de Distribuição por Canal
+            const ctx2 = document.getElementById('channelDistributionChart').getContext('2d');
+            channelDistributionChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['WhatsApp', 'Email', 'SMS'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#25D366', '#EA4335', '#FF9800'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de Geração de Conteúdo
+            const ctx3 = document.getElementById('contentGenerationChart').getContext('2d');
+            contentGenerationChart = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
+                    datasets: [{
+                        label: 'Posts Gerados',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: '#00D1FF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de Engajamento Social
+            const ctx4 = document.getElementById('socialEngagementChart').getContext('2d');
+            socialEngagementChart = new Chart(ctx4, {
+                type: 'radar',
+                data: {
+                    labels: ['Instagram', 'Facebook', 'LinkedIn'],
+                    datasets: [{
+                        label: 'Engajamento',
+                        data: [0, 0, 0],
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: '#00D1FF',
+                        pointBackgroundColor: '#00D1FF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    elements: {
+                        line: {
+                            borderWidth: 2
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/marketing/dashboard-data');
+                const data = await response.json();
+
+                updateMetrics(data.metrics);
+                updateCharts(data.charts);
+                updatePredictions(data.predictions);
+                updateCampaigns(data.campaigns);
+                updateSystemPerformance(data.system);
+                updateRecommendations(data.recommendations);
+
+            } catch (error) {
+                console.error('Erro ao carregar dados do dashboard:', error);
+            }
+        }
+
+        function updateMetrics(metrics) {
+            const metricsRow = document.getElementById('metrics-row');
+            metricsRow.innerHTML = '';
+
+            const metricCards = [
+                { title: 'Total de Campanhas', value: metrics.total_campaigns, icon: 'fas fa-bullhorn', class: 'primary' },
+                { title: 'Mensagens Enviadas', value: metrics.messages_sent, icon: 'fas fa-paper-plane', class: 'success' },
+                { title: 'Taxa de Resposta', value: `${metrics.response_rate}%`, icon: 'fas fa-reply', class: 'info' },
+                { title: 'Receita Projetada', value: `R$ ${metrics.projected_revenue}`, icon: 'fas fa-dollar-sign', class: 'warning' }
+            ];
+
+            metricCards.forEach(metric => {
+                const col = document.createElement('div');
+                col.className = 'col-lg-3 col-md-6';
+                col.innerHTML = `
+                    <div class="metric-card ${metric.class}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-0">${metric.value}</h3>
+                                <p class="mb-0 opacity-75">${metric.title}</p>
+                            </div>
+                            <i class="${metric.icon} fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                `;
+                metricsRow.appendChild(col);
+            });
+        }
+
+        function updateCharts(charts) {
+            // Atualizar gráfico de performance das campanhas
+            campaignPerformanceChart.data.labels = charts.campaign_performance.labels;
+            campaignPerformanceChart.data.datasets[0].data = charts.campaign_performance.sent;
+            campaignPerformanceChart.data.datasets[1].data = charts.campaign_performance.responses;
+            campaignPerformanceChart.update();
+
+            // Atualizar distribuição por canal
+            channelDistributionChart.data.datasets[0].data = charts.channel_distribution;
+            channelDistributionChart.update();
+
+            // Atualizar geração de conteúdo
+            contentGenerationChart.data.datasets[0].data = charts.content_generation;
+            contentGenerationChart.update();
+
+            // Atualizar engajamento social
+            socialEngagementChart.data.datasets[0].data = charts.social_engagement;
+            socialEngagementChart.update();
+        }
+
+        function updatePredictions(predictions) {
+            const churnDiv = document.getElementById('churn-prediction');
+            churnDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Risco Alto:</span>
+                    <span class="badge bg-danger">${predictions.churn_high_risk}%</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Risco Médio:</span>
+                    <span class="badge bg-warning">${predictions.churn_medium_risk}%</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Risco Baixo:</span>
+                    <span class="badge bg-success">${predictions.churn_low_risk}%</span>
+                </div>
+            `;
+
+            const revenueDiv = document.getElementById('revenue-prediction');
+            revenueDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Próximo Mês:</span>
+                    <span class="fw-bold">R$ ${predictions.next_month_revenue}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Próximos 3 Meses:</span>
+                    <span class="fw-bold">R$ ${predictions.next_quarter_revenue}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Crescimento Projetado:</span>
+                    <span class="badge bg-success">+${predictions.growth_rate}%</span>
+                </div>
+            `;
+        }
+
+        function updateCampaigns(campaigns) {
+            const campaignsDiv = document.getElementById('active-campaigns');
+            campaignsDiv.innerHTML = '';
+
+            campaigns.forEach(campaign => {
+                const campaignCard = document.createElement('div');
+                campaignCard.className = `campaign-card ${campaign.status}`;
+                campaignCard.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">${campaign.name}</h6>
+                            <p class="mb-1 text-muted">${campaign.type} • ${campaign.channel}</p>
+                            <small class="text-muted">
+                                ${campaign.sent_messages} enviadas • ${campaign.responses} respostas
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-${getStatusColor(campaign.status)}">${campaign.status}</span>
+                            <div class="mt-1">
+                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="pauseCampaign(${campaign.id})">
+                                    <i class="fas fa-pause"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="stopCampaign(${campaign.id})">
+                                    <i class="fas fa-stop"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                campaignsDiv.appendChild(campaignCard);
+            });
+        }
+
+        function updateSystemPerformance(system) {
+            document.getElementById('cpu-usage').textContent = `${system.cpu}%`;
+            document.getElementById('memory-usage').textContent = `${system.memory}%`;
+            document.getElementById('disk-usage').textContent = `${system.disk}%`;
+            document.getElementById('network-usage').textContent = `${system.network} MB/s`;
+
+            // Atualizar indicadores de performance
+            updatePerformanceIndicator('cpu-usage', system.cpu);
+            updatePerformanceIndicator('memory-usage', system.memory);
+            updatePerformanceIndicator('disk-usage', system.disk);
+        }
+
+        function updatePerformanceIndicator(elementId, value) {
+            const element = document.getElementById(elementId);
+            const indicator = element.previousElementSibling;
+
+            indicator.className = 'performance-indicator';
+
+            if (value < 50) {
+                indicator.classList.add('good');
+            } else if (value < 80) {
+                indicator.classList.add('warning');
+            } else {
+                indicator.classList.add('critical');
+            }
+        }
+
+        function updateRecommendations(recommendations) {
+            const recDiv = document.getElementById('optimization-recommendations');
+            recDiv.innerHTML = '';
+
+            if (recommendations.length === 0) {
+                recDiv.innerHTML = '<p class="text-muted mb-0">Nenhuma recomendação no momento.</p>';
+                return;
+            }
+
+            recommendations.forEach(rec => {
+                const recItem = document.createElement('div');
+                recItem.className = 'alert alert-info mb-2';
+                recItem.innerHTML = `<i class="fas fa-lightbulb me-2"></i>${rec}`;
+                recDiv.appendChild(recItem);
+            });
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'active': 'success',
+                'paused': 'warning',
+                'completed': 'secondary',
+                'draft': 'info'
+            };
+            return colors[status] || 'secondary';
+        }
+
+        function refreshDashboard() {
+            loadDashboardData();
+        }
+
+        function showCreateCampaignModal() {
+            const modal = new bootstrap.Modal(document.getElementById('createCampaignModal'));
+            modal.show();
+        }
+
+        async function createCampaign() {
+            const form = document.getElementById('campaign-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const campaignData = {
+                name: document.getElementById('campaign-name').value,
+                type: document.getElementById('campaign-type').value,
+                channel: document.getElementById('campaign-channel').value,
+                segment: document.getElementById('campaign-segment').value,
+                message: document.getElementById('campaign-message').value,
+                start_date: document.getElementById('campaign-start').value,
+                end_date: document.getElementById('campaign-end').value
+            };
+
+            try {
+                const response = await fetch('/api/marketing/campaigns', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(campaignData)
+                });
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('createCampaignModal')).hide();
+                    form.reset();
+                    loadDashboardData();
+                    alert('Campanha criada com sucesso!');
+                } else {
+                    alert('Erro ao criar campanha.');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao criar campanha.');
+            }
+        }
+
+        async function pauseCampaign(campaignId) {
+            try {
+                const response = await fetch(`/api/marketing/campaigns/${campaignId}/pause`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    loadDashboardData();
+                }
+            } catch (error) {
+                console.error('Erro ao pausar campanha:', error);
+            }
+        }
+
+        async function stopCampaign(campaignId) {
+            if (!confirm('Tem certeza que deseja parar esta campanha?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/marketing/campaigns/${campaignId}/stop`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    loadDashboardData();
+                }
+            } catch (error) {
+                console.error('Erro ao parar campanha:', error);
+            }
+        }
+    </script>
+</body>
+</html>

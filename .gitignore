@@ -1,0 +1,48 @@
+# Virtual Environment
+venv/
+.venv/
+ENV/
+env/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+instance/
+
+# Pycache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.env
+
+# Logs
+*.log
+logs/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node modules (if present)
+node_modules/
+
+# Temporary files
+temp/
+tmp/
+vexus_core/venv/

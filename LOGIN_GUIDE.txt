@@ -1,0 +1,213 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                    🔐 GUIA DE LOGIN - VEXUS CRM                   ║
+╚════════════════════════════════════════════════════════════════════╝
+
+
+📌 O QUE MUDOU?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Tela de LOGIN agora aparece quando você abre app.html!
+✅ Você PRECISA fazer login para entrar no CRM
+✅ Dois modos de login: Real (com API) ou Demo (teste rápido)
+✅ Token salvo em localStorage para manter sessão ativa
+
+
+🔐 COMO FAZER LOGIN - 3 FORMAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FORMA 1: USAR BOTÃO DEMO (Teste Rápido) ⚡
+──────────────────────────────────────────
+
+1. Acesse: http://localhost:8000/frontend/app.html
+2. Clique no botão: 📱 Usar Demo
+3. PRONTO! Você está dentro do CRM!
+
+   ✓ Entra com token de demo (sem chamar API)
+   ✓ Funciona 100% do CRM
+   ✓ Maior para testes rapidinho
+
+
+FORMA 2: LOGIN COM EMAIL/SENHA (Real) 🔑
+─────────────────────────────────────────
+
+1. Acesse: http://localhost:8000/frontend/app.html
+2. Preencha email e senha:
+   
+   Email:   seu@email.com
+   Senha:   sua_senha_aqui
+
+3. Clique em: 🔓 Entrar
+4. Se credenciais corretas, você entra no CRM!
+
+   ✓ Chama API para validação
+   ✓ Retorna JWT token
+   ✓ Salva em localStorage
+
+   Dados de teste:
+   Email:    admin@vexus.com
+   Senha:    senha123
+
+
+FORMA 3: REGISTRAR NOVA CONTA 📝
+────────────────────────────────
+
+Se não tem conta:
+1. Vá para: http://localhost:8000/frontend/login.html (página separada)
+2. Clique em: Registrar
+3. Preencha os dados
+4. Volta para app.html para fazer login
+
+
+🔓 LOGOUT (SAIR)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Dentro do CRM (app.html)
+2. Clique no ícone: 🚪 (canto inferior esquerdo)
+3. Confirme: "Tem certeza que deseja sair?"
+4. OK!
+
+   ✓ Token removido de localStorage
+   ✓ Volta pra tela de login
+   ✓ Pode fazer novo login
+
+
+📱 TELA DE LOGIN - O QUE VER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌──────────────────────────────┐
+  │                              │
+  │            📱 V              │ ← Logo Vexus
+  │                              │
+  │    Vexus CRM                 │
+  │  Sistema Inteligente...      │
+  │                              │
+  │ ┌────────────────────────┐   │
+  │ │ Faça login em...       │   │
+  │ ├────────────────────────┤   │
+  │ │ Email:                 │   │ ← Campo de email
+  │ │ [seu@email.com........] │
+  │ │                        │   │
+  │ │ Senha:                 │   │ ← Campo de senha
+  │ │ [••••••••.............] │
+  │ │                        │   │
+  │ │ [🔓 Entrar]            │   │ ← Botão login real
+  │ ├────────────────────────┤   │
+  │ │                        │   │
+  │ │ [📱 Usar Demo]         │   │ ← Botão demo (atalho)
+  │ │                        │   │
+  │ └────────────────────────┘   │
+  │                              │
+  │  v1.0.0 │ Termos...          │
+  │                              │
+  └──────────────────────────────┘
+
+
+💾 COMO FUNCIONA O TOKEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Você faz login
+2. API retorna JWT token (30 minutos de validade)
+3. Token é salvo em: localStorage['vexus_token']
+4. App.html verifica localStorage ao carregar:
+   
+   ✓ Se tem token → mostra CRM
+   ✓ Se não tem token → mostra login
+
+5. Token é enviado em toda requisição à API:
+   
+   Authorization: Bearer <seu_token_aqui>
+
+6. Ao fazer logout:
+   
+   ✓ Token é removido de localStorage
+   ✓ Volta pra tela de login
+
+
+⚙️ DADOS DE TESTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Usuário Admin:
+  Email:     admin@vexus.com
+  Senha:     senha123
+  Permissão: Full access
+
+
+Usuário Vendedor:
+  Email:     vendedor@vexus.com
+  Senha:     senha123
+  Permissão: Sales only
+
+
+Demo Login (Atalho):
+  Clique em: 📱 Usar Demo
+  Entra automaticamente sem validação
+  Perfeito para testes rápidos
+
+
+🐛 SE ALGO ERRAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"Login não funciona"
+→ Verifique no DevTools (F12) → Console
+→ Ver se recebe resposta da API
+→ Cheque credenciais
+
+"Tela em branco depois de clicar Entrar"
+→ Pode ser erro de CORS
+→ Verifique se API está online: curl http://localhost:8000/health
+→ Se não funcionar, use Demo Button
+
+"Volta pra login toda hora"
+→ localStorage pode estar limpo
+→ Tente clicar no botão Demo
+→ Ou refaça login
+
+"Demo button não funciona"
+→ Abra DevTools (F12)
+→ Veja Console para mensagens de erro
+→ Tente login com credenciais reais
+
+
+✨ FLUXO COMPLETO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Abre app.html
+    ↓
+Verifica localStorage['vexus_token']
+    ↓
+┌─ SE NÃO TEM TOKEN ──→ Mostra TELA LOGIN
+│                      ├─ Campo email
+│                      ├─ Campo senha
+│                      ├─ Botão Entrar
+│                      └─ Botão Demo
+│
+└─ SE TEM TOKEN ──────→ Mostra CRM (app)
+                     ├─ Sidebar
+                     ├─ Header
+                     └─ Dashboard (ou página atual)
+
+De qualquer página:
+    Clica em 🚪 → Logout → Remove token → Volta login
+
+
+🚀 PRÓXIMOS PASSOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ Abra: http://localhost:8000/frontend/app.html
+
+2️⃣ Clique em: 📱 Usar Demo (entrada rápida)
+
+3️⃣ Navegue pelo CRM!
+   Clique nos ícones da sidebar
+   Ctrl+1-7 para atalhos
+
+4️⃣ Faça logout e teste login real:
+   🚪 → Confirma → Volta login
+   Preenche email/senha → Entrar
+
+
+════════════════════════════════════════════════════════════════════
+
+Versão: 1.0.0
+Data: 28 de Fevereiro de 2026
+Status: ✅ Tela de Login Implementada

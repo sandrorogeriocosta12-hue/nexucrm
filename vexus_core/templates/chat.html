@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR" x-data="chatApp()">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexus IA - Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="vexus-theme.css">
+</head>
+<body class="flex h-screen bg-[#0B0E14] text-gray-200">
+  <nav class="w-16 border-r border-[#2D3748] flex flex-col items-center py-6 gap-8">
+    <a href="dashboard.html"><i data-lucide="layout-dashboard" class="w-6 h-6 text-gray-400 hover:text-[#8B5CF6]"></i></a>
+    <a href="chat.html"><i data-lucide="message-square" class="w-6 h-6 text-[#8B5CF6]"></i></a>
+    <a href="leads.html"><i data-lucide="users" class="w-6 h-6 text-gray-400 hover:text-[#8B5CF6]"></i></a>
+    <a href="settings.html"><i data-lucide="settings" class="w-6 h-6 text-gray-400 hover:text-[#8B5CF6]"></i></a>
+  </nav>
+
+  <aside class="w-80 border-r border-[#2D3748] overflow-y-auto p-4 space-y-2">
+    <template x-for="conversation in conversations" :key="conversation.id">
+      <div class="glass-card p-3 rounded-lg cursor-pointer hover:bg-[#1E2530] transition"
+           :class="{'border-l-4 border-[#8B5CF6]': selectedConversation === conversation.id}"
+           @click="selectConversation(conversation.id)">
+        <div class="flex justify-between items-center">
+          <span class="font-medium" x-text="conversation.name"></span>
+          <span class="text-xs px-2 py-1 rounded-full" 
+                :class="{'bg-blue-500': conversation.channel === 'wa', 'bg-pink-500': conversation.channel === 'ig'}">
+            <i :data-lucide="conversation.channel === 'wa' ? 'message-circle' : 'instagram'"></i>
+          </span>
+        </div>
+        <p class="text-sm text-gray-400 truncate" x-text="conversation.lastMessage"></p>
+        <div class="mt-2 relative h-1.5 bg-gray-700 rounded-full overflow-hidden">
+          <div class="lead-temp-fill"
+               :class="{'bg-red-500': conversation.leadClass==='hot', 'bg-yellow-500': conversation.leadClass==='warm', 'bg-blue-500': conversation.leadClass==='cold'}"
+               :style="{ width: conversation.leadScore + '%' }"></div>
+        </div>
+      </div>
+    </template>
+  </aside>
+
+  <main class="flex-1 flex flex-col">
+    <header class="h-16 border-b border-[#2D3748] flex items-center px-6">
+      <h2 class="text-lg font-semibold" x-text="currentConversation?.name || 'Selecione uma conversa'"></h2>
+    </header>
+    <div class="flex-1 overflow-y-auto p-6 space-y-4" x-ref="chatMessages">
+      <template x-for="msg in messages" :key="msg.id">
+        <div class="flex" :class="{'justify-end': msg.sender === 'user'}">
+          <div class="max-w-xs p-3 rounded-lg" 
+               :class="msg.sender === 'ai' ? 'bg-[#8B5CF6] bg-opacity-20 border border-[#8B5CF6] border-dashed' : 'bg-[#2D3748]'">
+            <p x-text="msg.text"></p>
+          </div>
+        </div>
+      </template>
+    </div>
+    <div class="p-4 border-t border-[#2D3748]">
+      <div class="flex gap-2">
+        <input type="text" class="flex-1 bg-[#161B22] border border-[#2D3748] rounded-lg px-4 py-2 focus:outline-none focus:border-[#8B5CF6]" 
+               placeholder="Digite sua mensagem..." x-model="newMessage" @keyup.enter="sendMessage">
+        <button class="btn-glow px-6 py-2 rounded-lg" @click="sendMessage">Enviar</button>
+      </div>
+    </div>
+  </main>
+
+  <aside class="w-72 bg-[#161B22] p-4 flex flex-col gap-6">
+    <div class="glass-card p-4 rounded-lg">
+      <h3 class="text-sm font-semibold text-[#8B5CF6] uppercase tracking-wider">Resumo da IA</h3>
+      <p class="text-sm mt-2" x-text="aiSummary || 'Analisando conversa...'"></p>
+    </div>
+    <div class="glass-card p-4 rounded-lg">
+      <h3 class="text-sm font-semibold text-[#8B5CF6] uppercase tracking-wider">Ações Rápidas</h3>
+      <div class="mt-3 space-y-2">
+        <button class="w-full bg-[#2D3748] hover:bg-[#3A4556] text-sm py-2 rounded transition">📄 Gerar Proposta</button>
+        <button class="w-full bg-[#2D3748] hover:bg-[#3A4556] text-sm py-2 rounded transition">📅 Agendar Reunião</button>
+        <button class="w-full bg-[#2D3748] hover:bg-[#3A4556] text-sm py-2 rounded transition">🤖 Assumir Controle</button>
+      </div>
+    </div>
+  </aside>
+
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  function chatApp() {
+    return {
+      conversations: [],
+      selectedConversation: null,
+      messages: [],
+      newMessage: '',
+      aiSummary: '',
+      async init() {
+        lucide.createIcons();
+        const res = await fetch('/api/conversations');
+        this.conversations = await res.json();
+        if (this.conversations.length) this.selectConversation(this.conversations[0].id);
+        // load lead scores if endpoint exists
+        if (typeof this.loadLeadScores === 'function') {
+          await this.loadLeadScores();
+        }
+        // preload shared templates
+        fetch('components.html')
+          .then(r => r.text())
+          .then(html => {
+            const div = document.createElement('div');
+            div.style.display = 'none';
+            div.innerHTML = html;
+            document.body.appendChild(div);
+          });
+      },
+      async loadLeadScores() {
+        for (let conv of this.conversations) {
+          try {
+            const resp = await fetch('/fuzzy/lead-score', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ engagement: conv.engagement || 0, likelihood: conv.likelihood || 0 })
+            });
+            const data = await resp.json();
+            conv.leadScore = data.score;
+            conv.leadClass = data.classification;
+          } catch (e) {
+            conv.leadScore = 0;
+            conv.leadClass = 'cold';
+          }
+        }
+      }
+      selectConversation(id) {
+        this.selectedConversation = id;
+        this.loadMessages(id);
+        this.loadAISummary(id);
+      },
+      async loadMessages(convId) {
+        const res = await fetch(`/api/conversations/${convId}/messages`);
+        this.messages = await res.json();
+        this.$nextTick(() => this.$refs.chatMessages.scrollTop = this.$refs.chatMessages.scrollHeight);
+      },
+      async loadAISummary(convId) {
+        const res = await fetch(`/api/ai/summary/${convId}`);
+        this.aiSummary = (await res.json()).summary;
+      },
+      async sendMessage() {
+        if (!this.newMessage.trim()) return;
+        const msg = { text: this.newMessage, sender: 'user' };
+        this.messages.push(msg);
+        this.newMessage = '';
+        const res = await fetch('/api/chat/send', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ conversationId: this.selectedConversation, message: msg.text })
+        });
+        const reply = await res.json();
+        this.messages.push({ text: reply.text, sender: 'ai' });
+        this.$nextTick(() => this.$refs.chatMessages.scrollTop = this.$refs.chatMessages.scrollHeight);
+      }
+    }
+  }
+</script>
+</body>
+</html>

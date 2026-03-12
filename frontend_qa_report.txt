@@ -1,0 +1,54 @@
+--- Login-Nexus ---
+PASS: Page loads
+PASS: Branding "Nexus Service" present
+PASS: Gradient present (linear-gradient / bg-gradient-to / gradient)
+PASS: Contains phrase "Lead Scoring"
+PASS: Has email/password fields (input type="email" or placeholder)
+PASS: Entrar button exists (Entrar Agora / Entrar)
+PASS: Dark theme hint (bg-gray, dark, #0f172a)
+PASS: Link to signup exists
+PAGE RESULT: OK
+
+--- Signup-Nexus ---
+PASS: Page loads
+PASS: Branding "Nexus Service" present
+PASS: Gradient present (linear-gradient / bg-gradient-to / gradient)
+PASS: Contains "Criar Conta" title
+PASS: Has name/email/password fields
+PASS: Has submit button
+PASS: Link back to login exists
+PASS: Terms checkbox present
+PAGE RESULT: OK
+
+--- Inbox-Nexus ---
+PASS: Page loads
+PASS: Branding "Nexus Service" present
+PASS: Gradient present (linear-gradient / bg-gradient-to / gradient)
+PASS: Sidebar icons present (emoji or icon classes)
+PASS: Inbox active highlighted
+PASS: Sample scores HOT/WARM/COLD present
+PASS: Ver Proposta Gerada button
+PAGE RESULT: OK
+
+--- KPI-Dashboard ---
+PASS: Page loads
+PASS: Branding "Nexus Service" present
+PASS: Gradient present (linear-gradient / bg-gradient-to / gradient)
+PASS: Chart.js present
+PASS: 5 metric cards (search for Leads Processados / Taxa de Conversão / Potencial Revenue)
+PAGE RESULT: OK
+
+--- Pipeline-Nexus ---
+PASS: Page loads
+PASS: Branding "Nexus Service" present
+PASS: Gradient present (linear-gradient / bg-gradient-to / gradient)
+PASS: Kanban columns present (Novo / Qualificado / Proposta / Contrato)
+PASS: Column counts (digits near column names)
+PAGE RESULT: OK
+
+--- GLOBAL VISUAL CHECKS ---
+Gradient palette present: YES
+Dark theme used across pages: YES
+Score color hints (red/orange/blue) present: YES
+--- PERFORMANCE HINTS (manual checks) ---
+Ensure Chart.js loads from local or CDN; offline pages may show blank charts.

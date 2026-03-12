@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Vexus IA{% endblock %}
+
+{% block extra_head %}
+<style>
+    .metric-card {
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-tachometer-alt text-primary me-2"></i>
+            Dashboard
+        </h1>
+        <p class="text-muted">Visão geral do sistema - Últimos 30 dias</p>
+    </div>
+</div>
+
+<!-- Métricas Principais -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card metric-card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total de Agendamentos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ metrics.total_appointments }}
+                        </div>
+                        <div class="text-xs text-muted">
+                            Média: {{ metrics.avg_appointments_per_day }}/dia
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-check fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card metric-card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Taxa de Confirmação
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ metrics.confirmation_rate }}%
+                        </div>
+                        <div class="text-xs text-muted">
+                            {{ metrics.confirmed_appointments }} confirmados
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card metric-card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Novos Pacientes
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ metrics.new_patients }}
+                        </div>
+                        <div class="text-xs text-muted">
+                            Últimos 30 dias
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card metric-card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Receita Estimada
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            R$ {{ "%.2f"|format(metrics.estimated_revenue) }}
+                        </div>
+                        <div class="text-xs text-muted">
+                            Últimos 30 dias
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mb-4">
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Tendência de Receita
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Status dos Agendamentos
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabelas de Dados -->
+<div class="row">
+    <!-- Próximos Agendamentos -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-clock me-2"></i>
+                    Próximos Agendamentos
+                </h6>
+                <a href="{{ url_for('main.appointments') }}" class="btn btn-sm btn-outline-primary">
+                    Ver Todos
+                </a>
+            </div>
+            <div class="card-body">
+                {% if upcoming_appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <tbody>
+                                {% for appointment in upcoming_appointments %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary text-white me-3">
+                                                {{ appointment.patient[0]|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="font-weight-bold">{{ appointment.patient }}</div>
+                                                <small class="text-muted">{{ appointment.service }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="font-weight-bold">{{ appointment.time }}</div>
+                                        <small class="text-muted">{{ appointment.date }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                        <p>Nenhum agendamento futuro encontrado</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Serviços Mais Solicitados -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-stethoscope me-2"></i>
+                    Serviços Mais Solicitados
+                </h6>
+                <a href="{{ url_for('main.services') }}" class="btn btn-sm btn-outline-primary">
+                    Ver Todos
+                </a>
+            </div>
+            <div class="card-body">
+                {% if services_by_usage %}
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <tbody>
+                                {% for service in services_by_usage[:5] %}
+                                <tr>
+                                    <td>
+                                        <div class="font-weight-bold">{{ service.service }}</div>
+                                        <small class="text-muted">{{ service.appointments }} agendamentos</small>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="badge bg-primary">{{ service.appointments }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                        <p>Nenhum dado disponível</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conversas Recentes -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-comments me-2"></i>
+                    Conversas Recentes (WhatsApp)
+                </h6>
+                <a href="{{ url_for('main.conversations') }}" class="btn btn-sm btn-outline-primary">
+                    Ver Todas
+                </a>
+            </div>
+            <div class="card-body">
+                {% if conversation_metrics %}
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="h4 text-primary">{{ conversation_metrics.total_conversations }}</div>
+                            <small class="text-muted">Total de Conversas</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h4 text-success">{{ conversation_metrics.ai_processing_rate }}%</div>
+                            <small class="text-muted">Processadas por IA</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h4 text-info">{{ conversation_metrics.platform_distribution.get('whatsapp', 0) }}</div>
+                            <small class="text-muted">Via WhatsApp</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="h4 text-warning">
+                                {{ conversation_metrics.intent_distribution.get('booking', 0) +
+                                   conversation_metrics.intent_distribution.get('information', 0) }}
+                            </div>
+                            <small class="text-muted">Agendamentos/Informações</small>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <p>Nenhuma conversa recente</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Gráfico de Receita
+{% if revenue_trend %}
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+        labels: {{ revenue_trend|map(attribute='date')|list|tojson }},
+        datasets: [{
+            label: 'Receita (R$)',
+            data: {{ revenue_trend|map(attribute='revenue')|list|tojson }},
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'R$ ' + value.toFixed(2);
+                    }
+                }
+            }
+        }
+    }
+});
+{% endif %}
+
+// Gráfico de Status
+{% if appointments_by_status %}
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ appointments_by_status.keys()|list|tojson }},
+        datasets: [{
+            data: {{ appointments_by_status.values()|list|tojson }},
+            backgroundColor: [
+                'rgb(255, 99, 132)',
+                'rgb(54, 162, 235)',
+                'rgb(255, 205, 86)',
+                'rgb(75, 192, 192)',
+                'rgb(153, 102, 255)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

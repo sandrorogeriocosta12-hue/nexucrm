@@ -1,0 +1,327 @@
+════════════════════════════════════════════════════════════════════════════════
+   🆘 TROUBLESHOOTING - ERROS DE CONEXÃO WHATSAPP
+════════════════════════════════════════════════════════════════════════════════
+
+Seu Número: 22988030759
+
+Quando clicar em "🧪 Testar Conexão" e recebeu um ERRO?
+
+Use este documento para descobrir qual é o problema!
+
+════════════════════════════════════════════════════════════════════════════════
+   ❌ ERRO: "❌ Preencha os campos obrigatórios"
+════════════════════════════════════════════════════════════════════════════════
+
+Você vê:
+   └─ Status: "❌ Preencha os campos obrigatórios"
+
+O QUE SIGNIFICA:
+   └─ Um ou mais campos estão vazios
+
+O QUE FAZER:
+
+   1. ☑️ Voltou à configuração?
+   2. Verifique cada campo:
+      
+      📱 Phone Number ID:
+         └─ Tem alguma coisa? ( não pode estar vazio )
+         └─ Se não tiver: copie de business.facebook.com → Settings → Business Info
+      
+      🏢 Business Account ID:
+         └─ Tem alguma coisa? ( não pode estar vazio )
+         └─ Se não tiver: copie de business.facebook.com → Settings → Business Info
+      
+      🔐 Access Token:
+         └─ Tem alguma coisa muito longa? (começa com "EAA...")
+         └─ Se não tiver: gere em developers.facebook.com
+      
+      🔗 Webhook Verify Token:
+         └─ Tem alguma coisa? (pode ser qualquer texto simples)
+         └─ Se não tiver: digite "teste123"
+   
+   3. Clique novamente: "✅ SALVAR CONFIGURAÇÃO"
+   4. Depois: "🧪 TESTAR CONEXÃO"
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ❌ ERRO: "401 Unauthorized" ou "Invalid Access Token"
+════════════════════════════════════════════════════════════════════════════════
+
+Você vê:
+   └─ Status: "401 Unauthorized - Invalid Access Token"
+
+O QUE SIGNIFICA:
+   └─ O token que você copiou está errado, expirado ou incompleto
+
+O QUE FAZER:
+
+   ✅ SOLUÇÃO 1: Regenerar o Token (99% das vezes funciona)
+   
+      1. Abra: https://developers.facebook.com
+      2. Clique: "Meus Aplicativos"
+      3. Selecione seu app (Nexus CRM ou WhatsApp)
+      4. Vá para: Settings → Basic
+      5. Busque: "Gerar Token de Usuário" ou "User Token"
+      6. Clique: [  Gerar Token  ]
+      7. Selecione permissões:
+         ✓ whatsapp_business_messaging
+         ✓ whatsapp_business_management
+      8. Clique novamente: [  Gerar Token  ]
+      9. Um NOVO e LONGO token aparecerá
+      10. Copie TUDO (incluindo o final)
+      11. Volte ao Nexus
+      12. Cole no campo "🔐 Access Token"
+      13. Clique "✅ SALVAR"
+      14. Clique "🧪 TESTAR"
+   
+   ✅ SOLUÇÃO 2: Certificar que copiou TUDO
+   
+      O token deve parecer assim:
+      EAA...muitos...caracteres...muito...longo...XYZ
+      
+      Provavelmente tem 200+ caracteres!
+      
+      Se copiou algo curto (menos de 50 caracteres), está incompleto!
+   
+   ✅ SOLUÇÃO 3: Token expirou
+   
+      Tokens da Meta expiram a cada 60 dias
+      
+      Se não usa a integração por um tempo, gere um novo
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ❌ ERRO: "Invalid phone number ID"
+════════════════════════════════════════════════════════════════════════════════
+
+Você vê:
+   └─ Status: "Invalid phone number ID"
+
+O QUE SIGNIFICA:
+   └─ O Phone Number ID está errado
+
+O QUE FAZER:
+
+   1. Abra: https://business.facebook.com
+   2. Clique: ⚙️ Settings (engrenagem)
+   3. Clique: Business Info
+   4. Procure por: "Phone Number ID" ou "WhatsApp Phone Number"
+   5. Copie o número (não tem "+", não tem "(", ")", espaços)
+   
+      ✗ ERRADO: +55 (11) 99999-9999
+      ✗ ERRADO: (11) 99999-9999
+      ✗ ERRADO: 11 99999-9999
+      
+      ✓ CERTO: 1234567890 (só números)
+   
+   6. Volte ao Nexus
+   7. Apague o que tinha no campo
+   8. Cole APENAS os números
+   9. Clique "✅ SALVAR"
+   10. Clique "🧪 TESTAR"
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ❌ ERRO: "Invalid Business Account ID"
+════════════════════════════════════════════════════════════════════════════════
+
+Você vê:
+   └─ Status: "Invalid Business Account ID"
+
+O QUE SIGNIFICA:
+   └─ O Business Account ID está incompleto ou errado
+
+O QUE FAZER:
+
+   1. Abra: https://business.facebook.com
+   2. Clique: seu Avatar (canto superior direito)
+   3. Clique: Settings
+   4. Clique: Informações da Empresa (lado esquerdo)
+   5. Procure por:
+      └─ "Business ID" ou
+      └─ "WAID" ou
+      └─ "ID de Negócio"
+   
+   6. Você verá algo como: WAID1234567890 ou just 1234567890
+   7. COPIE TUDO (se começar com WAID, copie o WAID também)
+   8. Volte ao Nexus
+   9. Cole no campo "🏢 Business Account ID"
+   10. Clique "✅ SALVAR"
+   11. Clique "🧪 TESTAR"
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ❌ ERRO: "Network error" ou "Connection refused"
+════════════════════════════════════════════════════════════════════════════════
+
+Você vê:
+   └─ Status: "Network error" ou "Connection refused"
+
+O QUE SIGNIFICA:
+   └─ Seu servidor do Nexus não está rodando
+
+O QUE FAZER:
+
+   1. Abra um terminal
+   2. Digite: ps aux | grep app_server
+   3. Vê "app_server.py" na lista? 
+      
+      SIM ✅ → Vá para SOLUÇÃO 2
+      NÃO ❌ → Vá para SOLUÇÃO 1
+   
+   ✅ SOLUÇÃO 1: Reiniciar o servidor
+      
+      1. Terminal:
+         ```
+         cd "/home/victor-emanuel/PycharmProjects/Vexus Service"
+         pkill -f "app_server.py"
+         sleep 2
+         python app_server.py > /tmp/server.log 2>&1 &
+         ```
+      
+      2. Espere 3 segundos
+      3. Volte ao Nexus
+      4. Clique "🧪 TESTAR CONEXÃO" novamente
+   
+   ✅ SOLUÇÃO 2: Verifique se respondendo
+      
+      1. Terminal:
+         ```
+         curl http://localhost:8000
+         ```
+      
+      2. Se não responder, execute SOLUÇÃO 1
+      3. Se responder com um página HTML, o servidor está OK
+      4. Tente "🧪 TESTAR CONEXÃO" novamente
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ❌ ERRO: "WhatsApp não configurado"
+════════════════════════════════════════════════════════════════════════════════
+
+Você vê:
+   └─ Status: "WhatsApp não configurado"
+
+O QUE SIGNIFICA:
+   └─ Os dados não foram salvos corretamente
+
+O QUE FAZER:
+
+   1. Clique "✅ SALVAR CONFIGURAÇÃO" novamente
+   2. Espere a mensagem de sucesso aparecer
+   3. Depois clique "🧪 TESTAR CONEXÃO"
+   
+   Se continuar:
+   
+   1. Abra console (F12) do navegador
+   2. Vire para aba "Console"
+   3. Procure por mensagens de erro (vermelhas)
+   4. Me mostre qual é o erro exato
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ❌ ERRO: Qualquer outro erro não listado aqui
+════════════════════════════════════════════════════════════════════════════════
+
+PASSO 1: Copie a mensagem de erro EXATA
+
+PASSO 2: Procure no documento WHATSAPP_BUSINESS_SETUP.md
+
+PASSO 3: Se não encontrar, tente:
+
+   a) Regenerar o Access Token (conforme SOLUÇÃO acima)
+   
+   b) Verificar se todos os campos têm conteúdo
+      └─ Nenhum pode estar vazio
+   
+   c) Reiniciar o servidor
+      ```
+      pkill -f app_server.py
+      sleep 2
+      python app_server.py &
+      ```
+   
+   d) Tentar em um navegador diferente
+      └─ Chrome, Firefox, Safari
+      └─ Às vezes cache do navegador causa problemas
+   
+   e) Limpar cache do navegador (Ctrl+Shift+Del)
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ✅ QUANDO FUNCIONA - O QUE VOCÊ VERÁ
+════════════════════════════════════════════════════════════════════════════════
+
+Após "🧪 TESTAR CONEXÃO":
+
+   ┌─────────────────────────────────────────┐
+   │ Status da Conexão                       │
+   ├─────────────────────────────────────────┤
+   │                                         │
+   │ ✅ Conectado ao WhatsApp Business      │
+   │                                         │
+   │ Icon: ✅ (aparece verde)                │
+   │                                         │
+   │ Terminal do servidor mostra:            │
+   │ INFO: Message to 5511999999999: [ID]   │
+   │                                         │
+   └─────────────────────────────────────────┘
+
+🎉 Pronto! Funciona!
+
+
+════════════════════════════════════════════════════════════════════════════════
+   📋 CHECKLIST: Você preencheu EXATAMENTE assim?
+════════════════════════════════════════════════════════════════════════════════
+
+[ ] 📱 Phone Number ID
+    └─ Tem números? Somente números (sem +, sem parênteses)?
+    └─ Exemplo: 1234567890
+
+[ ] 🏢 Business Account ID
+    └─ Tem algo? Pode começar com "WAID"?
+    └─ Exemplo: WAID1234567890 ou 1234567890
+
+[ ] 🔐 Access Token
+    └─ Tem algo MUITO LONGO (200+ caracteres)?
+    └─ Começa com "EAA"?
+    └─ Exemplo: EAA123456789abcdef...XYZ(muito longo)
+
+[ ] 🔗 Webhook Verify Token
+    └─ Tem algo simples? (qualquer texto)
+    └─ Exemplo: abc123 ou meutoken123
+
+
+Se TODOS têm ✅ e ainda dá erro:
+
+1. Regenere o Access Token (developers.facebook.com)
+2. Reinicie o servidor (killall app_server.py)
+3. Tente novamente
+
+
+════════════════════════════════════════════════════════════════════════════════
+   💡 DICA FINAL: TOKEN EXPIRA
+════════════════════════════════════════════════════════════════════════════════
+
+O Access Token da Meta expira a cada 60 dias.
+
+Se conectou e funcionou, mas depois parou:
+
+   ✅ Provável causa: Token expirou
+   
+   ✅ Como resolver:
+      1. Abra developers.facebook.com
+      2. Gere um novo Access Token
+      3. Cole no Nexus
+      4. Tente novamente
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+Precisando de mais ajuda? 
+
+1. Verifique: WHATSAPP_TOKEN_PASSO_A_PASSO.txt (guia completo)
+2. Verifique: WHATSAPP_CLIQUE_VISUAL.txt (com imagens visuais)
+3. Verifique: examples_whatsapp.py (exemplos de código)
+
+════════════════════════════════════════════════════════════════════════════════

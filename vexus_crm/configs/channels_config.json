@@ -1,0 +1,43 @@
+{
+  "whatsapp": {
+    "enabled": true,
+    "provider": "twilio",
+    "api_key": "",
+    "phone_id": "",
+    "settings": {
+      "api_key": "sk-test",
+      "phone_id": "12345"
+    }
+  },
+  "telegram": {
+    "enabled": false,
+    "bot_token": ""
+  },
+  "email": {
+    "enabled": false,
+    "smtp_host": "",
+    "smtp_port": 587,
+    "username": "",
+    "password": ""
+  },
+  "sms": {
+    "enabled": false,
+    "provider": "",
+    "api_key": ""
+  },
+  "instagram": {
+    "enabled": false,
+    "access_token": ""
+  },
+  "facebook": {
+    "enabled": false,
+    "page_token": ""
+  },
+  "website": {
+    "enabled": true,
+    "widget_key": "",
+    "settings": {
+      "widget_key": "demo-site-v1"
+    }
+  }
+}

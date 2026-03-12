@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Plan Selection Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; background: #1a1a1a; color: #0f0; }
+        .test { margin: 10px 0; padding: 10px; background: #222; border-left: 3px solid #0f0; }
+        .error { color: #f00; border-left-color: #f00; }
+        .success { color: #0f0; }
+        code { background: #333; padding: 2px 5px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Plan Selection Test Suite</h1>
+    
+    <div id="output"></div>
+    
+    <script>
+        async function runTests() {
+            const output = document.getElementById('output');
+            
+            try {
+                // Fetch the HTML
+                const response = await fetch('http://localhost:8000/frontend/app.html');
+                const html = await response.text();
+                
+                // Create iframe to test the app
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+                
+                // Write HTML to iframe
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                iframeDoc.open();
+                iframeDoc.write(html);
+                iframeDoc.close();
+                
+                // Wait for DOM to be ready
+                setTimeout(() => {
+                    const iframeWindow = iframe.contentWindow;
+                    const iframeDocument = iframeDoc;
+                    
+                    // Test 1: Check if plan-cards are accessible
+                    const planCards = iframeDocument.querySelectorAll('.plan-card');
+                    addTest(output, planCards.length === 3, 
+                        `Found ${planCards.length} plan cards in DOM`,
+                        'Plan cards must be in DOM');
+                    
+                    // Test 2: Check if radios exist
+                    const radios = iframeDocument.querySelectorAll('input[name="selected-plan"]');
+                    addTest(output, radios.length === 3,
+                        `Found ${radios.length} radio inputs`,
+                        'Radios must exist');
+                    
+                    // Test 3: Check if any radio is pre-checked
+                    const preChecked = iframeDocument.querySelector('input[name="selected-plan"]:checked');
+                    addTest(output, !preChecked,
+                        'No radio is pre-checked',
+                        'No plan should be pre-selected');
+                    
+                    // Test 4: Simulate clicking a plan card
+                    if (planCards.length > 0) {
+                        const starterCard = planCards[0];
+                        const starterRadio = starterCard.querySelector('.plan-radio');
+                        
+                        // Click the card
+                        starterCard.click();
+                        
+                        // Check if radio got checked
+                        const isChecked = starterRadio.checked;
+                        addTest(output, isChecked,
+                            `Starter plan radio is ${ isChecked ? 'checked' : 'NOT checked'}`,
+                            'Radio should be checked after card click');
+                        
+                        // Check if card got selected class
+                        const hasSelected = starterCard.classList.contains('selected');
+                        addTest(output, hasSelected,
+                            `Starter card has ${ hasSelected ? 'selected' : 'NO'} class`,
+                            'Card should have selected class');
+                    }
+                    
+                    // Test 5: Simulate changing selection
+                    if (planCards.length > 1) {
+                        const proCard = planCards[1];
+                        const proRadio = proCard.querySelector('.plan-radio');
+                        
+                        proCard.click();
+                        
+                        const isProChecked = proRadio.checked;
+                        const starterRadio = planCards[0].querySelector('.plan-radio');
+                        const isStarterUnchecked = !starterRadio.checked;
+                        
+                        addTest(output, isProChecked && isStarterUnchecked,
+                            'Professional is checked, Starter is unchecked',
+                            'Only one radio should be checked');
+                    }
+                    
+                    // Test 6: Check validation function
+                    if (typeof iframeWindow.validateCurrentSignupStep === 'function') {
+                        iframeWindow.currentSignupStep = 4;
+                        const proRadio = iframeDocument.querySelector('input[name="selected-plan"][value="professional"]');
+                        if (proRadio) {
+                            proRadio.checked = true;
+                            const isValid = iframeWindow.validateCurrentSignupStep();
+                            addTest(output, isValid,
+                                'Step 4 validation passed with selected plan',
+                                'Validation should pass when plan is selected');
+                        }
+                    }
+                    
+                }, 1000);
+                
+            } catch (error) {
+                output.innerHTML += `<div class="test error">❌ Test Error: ${error.message}</div>`;
+            }
+        }
+        
+        function addTest(output, success, message, requirement) {
+            const div = document.createElement('div');
+            div.className = `test ${success ? 'success' : 'error'}`;
+            div.innerHTML = `${success ? '✅' : '❌'} <strong>${requirement}</strong>: ${message}`;
+            output.appendChild(div);
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>

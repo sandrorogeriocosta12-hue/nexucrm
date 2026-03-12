@@ -1,0 +1,28 @@
+{
+  "lead_scoring": {
+    "enabled": true,
+    "threshold": 60,
+    "personality": "amigavel"
+  },
+  "conversation_analyzer": {
+    "enabled": true,
+    "sensitivity": "medium"
+  },
+  "next_best_action": {
+    "enabled": true
+  },
+  "proposal_generator": {
+    "enabled": true,
+    "template_id": "default"
+  },
+  "followup_scheduler": {
+    "enabled": true,
+    "max_followups": 3
+  },
+  "channel_optimizer": {
+    "enabled": true
+  },
+  "pipeline_manager": {
+    "enabled": true
+  }
+}

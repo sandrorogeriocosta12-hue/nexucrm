@@ -1,0 +1,57 @@
+{
+  "variables": [
+    {
+      "name": "engagement",
+      "min": 0,
+      "max": 100,
+      "sets": [
+        {"name": "baixo", "a": 0, "b": 0, "c": 50},
+        {"name": "medio", "a": 30, "b": 50, "c": 70},
+        {"name": "alto", "a": 50, "b": 100, "c": 100}
+      ]
+    },
+    {
+      "name": "likelihood",
+      "min": 0,
+      "max": 100,
+      "sets": [
+        {"name": "baixo", "a": 0, "b": 0, "c": 40},
+        {"name": "medio", "a": 20, "b": 50, "c": 80},
+        {"name": "alto", "a": 60, "b": 100, "c": 100}
+      ]
+    },
+    {
+      "name": "availability",
+      "min": 0,
+      "max": 1,
+      "sets": [
+        {"name": "low", "a": 0, "b": 0, "c": 0.5},
+        {"name": "high", "a": 0.5, "b": 1, "c": 1}
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "antecedents": [
+        {"var": "engagement", "set": "alto"},
+        {"var": "likelihood", "set": "alto"},
+        {"var": "availability", "set": "high"}
+      ],
+      "consequent": {"var": "score", "set": "alto", "weight": 1.0}
+    },
+    {
+      "antecedents": [
+        {"var": "engagement", "set": "medio"},
+        {"var": "likelihood", "set": "medio"}
+      ],
+      "consequent": {"var": "score", "set": "medio", "weight": 0.5}
+    },
+    {
+      "antecedents": [
+        {"var": "engagement", "set": "baixo"},
+        {"var": "likelihood", "set": "baixo"}
+      ],
+      "consequent": {"var": "score", "set": "baixo", "weight": 1.0}
+    }
+  ]
+}

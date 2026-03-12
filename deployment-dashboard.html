@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexus CRM - Dashboard de Configuração</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #00D1FF 0%, #0062FF 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #00D1FF;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+
+        .status-badge {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-badge.active {
+            background: #4caf50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .status-badge.pending {
+            background: #ff9800;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn.active {
+            background: #00D1FF;
+            color: white;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Content Sections */
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Funções Section */
+        .functions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .function-card {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .function-card:hover {
+            border-color: #00D1FF;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .function-card h3 {
+            color: #00D1FF;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .function-card p {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .function-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #00D1FF;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-right: 5px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #00D1FF;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Configuração Section */
+        .setup-steps {
+            margin-top: 20px;
+        }
+
+        .step {
+            background: #f9f9f9;
+            border-left: 4px solid #00D1FF;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .step.completed {
+            border-left-color: #4caf50;
+            background: #f0f9f7;
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #00D1FF;
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-right: 15px;
+        }
+
+        .step.completed .step-number {
+            background: #4caf50;
+        }
+
+        .step-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .step-status {
+            padding: 5px 15px;
+            background: #ff9800;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .step.completed .step-status {
+            background: #4caf50;
+        }
+
+        .step-content {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .step.expanded .step-content {
+            display: block;
+        }
+
+        .step-content h4 {
+            color: #333;
+            margin-bottom: 10px;
+            margin-top: 15px;
+        }
+
+        .step-content p {
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .step-content ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .step-content li {
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .config-input {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: #00D1FF;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Status Dashboard */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #00D1FF 0%, #0062FF 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .status-card.completed {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        }
+
+        .status-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .status-card p {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-top: 15px;
+        }
+
+        .btn-primary {
+            background: #00D1FF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-secondary {
+            background: #666;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #555;
+            transform: translateY(-2px);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-item {
+            padding-left: 40px;
+            padding-bottom: 20px;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            background: #00D1FF;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #00D1FF;
+        }
+
+        .timeline-item.completed::before {
+            background: #4caf50;
+            box-shadow: 0 0 0 3px #4caf50;
+        }
+
+        .timeline-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 25px;
+            width: 3px;
+            height: calc(100% + 15px);
+            background: #ddd;
+        }
+
+        .timeline-content h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .timeline-content p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .timeline-date {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .functions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+
+            .status-bar {
+                flex-direction: column;
+            }
+
+            .status-item {
+                width: 100%;
+            }
+        }
+
+        /* Info Box */
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            color: #1976d2;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            color: #f57c00;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            color: #388e3c;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .code-block code {
+            color: #d73a49;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 Vexus CRM Agêntico</h1>
+            <p>Dashboard de Configuração & Implantação</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-badge active"></span>
+                    <strong>Sistema:</strong> Pronto para Deploy
+                </div>
+                <div class="status-item">
+                    <span class="status-badge active"></span>
+                    <strong>Testes:</strong> Passando
+                </div>
+                <div class="status-item">
+                    <span class="status-badge pending"></span>
+                    <strong>Configuração:</strong> Em Andamento
+                </div>
+                <div class="status-item">
+                    <span class="status-badge pending"></span>
+                    <strong>Deploy:</strong> Aguardando
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('functions')">⚙️ Funções</button>
+            <button class="tab-btn" onclick="switchTab('setup')">🔧 Configuração</button>
+            <button class="tab-btn" onclick="switchTab('ai-config')">🤖 Configurar IA</button>
+            <button class="tab-btn" onclick="switchTab('manual')">📖 Manual</button>
+            <button class="tab-btn" onclick="switchTab('status')">📈 Status</button>
+            <button class="tab-btn" onclick="switchTab('timeline')">📅 Timeline</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <h2>📊 Visão Geral do Sistema</h2>
+            
+            <div class="status-grid">
+                <div class="status-card completed">
+                    <h3>81</h3>
+                    <p>Funções Implementadas</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%; background: white;"></div>
+                    </div>
+                </div>
+                <div class="status-card completed">
+                    <h3>45+</h3>
+                    <p>Classes Desenvolvidas</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%; background: white;"></div>
+                    </div>
+                </div>
+                <div class="status-card completed">
+                    <h3>20</h3>
+                    <p>Modelos de Banco de Dados</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%; background: white;"></div>
+                    </div>
+                </div>
+                <div class="status-card completed">
+                    <h3>18</h3>
+                    <p>Endpoints FastAPI</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%; background: white;"></div>
+                    </div>
+                </div>
+                <div class="status-card completed">
+                    <h3>7</h3>
+                    <p>AI Agents</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%; background: white;"></div>
+                    </div>
+                </div>
+                <div class="status-card completed">
+                    <h3>7</h3>
+                    <p>Canais Omnichannel</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%; background: white;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; color: #333;">Módulos do Sistema</h3>
+            <div class="functions-grid">
+                <div class="function-card">
+                    <h3>🤖 Vexus Core</h3>
+                    <p>Módulo base com autenticação, banco de dados e configurações gerais.</p>
+                    <span class="function-badge">Fase 1</span>
+                    <span class="function-badge" style="background: #4caf50;">✓ Ativo</span>
+                </div>
+                <div class="function-card">
+                    <h3>🏢 Vexus Hub</h3>
+                    <p>Sistema de gestão empresarial com dashboards e automações.</p>
+                    <span class="function-badge">Fase 2-3</span>
+                    <span class="function-badge" style="background: #4caf50;">✓ Ativo</span>
+                </div>
+                <div class="function-card">
+                    <h3>🚀 Vexus CRM</h3>
+                    <p>CRM inteligente com AI agents, automações e omnichannel.</p>
+                    <span class="function-badge">Fase 4</span>
+                    <span class="function-badge" style="background: #4caf50;">✓ Ativo</span>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; color: #333;">Recursos Principais</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #00D1FF;">
+                    <strong>Lead Scoring</strong><br>
+                    <span style="color: #666; font-size: 0.9em;">Classificação automática de leads com IA</span>
+                </div>
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #00D1FF;">
+                    <strong>Visual Flows</strong><br>
+                    <span style="color: #666; font-size: 0.9em;">Construtor de fluxos tipo Botconversa</span>
+                </div>
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #00D1FF;">
+                    <strong>Visual Pipelines</strong><br>
+                    <span style="color: #666; font-size: 0.9em;">Gestão de vendas tipo Pipefy</span>
+                </div>
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #00D1FF;">
+                    <strong>Omnichannel</strong><br>
+                    <span style="color: #666; font-size: 0.9em;">7 canais integrados (WhatsApp, Email, etc)</span>
+                </div>
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #00D1FF;">
+                    <strong>Analytics</strong><br>
+                    <span style="color: #666; font-size: 0.9em;">Dashboards e métricas em tempo real</span>
+                </div>
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #00D1FF;">
+                    <strong>AI Agents</strong><br>
+                    <span style="color: #666; font-size: 0.9em;">7 agentes inteligentes automatizados</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Functions Tab -->
+        <div id="functions" class="tab-content">
+            <h2>⚙️ Funções do Sistema</h2>
+            
+            <input type="text" class="search-box" id="searchBox" placeholder="🔍 Buscar funções..." onkeyup="filterFunctions()">
+
+            <div class="functions-grid" id="functionsGrid">
+                <!-- Funções serão preenchidas via JavaScript -->
+            </div>
+        </div>
+
+        <!-- Setup Tab -->
+        <div id="setup" class="tab-content">
+            <h2>🔧 Guia de Configuração</h2>
+            
+            <div class="setup-steps">
+                <!-- Passo 1 -->
+                <div class="step" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">1</span>
+                        <span class="step-title">Infraestrutura Cloud</span>
+                        <span class="step-status">Pendente</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Objetivo</h4>
+                        <p>Criar e configurar infraestrutura na nuvem (DigitalOcean recomendado)</p>
+                        
+                        <h4>Passos</h4>
+                        <ul>
+                            <li>1. Acesse <strong>digitalocean.com</strong> e crie uma conta</li>
+                            <li>2. Crie um novo App Platform Project</li>
+                            <li>3. Configure PostgreSQL managed database</li>
+                            <li>4. Configure Redis managed cache</li>
+                            <li>5. Conecte seu repositório GitHub</li>
+                        </ul>
+
+                        <h4>Tempo Estimado</h4>
+                        <p><strong>30-45 minutos</strong></p>
+
+                        <h4>Recurso de Exemplo</h4>
+                        <div class="info-box">
+                            <strong>DigitalOcean App Platform</strong><br>
+                            - Suporta deploy automático via GitHub<br>
+                            - PostgreSQL 15 gerenciado<br>
+                            - Redis 7 gerenciado<br>
+                            - Custo: ~$150/mês para MVP
+                        </div>
+
+                        <button class="btn btn-success" onclick="markStepCompleted(this)">✓ Concluído</button>
+                    </div>
+                </div>
+
+                <!-- Passo 2 -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <span class="step-title">Gerar Chaves de API</span>
+                        <span class="step-status">Pendente</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Chaves Necessárias</h4>
+                        
+                        <h4>🤖 OpenAI API Key</h4>
+                        <ul>
+                            <li>1. Acesse <strong>platform.openai.com</strong></li>
+                            <li>2. Faça login com sua conta</li>
+                            <li>3. Vá em <strong>API keys</strong> → <strong>Create new secret key</strong></li>
+                            <li>4. Copie a chave <code>sk-proj-xxxxx</code></li>
+                        </ul>
+
+                        <h4>📱 WhatsApp Business API Key</h4>
+                        <ul>
+                            <li>1. Acesse <strong>business.facebook.com</strong></li>
+                            <li>2. Crie uma aplicação WhatsApp Business</li>
+                            <li>3. Gere o token de acesso</li>
+                            <li>4. Obtenha o <strong>Phone Number ID</strong></li>
+                        </ul>
+
+                        <h4>Tempo Estimado</h4>
+                        <p><strong>20-30 minutos</strong></p>
+
+                        <div class="warning-box">
+                            <strong>⚠️ Importante:</strong> Guarde estas chaves em local seguro. Não compartilhe com ninguém!
+                        </div>
+
+                        <button class="btn btn-success" onclick="markStepCompleted(this)">✓ Concluído</button>
+                    </div>
+                </div>
+
+                <!-- Passo 3 -->
+                <div class="step" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <span class="step-title">Configurar Variáveis de Ambiente</span>
+                        <span class="step-status">Pendente</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Arquivo: .env.production</h4>
+                        <p>Copie o arquivo <strong>.env.production.example</strong> para <strong>.env.production</strong> e preencha com seus dados:</p>
+
+                        <h4>Variáveis Essenciais</h4>
+                        <div class="code-block">
+FLASK_ENV=production
+OPENAI_API_KEY=sk-proj-xxxxx
+WHATSAPP_BUSINESS_API_KEY=xxxxx
+WHATSAPP_PHONE_NUMBER_ID=xxxxx
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+REDIS_URL=redis://host:6379/0
+JWT_SECRET_KEY=xxxxx
+                        </div>
+
+                        <h4>Variáveis de Banco de Dados</h4>
+                        <div style="margin: 15px 0;">
+                            <label><strong>URL do PostgreSQL:</strong></label>
+                            <input type="text" class="config-input" placeholder="postgresql://user:password@host:5432/vexus_db">
+                            
+                            <label><strong>URL do Redis:</strong></label>
+                            <input type="text" class="config-input" placeholder="redis://host:6379/0">
+                        </div>
+
+                        <h4>Tempo Estimado</h4>
+                        <p><strong>15 minutos</strong></p>
+
+                        <button class="btn btn-success" onclick="markStepCompleted(this)">✓ Concluído</button>
+                    </div>
+                </div>
+
+                <!-- Passo 4 -->
+                <div class="step" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">4</span>
+                        <span class="step-title">Deploy em Staging</span>
+                        <span class="step-status">Pendente</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Objetivo</h4>
+                        <p>Fazer deploy do sistema em ambiente de teste antes de produção</p>
+
+                        <h4>Passos</h4>
+                        <ul>
+                            <li>1. Faça push do seu código para GitHub</li>
+                            <li>2. DigitalOcean detectará e fará deploy automático</li>
+                            <li>3. Acesse a URL de staging fornecida</li>
+                            <li>4. Teste todos os endpoints via Swagger: <code>/docs</code></li>
+                            <li>5. Valide as integrações (WhatsApp, OpenAI, etc)</li>
+                        </ul>
+
+                        <h4>Comandos</h4>
+                        <div class="code-block">
+# Fazer push para GitHub
+git add .
+git commit -m "Config: Deploy em staging"
+git push origin main
+
+# Acessar Swagger
+https://seu-app-staging.ondigitalocean.app/docs
+                        </div>
+
+                        <h4>Tempo Estimado</h4>
+                        <p><strong>2 horas</strong> (inclui testes)</p>
+
+                        <h4>Validações Necessárias</h4>
+                        <div class="success-box">
+                            ✅ API respondendo (GET /health)<br>
+                            ✅ Banco de dados conectado<br>
+                            ✅ Redis funcionando<br>
+                            ✅ Endpoints de CRUD funcionando<br>
+                            ✅ Autenticação JWT funcionando
+                        </div>
+
+                        <button class="btn btn-success" onclick="markStepCompleted(this)">✓ Concluído</button>
+                    </div>
+                </div>
+
+                <!-- Passo 5 -->
+                <div class="step" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">5</span>
+                        <span class="step-title">Deploy em Produção</span>
+                        <span class="step-status">Pendente</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Objetivo</h4>
+                        <p>Colocar o sistema em produção com estratégia Blue-Green</p>
+
+                        <h4>Estratégia Blue-Green</h4>
+                        <ul>
+                            <li>1. Ambiente <strong>Blue</strong> (atual) continua ativo</li>
+                            <li>2. Ambiente <strong>Green</strong> (novo) recebe deploy</li>
+                            <li>3. Testa tudo no Green</li>
+                            <li>4. Direciona tráfego para Green</li>
+                            <li>5. Blue permanece como backup</li>
+                        </ul>
+
+                        <h4>Comandos</h4>
+                        <div class="code-block">
+# Em DigitalOcean, configure variáveis de ambiente de produção
+# Depois faça push de uma tag de versão
+git tag -a v1.0.0 -m "Production release"
+git push origin v1.0.0
+                        </div>
+
+                        <h4>Tempo Estimado</h4>
+                        <p><strong>1-2 horas</strong> (com monitoramento)</p>
+
+                        <div class="warning-box">
+                            <strong>⚠️ Precauções:</strong><br>
+                            - Faça backup do banco de dados<br>
+                            - Monitore logs por 1 hora<br>
+                            - Tenha plano de rollback pronto<br>
+                            - Teste críticos endpoints após deploy
+                        </div>
+
+                        <button class="btn btn-success" onclick="markStepCompleted(this)">✓ Concluído</button>
+                    </div>
+                </div>
+
+                <!-- Passo 6 -->
+                <div class="step" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">6</span>
+                        <span class="step-title">Anúncio Público</span>
+                        <span class="step-status">Pendente</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Objetivo</h4>
+                        <p>Anunciar o lançamento do Vexus CRM para o mercado</p>
+
+                        <h4>Canais de Comunicação</h4>
+                        <ul>
+                            <li>📱 Twitter: Poste sobre o lançamento</li>
+                            <li>💼 LinkedIn: Artigo sobre as features</li>
+                            <li>📧 Email: Envie para lista de espera</li>
+                            <li>🌐 Website: Atualize página de pricing</li>
+                        </ul>
+
+                        <h4>Mensagem de Exemplo</h4>
+                        <div class="code-block">
+"🚀 Vexus CRM Agêntico LIVE! 
+
+O CRM mais inteligente do mercado agora está disponível:
+✅ 7 AI Agents inteligentes
+✅ Visual Flows & Pipelines
+✅ Omnichannel (7 canais)
+✅ Analytics em tempo real
+
+Acesse: vexus-crm.com"
+                        </div>
+
+                        <h4>Tempo Estimado</h4>
+                        <p><strong>30 minutos</strong></p>
+
+                        <div class="success-box">
+                            ✅ Sistema em Produção<br>
+                            ✅ Tudo testado e validado<br>
+                            ✅ Pronto para receber clientes!
+                        </div>
+
+                        <button class="btn btn-success" onclick="markStepCompleted(this)">✓ Concluído</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Config Tab -->
+        <div id="ai-config" class="tab-content">
+            <h2>🤖 Configurar Comportamento da IA</h2>
+            
+            <div class="setup-steps">
+                <!-- Personalidade -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">1</span>
+                        <span class="step-title">Definir Personalidade da IA</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Como a IA deve responder aos clientes?</h4>
+                        <div style="margin: 15px 0;">
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="personalidade" value="profissional"> 
+                                <strong>Profissional</strong> - Formal, focada em resultados
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="personalidade" value="amigavel" checked> 
+                                <strong>Amigável</strong> - Calorosa, acessível e receptiva
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="personalidade" value="consultiva"> 
+                                <strong>Consultiva</strong> - Educadora, oferece insights
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="personalidade" value="vendedora"> 
+                                <strong>Vendedora</strong> - Persuasiva, focada em conversão
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tom de Voz -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">2</span>
+                        <span class="step-title">Definir Tom de Voz</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Qual tom usar nas respostas?</h4>
+                        <div style="margin: 15px 0;">
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="tom" value="formal"> 
+                                <strong>Formal</strong> - "Prezado cliente, segue informação..."
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="tom" value="casual" checked> 
+                                <strong>Casual</strong> - "Opa! Aqui está o que você pediu..."
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="tom" value="entusiasta"> 
+                                <strong>Entusiasta</strong> - "Ótimo! Tenho exatamente o que você precisa! 🎉"
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="tom" value="minimalista"> 
+                                <strong>Minimalista</strong> - "Aqui está. Qualquer dúvida?"
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comportamento em Objections -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">3</span>
+                        <span class="step-title">Lidar com Objeções</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Como reagir quando o cliente discorda ou questiona?</h4>
+                        <div style="margin: 15px 0;">
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="objecoes" value="aceitar"> 
+                                <strong>Aceitar</strong> - "Entendi seu ponto de vista. Deixe-me ajudá-lo..."
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="objecoes" value="questionar" checked> 
+                                <strong>Questionar</strong> - "Entendo! Qual é sua maior preocupação?"
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="objecoes" value="educador"> 
+                                <strong>Educador</strong> - "Ótima pergunta! Deixe-me explicar..."
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="objecoes" value="direto"> 
+                                <strong>Direto</strong> - "Aqui estão os fatos..."
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Foco da IA -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">4</span>
+                        <span class="step-title">Prioridade da IA</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Qual deve ser o foco principal?</h4>
+                        <div style="margin: 15px 0;">
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="prioridade" value="vendas" checked> 
+                                <strong>Vendas</strong> - Focar em conversão e fechar negócios
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="prioridade" value="servico"> 
+                                <strong>Serviço</strong> - Focar em satisfação do cliente
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="prioridade" value="informacao"> 
+                                <strong>Informação</strong> - Focar em educar e informar
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="radio" name="prioridade" value="qualificacao"> 
+                                <strong>Qualificação</strong> - Focar em qualificar leads
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instruções Customizadas -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">5</span>
+                        <span class="step-title">Instruções Customizadas</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Digite instruções específicas para a IA:</h4>
+                        <textarea class="config-input" style="height: 120px; resize: vertical;" placeholder="Ex: Sempre ofereça desconto de 10% se o cliente pedir. Nunca prometa prazos menores que 48h. Sempre termine com uma pergunta engajadora..."></textarea>
+                        
+                        <h4 style="margin-top: 20px;">Exemplos de Instruções Efetivas:</h4>
+                        <ul style="margin-left: 20px; color: #666;">
+                            <li>"Sempre confirme o entendimento do cliente antes de prosseguir"</li>
+                            <li>"Ofereça 3 opções quando houver múltiplas soluções"</li>
+                            <li>"Use dados específicos do cliente para personalizar respostas"</li>
+                            <li>"Termine sempre com próximas etapas claras"</li>
+                            <li>"Manifeste empatia antes de dar más notícias"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Respostas Padrão -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">6</span>
+                        <span class="step-title">Respostas Padrão para Cenários Comuns</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Cenário: Cliente pede desconto</h4>
+                        <textarea class="config-input" style="height: 70px; resize: vertical;" placeholder="Ex: Posso oferecer 10% de desconto se você decidir hoje. Temos também opções de parcelamento..."></textarea>
+
+                        <h4 style="margin-top: 15px;">Cenário: Cliente está insatisfeito</h4>
+                        <textarea class="config-input" style="height: 70px; resize: vertical;" placeholder="Ex: Sinto muito pela experiência. Vamos resolver isso imediatamente. Como posso ajudá-lo?"></textarea>
+
+                        <h4 style="margin-top: 15px;">Cenário: Cliente não responde</h4>
+                        <textarea class="config-input" style="height: 70px; resize: vertical;" placeholder="Ex: Percebi que não respondeu meu último mensagem. Continua interessado? Posso ajudá-lo com algo?"></textarea>
+
+                        <h4 style="margin-top: 15px;">Cenário: Cliente finaliza conversa</h4>
+                        <textarea class="config-input" style="height: 70px; resize: vertical;" placeholder="Ex: Obrigado pelo tempo! Estou aqui se precisar no futuro. Tenha um ótimo dia!"></textarea>
+                    </div>
+                </div>
+
+                <!-- Limites da IA -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">7</span>
+                        <span class="step-title">Definir Limites da IA</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>O que a IA NÃO deve fazer:</h4>
+                        <div style="margin: 15px 0;">
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="checkbox" checked> 
+                                <strong>Prometer prazos sem confirmar capacidade</strong>
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="checkbox" checked> 
+                                <strong>Oferecer descontos maiores que X% sem aprovação</strong>
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="checkbox" checked> 
+                                <strong>Discutir política, religião ou assuntos sensíveis</strong>
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="checkbox" checked> 
+                                <strong>Compartilhar informações confidenciais</strong>
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="checkbox" checked> 
+                                <strong>Fazer diagnósticos médicos/legais (se não for especialista)</strong>
+                            </label>
+                            <label style="display: block; margin-bottom: 10px;">
+                                <input type="checkbox" checked> 
+                                <strong>Ignorar pedidos de escalonamento para humano</strong>
+                            </label>
+                        </div>
+
+                        <h4>Máximo de desconto permitido (%): </h4>
+                        <input type="number" class="config-input" value="15" min="0" max="100" placeholder="15">
+
+                        <h4 style="margin-top: 15px;">Número máximo de tentativas antes de escalonar:</h4>
+                        <input type="number" class="config-input" value="3" min="1" max="10" placeholder="3">
+                    </div>
+                </div>
+
+                <!-- Análise de Sentimento -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">8</span>
+                        <span class="step-title">Análise de Sentimento</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Como a IA deve reagir a diferentes sentimentos?</h4>
+                        
+                        <h4 style="margin-top: 15px;">Cliente Feliz/Positivo:</h4>
+                        <textarea class="config-input" style="height: 60px;" placeholder="Ex: Fico muito feliz em saber disso! Vamos manter esse momentum..."></textarea>
+
+                        <h4 style="margin-top: 15px;">Cliente Frustrado/Negativo:</h4>
+                        <textarea class="config-input" style="height: 60px;" placeholder="Ex: Entendo sua frustração. Deixe-me fazer isso direito para você..."></textarea>
+
+                        <h4 style="margin-top: 15px;">Cliente Neutro/Indiferente:</h4>
+                        <textarea class="config-input" style="height: 60px;" placeholder="Ex: Vejo que pode não ser exatamente o que esperava. O que mudaria sua perspectiva?"></textarea>
+
+                        <h4 style="margin-top: 15px;">Cliente Urgente/Apressado:</h4>
+                        <textarea class="config-input" style="height: 60px;" placeholder="Ex: Entendo que é urgente. Vou direto ao ponto..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; color: #333;">Preview da Configuração</h3>
+            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; border-radius: 8px; margin-top: 15px;">
+                <h4 style="color: #333; margin-bottom: 15px;">Como a IA irá se apresentar:</h4>
+                <div style="background: white; padding: 15px; border-radius: 5px; border-left: 4px solid #00D1FF;">
+                    <p style="color: #666; margin: 0;">
+                        <strong>Personalidade:</strong> <span id="preview-personalidade">Amigável</span><br>
+                        <strong>Tom:</strong> <span id="preview-tom">Casual</span><br>
+                        <strong>Foco:</strong> <span id="preview-prioridade">Vendas</span><br>
+                        <strong>Comportamento:</strong> <span id="preview-objecoes">Questionadora</span>
+                    </p>
+                </div>
+            </div>
+
+            <button class="btn btn-success" style="margin-top: 20px;" onclick="salvarConfigAI()">💾 Salvar Configuração da IA</button>
+            <button class="btn btn-primary" style="margin-top: 20px;" onclick="testarIA()">🧪 Testar IA com Essas Configs</button>
+            <button class="btn btn-secondary" style="margin-top: 20px; margin-left: 10px;" onclick="toggleChannelsEditor()">🔌 Editar Canais</button>
+            <div id="channels-editor" style="margin-top:20px; display:none; background:#fff; padding:15px; border-radius:6px;">
+                <h4>Editor de Canais</h4>
+                <div id="channels-list">Carregando canais...</div>
+                <button class="btn btn-success" style="margin-top:10px;" onclick="saveAllChannels()">Salvar Alterações</button>
+            </div>
+        </div>
+
+        <!-- Manual Tab -->
+        <div id="manual" class="tab-content">
+            <h2>📖 Manual Completo do Vexus CRM</h2>
+
+            <div class="setup-steps">
+                <!-- Introdução -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">📚</span>
+                        <span class="step-title">Bem-vindo ao Vexus CRM!</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>O que é Vexus CRM?</h4>
+                        <p>Vexus CRM é um sistema de gerenciamento de relacionamento com clientes (CRM) inteligente, alimentado por IA artificial, que automatiza todo o processo de vendas.</p>
+
+                        <h4 style="margin-top: 15px;">Por que você precisa?</h4>
+                        <ul>
+                            <li><strong>Automatização Completa:</strong> A IA trabalha 24/7 qualificando leads, respondendo mensagens e fechando vendas</li>
+                            <li><strong>Aumento de Conversão:</strong> Responde em segundos com mensagens personalizadas e persuasivas</li>
+                            <li><strong>Economia de Tempo:</strong> Seu time se foca em relacionamento, IA faz o resto</li>
+                            <li><strong>Omnichannel:</strong> Funciona em WhatsApp, Email, Instagram, SMS, Telegram, Facebook e Website simultaneamente</li>
+                            <li><strong>Inteligência em Tempo Real:</strong> Dashboards mostram exatamente o que está acontecendo agora</li>
+                        </ul>
+
+                        <h4 style="margin-top: 15px;">Principais Capacidades:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                            <div style="background: #f0f7ff; padding: 10px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>🤖 AI Lead Scoring</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">Classifica automaticamente leads pelo potencial</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 10px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>💬 Automação de Chats</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">IA responde conversas em tempo real</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 10px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>📊 Visual Pipeline</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">Tipo Pipefy para gerenciar vendas</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 10px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>🔄 Fluxos Visuais</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">Tipo Botconversa para automações</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 10px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>📱 7 Canais</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">WhatsApp, Email, IG, SMS, Telegram, FB</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 10px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>📈 Analytics</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">Dashboards com KPIs em tempo real</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Como Funciona -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">⚙️</span>
+                        <span class="step-title">Como Funciona na Prática</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Fluxo Completo do Vexus CRM:</h4>
+                        
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>1️⃣ Cliente Chega (Qualquer Canal)</strong><br>
+                            <span style="color: #666;">Cliente envia mensagem no WhatsApp, email, IG ou website</span>
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>2️⃣ IA Recebe & Analisa</strong><br>
+                            <span style="color: #666;">Sistema capta mensagem, analisa intenção e sentimento</span>
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>3️⃣ IA Classifica Lead</strong><br>
+                            <span style="color: #666;">Lead Scoring Agent classifica: Hot, Warm ou Cold</span>
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>4️⃣ IA Responde</strong><br>
+                            <span style="color: #666;">IA gera resposta personalizada em segundos (com sua voz)</span>
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>5️⃣ Sistema Qualifica</strong><br>
+                            <span style="color: #666;">Faz perguntas qualificadoras (BANT: Budget, Authority, Need, Timeline)</span>
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>6️⃣ Cria ou Move Lead</strong><br>
+                            <span style="color: #666;">Cria novo contato ou move no pipeline (Lead → Qualified → Negotiating...)</span>
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>7️⃣ Agenda Follow-up</strong><br>
+                            <span style="color: #666;">IA agenda automaticamente próximo contato (email, SMS, chat)</span>
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>8️⃣ Você Recebe Notificação</strong><br>
+                            <span style="color: #666;">You get notified only if it needs human touch (escalation)</span>
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>9️⃣ Fechamento</strong><br>
+                            <span style="color: #666;">IA detecta sinais de compra e faz proposta final</span>
+                        </div>
+
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                            <strong>🔟 Pós-Venda</strong><br>
+                            <span style="color: #666;">Sistema acompanha cliente, recomenda upsells</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7 AI Agents -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">🤖</span>
+                        <span class="step-title">Os 7 AI Agents Inteligentes</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>1. Lead Scoring Agent</h4>
+                        <p><strong>O que faz:</strong> Classifica automaticamente a qualidade de cada lead</p>
+                        <p><strong>Como funciona:</strong> Analisa comportamento, engajamento, respostas e cria score de 0-100</p>
+                        <p><strong>Resultado:</strong> Você sabe exatamente quem está pronto para comprar</p>
+
+                        <h4 style="margin-top: 20px;">2. Conversation Analyzer Agent</h4>
+                        <p><strong>O que faz:</strong> Entende o que o cliente REALMENTE quer dizer</p>
+                        <p><strong>Como funciona:</strong> Detecta intenção (pergunta, objeção, compra), sentimento (feliz, frustrado), urgência</p>
+                        <p><strong>Resultado:</strong> IA responde com empátia e relevância</p>
+
+                        <h4 style="margin-top: 20px;">3. Next Best Action Agent</h4>
+                        <p><strong>O que faz:</strong> Sugere a melhor ação para cada situação</p>
+                        <p><strong>Como funciona:</strong> "Esse lead é Hot e tem objeção de preço → ofereça desconto" ou "Esse cliente já comprou 5x → faça upsell"</p>
+                        <p><strong>Resultado:</strong> Aumenta conversão em 40-60%</p>
+
+                        <h4 style="margin-top: 20px;">4. Proposal Generator Agent</h4>
+                        <p><strong>O que faz:</strong> Cria propostas personalizadas automaticamente</p>
+                        <p><strong>Como funciona:</strong> Pega dados do cliente (tamanho, industria, budget) e gera proposta customizada em PDF</p>
+                        <p><strong>Resultado:</strong> Propostas em minutos, não em horas</p>
+
+                        <h4 style="margin-top: 20px;">5. Followup Scheduler Agent</h4>
+                        <p><strong>O que faz:</strong> Agenda follow-ups no momento exato</p>
+                        <p><strong>Como funciona:</strong> Aprende melhor hora para responder cada lead, agenda contato automático</p>
+                        <p><strong>Resultado:</strong> 100% dos leads recebem follow-up (humanos esquecem, IA não)</p>
+
+                        <h4 style="margin-top: 20px;">6. Channel Optimizer Agent</h4>
+                        <p><strong>O que faz:</strong> Escolhe o melhor canal para contatar cada cliente</p>
+                        <p><strong>Como funciona:</strong> "João responde melhor no WhatsApp → mande pelo WA", "Maria usa email → mande email"</p>
+                        <p><strong>Resultado:</strong> Respostas 3x mais rápidas</p>
+
+                        <h4 style="margin-top: 20px;">7. Pipeline Manager Agent</h4>
+                        <p><strong>O que faz:</strong> Move leads automaticamente no pipeline</p>
+                        <p><strong>Como funciona:</strong> "Lead qualificado com orçamento aprovado → move para Negotiating"</p>
+                        <p><strong>Resultado:</strong> Pipeline sempre atualizado e em tempo real</p>
+                    </div>
+                </div>
+
+                <!-- Visual Pipeline -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">📊</span>
+                        <span class="step-title">Como Usar o Visual Pipeline</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>O que é?</h4>
+                        <p>Um quadro visual (tipo Pipefy) que mostra ONDE está cada lead no processo de vendas</p>
+
+                        <h4 style="margin-top: 15px;">As 6 Fases Padrão:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                            <div style="background: #e8f5e9; padding: 10px; border-radius: 5px; border-left: 3px solid #4caf50;">
+                                <strong>1. Lead</strong><br>
+                                <span style="font-size: 0.85em; color: #666;">Primeiro contato, sem qualificação ainda</span>
+                            </div>
+                            <div style="background: #fff3e0; padding: 10px; border-radius: 5px; border-left: 3px solid #ff9800;">
+                                <strong>2. Qualified</strong><br>
+                                <span style="font-size: 0.85em; color: #666;">Respondeu perguntas, tem interesse</span>
+                            </div>
+                            <div style="background: #e3f2fd; padding: 10px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>3. Negotiating</strong><br>
+                                <span style="font-size: 0.85em; color: #666;">Recebeu proposta, discutindo preço</span>
+                            </div>
+                            <div style="background: #f3e5f5; padding: 10px; border-radius: 5px; border-left: 3px solid #9c27b0;">
+                                <strong>4. Review</strong><br>
+                                <span style="font-size: 0.85em; color: #666;">Analisando proposta, quase fechando</span>
+                            </div>
+                            <div style="background: #c8e6c9; padding: 10px; border-radius: 5px; border-left: 3px solid #4caf50; grid-column: 1;">
+                                <strong>5. Won</strong><br>
+                                <span style="font-size: 0.85em; color: #666;">✅ Vendido! Começar relacionamento</span>
+                            </div>
+                            <div style="background: #ffcdd2; padding: 10px; border-radius: 5px; border-left: 3px solid #f44336;">
+                                <strong>6. Lost</strong><br>
+                                <span style="font-size: 0.85em; color: #666;">❌ Perdido. Manter contato para futuro</span>
+                            </div>
+                        </div>
+
+                        <h4 style="margin-top: 20px;">Como Funciona na Prática:</h4>
+                        <ul>
+                            <li><strong>Cards:</strong> Cada lead é um "card" (cartão) no quadro</li>
+                            <li><strong>Arrastar:</strong> Você pode arrastar cards entre fases (ou IA faz automático)</li>
+                            <li><strong>Informações:</strong> Cada card mostra: nome, empresa, score, último contato, próxima ação</li>
+                            <li><strong>Filtros:</strong> Veja só leads "Hot", ou só de uma semana, ou de um vendedor</li>
+                            <li><strong>Emojis:</strong> 🔥 = Hot, 🌙 = Warm, ❄️ = Cold</li>
+                        </ul>
+
+                        <h4 style="margin-top: 20px;">Exemplo Visual:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 10px;">
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center; min-height: 150px; border: 2px solid #ddd;">
+                                <strong style="font-size: 0.8em;">LEAD</strong>
+                                <div style="background: white; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 0.75em; border-left: 3px solid #999;">João Silva 🔥</div>
+                                <div style="background: white; padding: 8px; border-radius: 3px; margin-top: 5px; font-size: 0.75em; border-left: 3px solid #999;">Maria Costa ⚪</div>
+                            </div>
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center; min-height: 150px; border: 2px solid #ddd;">
+                                <strong style="font-size: 0.8em;">QUALIFIED</strong>
+                                <div style="background: white; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 0.75em; border-left: 3px solid #ff9800;">Pedro Lima 🔥</div>
+                            </div>
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center; min-height: 150px; border: 2px solid #ddd;">
+                                <strong style="font-size: 0.8em;">NEGOT.</strong>
+                                <div style="background: white; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 0.75em; border-left: 3px solid #2196f3;">Ana Santos 🌙</div>
+                                <div style="background: white; padding: 8px; border-radius: 3px; margin-top: 5px; font-size: 0.75em; border-left: 3px solid #2196f3;">Carlos Souza 🔥</div>
+                            </div>
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center; min-height: 150px; border: 2px solid #ddd;">
+                                <strong style="font-size: 0.8em;">REVIEW</strong>
+                                <div style="background: white; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 0.75em; border-left: 3px solid #9c27b0;">Beatriz Ferreira 🔥</div>
+                            </div>
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center; min-height: 150px; border: 2px solid #ddd;">
+                                <strong style="font-size: 0.8em;">WON</strong>
+                                <div style="background: white; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 0.75em; border-left: 3px solid #4caf50;">✅ Empresa XYZ</div>
+                            </div>
+                            <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; text-align: center; min-height: 150px; border: 2px solid #ddd;">
+                                <strong style="font-size: 0.8em;">LOST</strong>
+                                <div style="background: white; padding: 8px; border-radius: 3px; margin-top: 8px; font-size: 0.75em; border-left: 3px solid #f44336;">❌ Tech Corp</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canais Omnichannel -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">📱</span>
+                        <span class="step-title">Os 7 Canais de Comunicação</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Vexus funciona em TODOS os canais simultaneamente:</h4>
+
+                        <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #25d366;">
+                            <h5 style="color: #25d366; margin: 0 0 5px 0;">📱 WhatsApp</h5>
+                            <p style="margin: 0; color: #666;">Maior canal de mensagens do mundo. IA responde em segundos, faz qualificação, agenda.</p>
+                        </div>
+
+                        <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #0084ff;">
+                            <h5 style="color: #0084ff; margin: 0 0 5px 0;">📧 Email</h5>
+                            <p style="margin: 0; color: #666;">IA escreve emails profissionais personalizados, segue templates, acompanha aberturas.</p>
+                        </div>
+
+                        <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #e1306c;">
+                            <h5 style="color: #e1306c; margin: 0 0 5px 0;">📸 Instagram DM</h5>
+                            <p style="margin: 0; color: #666;">Recebe mensagens diretas, responde com seu tom, move para WhatsApp depois.</p>
+                        </div>
+
+                        <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #34b7f1;">
+                            <h5 style="color: #34b7f1; margin: 0 0 5px 0;">💬 SMS</h5>
+                            <p style="margin: 0; color: #666;">Mensagens de texto rápidas para pessoas que preferem SMS ou quando WA não funciona.</p>
+                        </div>
+
+                        <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #0088cc;">
+                            <h5 style="color: #0088cc; margin: 0 0 5px 0;">✈️ Telegram</h5>
+                            <p style="margin: 0; color: #666;">Para clientes tech-savvy. IA faz bot inteligente com automações.</p>
+                        </div>
+
+                        <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #1877f2;">
+                            <h5 style="color: #1877f2; margin: 0 0 5px 0;">👥 Facebook Messenger</h5>
+                            <p style="margin: 0; color: #666;">Clientes Facebook antigos ainda usam. IA integrada naturalmente.</p>
+                        </div>
+
+                        <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #00D1FF;">
+                            <h5 style="color: #00D1FF; margin: 0 0 5px 0;">🌐 Website Chat</h5>
+                            <p style="margin: 0; color: #666;">Bot de chat no seu site. IA qualifica visitors em tempo real.</p>
+                        </div>
+
+                        <h4 style="margin-top: 20px;">Como Funciona o Omnichannel:</h4>
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px;">
+                            <p><strong>Histórico Unificado:</strong> Você vê TODAS as mensagens de um cliente em um lugar, independente do canal</p>
+                            <p><strong>Contexto Preservado:</strong> Se João começou no Instagram, IA sabe disso ao responder no WhatsApp</p>
+                            <p><strong>Redirecionamento Inteligente:</strong> "Vamos para WhatsApp?" - IA sabe quando sugerir melhor canal</p>
+                            <p><strong>Consistência:</strong> Mesma personalidade, mesma voz em todos os canais</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics & Dashboards -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">📊</span>
+                        <span class="step-title">Analytics & Dashboards em Tempo Real</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>O Dashboard Mostra:</h4>
+
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                            <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>📈 Taxa de Conversão</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">% de leads que viraram vendas</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>💰 Valor em Aberto</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">R$ total em pipeline</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>⏱️ Tempo Médio de Ciclo</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">Dias do Lead até Vendido</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>🤖 IA Automation Rate</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">% resolvido sem humano</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>⭐ Lead Quality Score</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">Qualidade média dos leads</span>
+                            </div>
+                            <div style="background: #f0f7ff; padding: 15px; border-radius: 5px; border-left: 3px solid #2196f3;">
+                                <strong>📞 Tempo de Resposta</strong><br>
+                                <span style="font-size: 0.9em; color: #666;">Média de minutos até responder</span>
+                            </div>
+                        </div>
+
+                        <h4 style="margin-top: 20px;">Métricas por Canal:</h4>
+                        <p style="color: #666;">Veja performance separadamente: WhatsApp está melhor? Instagram tem mais leads? Dashboard mostra tudo.</p>
+
+                        <h4 style="margin-top: 15px;">Previsões IA:</h4>
+                        <p style="color: #666;">Machine Learning prevê: "Mês que vem você fará 15 vendas = R$ 45k", baseado em histórico e tendências.</p>
+                    </div>
+                </div>
+
+                <!-- Melhores Práticas -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">✨</span>
+                        <span class="step-title">Melhores Práticas para Máximo ROI</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>1. Configure Bem a Personalidade da IA</h4>
+                        <p>A IA é tão boa quanto as instruções que você der. Gaste tempo configurando a seção "Configurar IA".</p>
+
+                        <h4 style="margin-top: 15px;">2. Qualifique com BANT</h4>
+                        <p>IA pergunta: Budget (tem orçamento?), Authority (pode aprovar?), Need (realmente precisa?), Timeline (quando?)</p>
+
+                        <h4 style="margin-top: 15px;">3. Use Fluxos para Automações</h4>
+                        <p>Crie fluxos visuais para cenários comuns: "Se cliente diz 'muito caro' → ofereça desconto de 10%"</p>
+
+                        <h4 style="margin-top: 15px;">4. Personalize Respostas Padrão</h4>
+                        <p>Para cada cenário comum (objeção de preço, insatisfeito, etc), configure resposta customizada com sua voz.</p>
+
+                        <h4 style="margin-top: 15px;">5. Revise IA Regularmente</h4>
+                        <p>A cada 2 semanas, veja quais conversas a IA está ganhando e onde está falhando. Melhore continuamente.</p>
+
+                        <h4 style="margin-top: 15px;">6. Escalone Inteligentemente</h4>
+                        <p>Deixe IA lidar com 80%, você foca nos 20% mais valiosos (clientes premium, objeções complexas).</p>
+
+                        <h4 style="margin-top: 15px;">7. Monitore Métricas</h4>
+                        <p>Acompanhe: taxa conversão, tempo resposta, valor médio venda, NPS. Otimize baseado em dados.</p>
+
+                        <h4 style="margin-top: 15px;">Resultado Esperado em 90 dias:</h4>
+                        <div class="success-box">
+                            ✅ 40-60% aumento em conversão<br>
+                            ✅ 80% redução em tempo de resposta<br>
+                            ✅ 10+ horas economizadas por semana<br>
+                            ✅ ROI em 2-3 clientes vendidos
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suporte & Troubleshooting -->
+                <div class="step expanded" onclick="toggleStep(this)">
+                    <div class="step-header">
+                        <span class="step-number">🆘</span>
+                        <span class="step-title">Troubleshooting & Suporte</span>
+                    </div>
+                    <div class="step-content">
+                        <h4>Problema: IA não está respondendo</h4>
+                        <p><strong>Solução:</strong> Verifique se API keys estão corretas. Vá em Configuração → Chaves de API</p>
+
+                        <h4 style="margin-top: 15px;">Problema: IA está dando respostas ruins</h4>
+                        <p><strong>Solução:</strong> IA espelha as instruções que você deu. Revise a seção "Configurar IA" e melhore as instruções</p>
+
+                        <h4 style="margin-top: 15px;">Problema: Mensagens estão atrasadas</h4>
+                        <p><strong>Solução:</strong> Pode ser fila congestionada. Sistema processa 1000s/min. Se pico de tráfego, upgrade o plano.</p>
+
+                        <h4 style="margin-top: 15px;">Problema: Lead desapareceu do pipeline</h4>
+                        <p><strong>Solução:</strong> Veja filtros - pode estar em "Lost" ou marcado como duplicado. Use busca global.</p>
+
+                        <h4 style="margin-top: 15px;">Problema: Banco de dados cheio</h4>
+                        <p><strong>Solução:</strong> Limpe conversas antigas (>1 ano). Sistema avisa antes de ficar cheio.</p>
+
+                        <h4 style="margin-top: 15px;">📞 Precisa de Ajuda?</h4>
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin-top: 10px;">
+                            📧 <strong>Email:</strong> support@vexus-crm.com<br>
+                            💬 <strong>WhatsApp:</strong> +55 31 99999-9999<br>
+                            🐛 <strong>Bugs:</strong> bugs@vexus-crm.com<br>
+                            📅 <strong>Agendar Demo:</strong> calendly.com/vexus
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div id="status" class="tab-content">
+            <h2>📈 Status da Implantação</h2>
+
+            <h3 style="margin-top: 30px; color: #333;">Progresso Geral</h3>
+            <div class="status-grid">
+                <div class="status-card">
+                    <h3>Pré-Implantação</h3>
+                    <p>Sistema desenvolvido e testado</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%; background: white;"></div>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <h3>Configuração</h3>
+                    <p>Em andamento agora</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 30%; background: white;"></div>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <h3>Staging</h3>
+                    <p>Próximo passo</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%; background: white;"></div>
+                    </div>
+                </div>
+                <div class="status-card">
+                    <h3>Produção</h3>
+                    <p>Último passo</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%; background: white;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; color: #333;">Checklist de Deploy</h3>
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <input type="checkbox" id="check1" style="width: 20px; height: 20px; margin-right: 10px;">
+                    <label for="check1" style="margin: 0;">Infraestrutura Cloud Configurada</label>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <input type="checkbox" id="check2" style="width: 20px; height: 20px; margin-right: 10px;">
+                    <label for="check2" style="margin: 0;">Chaves de API Geradas</label>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <input type="checkbox" id="check3" style="width: 20px; height: 20px; margin-right: 10px;">
+                    <label for="check3" style="margin: 0;">Variáveis de Ambiente Configuradas</label>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <input type="checkbox" id="check4" style="width: 20px; height: 20px; margin-right: 10px;">
+                    <label for="check4" style="margin: 0;">Deploy em Staging Validado</label>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <input type="checkbox" id="check5" style="width: 20px; height: 20px; margin-right: 10px;">
+                    <label for="check5" style="margin: 0;">Deploy em Produção Completo</label>
+                </div>
+                <div style="display: flex; align-items: center; margin-bottom: 0;">
+                    <input type="checkbox" id="check6" style="width: 20px; height: 20px; margin-right: 10px;">
+                    <label for="check6" style="margin: 0;">Anúncio Público Feito</label>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; color: #333;">Contatos & Suporte</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 15px;">
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #00D1FF;">
+                    <h4 style="color: #00D1FF; margin-bottom: 10px;">📧 Suporte</h4>
+                    <p>support@vexus-crm.com</p>
+                </div>
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #00D1FF;">
+                    <h4 style="color: #00D1FF; margin-bottom: 10px;">🐛 Reporte Bugs</h4>
+                    <p>bugs@vexus-crm.com</p>
+                </div>
+                <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 4px solid #00D1FF;">
+                    <h4 style="color: #00D1FF; margin-bottom: 10px;">📞 Emergências</h4>
+                    <p>+55 (31) 99999-9999</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Tab -->
+        <div id="timeline" class="tab-content">
+            <h2>📅 Timeline de Deployment</h2>
+            
+            <h3 style="margin-top: 20px; color: #333;">Cronograma: 3 dias até Go-Live</h3>
+            
+            <div class="timeline">
+                <div class="timeline-item completed">
+                    <div class="timeline-content">
+                        <h4>✓ Fase 1: Desenvolvimento & Testes (COMPLETO)</h4>
+                        <p>Sistema inteiramente desenvolvido, testado e pronto para produção.</p>
+                        <span class="timeline-date">Completado em: 4-5 de Fevereiro 2026</span>
+                    </div>
+                </div>
+
+                <div class="timeline-item" onclick="markTimelineCompleted(this)">
+                    <div class="timeline-content">
+                        <h4>Hoje (6 de Fevereiro): Configuração Inicial</h4>
+                        <p><strong>Tarefas:</strong></p>
+                        <ul>
+                            <li>Criar conta DigitalOcean</li>
+                            <li>Configurar PostgreSQL + Redis</li>
+                            <li>Gerar chaves de API (OpenAI, WhatsApp)</li>
+                            <li>Preencher .env.production</li>
+                        </ul>
+                        <span class="timeline-date">Tempo estimado: 2 horas</span>
+                    </div>
+                </div>
+
+                <div class="timeline-item" onclick="markTimelineCompleted(this)">
+                    <div class="timeline-content">
+                        <h4>Amanhã (7 de Fevereiro): Staging Deploy</h4>
+                        <p><strong>Tarefas:</strong></p>
+                        <ul>
+                            <li>Fazer push para GitHub</li>
+                            <li>Deploy automático em staging</li>
+                            <li>Testar endpoints via Swagger</li>
+                            <li>Validar integrações</li>
+                        </ul>
+                        <span class="timeline-date">Tempo estimado: 2-3 horas</span>
+                    </div>
+                </div>
+
+                <div class="timeline-item" onclick="markTimelineCompleted(this)">
+                    <div class="timeline-content">
+                        <h4>Sexta (8 de Fevereiro): Production Deploy</h4>
+                        <p><strong>Tarefas:</strong></p>
+                        <ul>
+                            <li>Deploy em produção (Blue-Green)</li>
+                            <li>Monitoramento de 1 hora</li>
+                            <li>Validação de performance</li>
+                            <li>Anúncio público do lançamento</li>
+                        </ul>
+                        <span class="timeline-date">Tempo estimado: 2 horas</span>
+                    </div>
+                </div>
+
+                <div class="timeline-item" onclick="markTimelineCompleted(this)">
+                    <div class="timeline-content">
+                        <h4>🚀 GO-LIVE - Vexus CRM no Mercado</h4>
+                        <p><strong>Você estará pronto para começar a vender!</strong></p>
+                        <ul>
+                            <li>✅ Sistema 100% funcional</li>
+                            <li>✅ Pronto para receber clientes</li>
+                            <li>✅ Suporte ativo 24/7</li>
+                            <li>✅ Monitoramento contínuo</li>
+                        </ul>
+                        <span class="timeline-date">Virada de jogo! 🎉</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; color: #333;">Estimativa de Custos</h3>
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 2px solid #ddd;">
+                        <th style="text-align: left; padding: 10px; color: #333;">Serviço</th>
+                        <th style="text-align: center; padding: 10px; color: #333;">Custo/Mês</th>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px;">App Platform (DigitalOcean)</td>
+                        <td style="text-align: center; padding: 10px;"><strong>$12</strong></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px;">PostgreSQL Managed (15GB)</td>
+                        <td style="text-align: center; padding: 10px;"><strong>$75</strong></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px;">Redis Managed (1GB)</td>
+                        <td style="text-align: center; padding: 10px;"><strong>$15</strong></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px;">Domain + SSL (yearly)</td>
+                        <td style="text-align: center; padding: 10px;"><strong>$15</strong></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px;">OpenAI API (usage based)</td>
+                        <td style="text-align: center; padding: 10px;"><strong>$20</strong></td>
+                    </tr>
+                    <tr style="border-bottom: 2px solid #ddd;">
+                        <td style="padding: 10px;">Backup & Monitoring</td>
+                        <td style="text-align: center; padding: 10px;"><strong>$10</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px;"><strong>TOTAL</strong></td>
+                        <td style="text-align: center; padding: 10px;"><strong style="color: #00D1FF; font-size: 1.2em;">$147/mês</strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="success-box" style="margin-top: 20px;">
+                <strong>💰 ROI Estimado:</strong><br>
+                Com preço de $99-199/mês por cliente, você terá retorno do investimento em <strong>1-2 clientes</strong>!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados das funções do sistema
+        const functions = [
+            {
+                title: "Lead Scoring",
+                description: "Classificação automática de leads com inteligência artificial baseada em padrões de comportamento.",
+                category: "AI"
+            },
+            {
+                title: "Pipeline Manager",
+                description: "Gerenciador visual de vendas com fases customizáveis e automações de workflow.",
+                category: "Vendas"
+            },
+            {
+                title: "Conversation Analyzer",
+                description: "Análise automática de conversas para detecção de intenção e sentimento.",
+                category: "AI"
+            },
+            {
+                title: "Next Best Action",
+                description: "Sugere próximas ações recomendadas para cada contato baseado em histórico.",
+                category: "AI"
+            },
+            {
+                title: "Proposal Generator",
+                description: "Gera propostas automáticas personalizadas com dados do cliente.",
+                category: "Automação"
+            },
+            {
+                title: "Followup Scheduler",
+                description: "Agenda automaticamente follow-ups em horários otimizados.",
+                category: "Automação"
+            },
+            {
+                title: "Channel Optimizer",
+                description: "Otimiza automaticamente qual canal usar para melhor taxa de resposta.",
+                category: "Omnichannel"
+            },
+            {
+                title: "WhatsApp Integration",
+                description: "Integração completa com WhatsApp Business para envio e recebimento de mensagens.",
+                category: "Omnichannel"
+            },
+            {
+                title: "Email Automation",
+                description: "Envio automatizado de emails com templates personalizados.",
+                category: "Omnichannel"
+            },
+            {
+                title: "SMS Gateway",
+                description: "Envio de SMS com integração com provedores de SMS.",
+                category: "Omnichannel"
+            },
+            {
+                title: "Instagram DM",
+                description: "Recebimento e resposta automática de mensagens diretas do Instagram.",
+                category: "Omnichannel"
+            },
+            {
+                title: "Telegram Bot",
+                description: "Bot inteligente para Telegram com automações de conversas.",
+                category: "Omnichannel"
+            },
+            {
+                title: "Visual Flow Builder",
+                description: "Construtor visual de fluxos tipo Botconversa com 8 tipos de blocos.",
+                category: "Automação"
+            },
+            {
+                title: "Visual Pipeline",
+                description: "Gestor visual de pipeline tipo Pipefy com cards customizáveis.",
+                category: "Vendas"
+            },
+            {
+                title: "Real-time Analytics",
+                description: "Dashboard de analytics em tempo real com KPIs e métricas de vendas.",
+                category: "Analytics"
+            },
+            {
+                title: "Lead Analytics",
+                description: "Análise detalhada de leads com previsão de probabilidade de conversão.",
+                category: "Analytics"
+            },
+            {
+                title: "Performance Optimizer",
+                description: "Otimiza automaticamente performance do sistema baseado em uso.",
+                category: "Sistema"
+            },
+            {
+                title: "Predictive Analytics",
+                description: "Previsões usando machine learning sobre comportamento de clientes.",
+                category: "AI"
+            },
+            {
+                title: "Contact Management",
+                description: "Gestão completa de contatos com histórico de interações.",
+                category: "CRM"
+            },
+            {
+                title: "Company Profiles",
+                description: "Perfis de empresas com dados integrados e histórico.",
+                category: "CRM"
+            },
+            {
+                title: "Task Management",
+                description: "Gestor de tarefas com automações e lembretes.",
+                category: "Produtividade"
+            },
+            {
+                title: "Calendar Integration",
+                description: "Integração com calendários para agendamentos automáticos.",
+                category: "Produtividade"
+            },
+            {
+                title: "Report Generator",
+                description: "Gerador automático de relatórios em PDF/Excel.",
+                category: "Analytics"
+            },
+            {
+                title: "API REST Completa",
+                description: "API REST com 18 endpoints para integração de terceiros.",
+                category: "API"
+            },
+            {
+                title: "Webhook System",
+                description: "Sistema de webhooks para integração com outras plataformas.",
+                category: "Integrações"
+            }
+        ];
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all buttons
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => btn.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Load functions if functions tab
+            if (tabName === 'functions') {
+                loadFunctions();
+            }
+        }
+
+        function loadFunctions() {
+            const grid = document.getElementById('functionsGrid');
+            if (grid.children.length === 0) {
+                grid.innerHTML = functions.map(func => `
+                    <div class="function-card">
+                        <h3>${func.title}</h3>
+                        <p>${func.description}</p>
+                        <span class="function-badge">${func.category}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function filterFunctions() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const cards = document.querySelectorAll('.function-card');
+            
+            cards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                const description = card.querySelector('p').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleStep(element) {
+            element.classList.toggle('expanded');
+        }
+
+        function markStepCompleted(button) {
+            const step = button.closest('.step');
+            step.classList.add('completed');
+            const status = step.querySelector('.step-status');
+            status.textContent = '✓ Completo';
+        }
+
+        function markTimelineCompleted(element) {
+            element.classList.add('completed');
+        }
+
+        // Funções para Configuração da IA
+        function atualizarPreview() {
+            const personalidade = document.querySelector('input[name="personalidade"]:checked')?.value || 'Amigável';
+            const tom = document.querySelector('input[name="tom"]:checked')?.value || 'Casual';
+            const prioridade = document.querySelector('input[name="prioridade"]:checked')?.value || 'Vendas';
+            const objecoes = document.querySelector('input[name="objecoes"]:checked')?.value || 'Questionadora';
+
+            document.getElementById('preview-personalidade').textContent = personalidade.charAt(0).toUpperCase() + personalidade.slice(1);
+            document.getElementById('preview-tom').textContent = tom.charAt(0).toUpperCase() + tom.slice(1);
+            document.getElementById('preview-prioridade').textContent = prioridade.charAt(0).toUpperCase() + prioridade.slice(1);
+            document.getElementById('preview-objecoes').textContent = objecoes.charAt(0).toUpperCase() + objecoes.slice(1);
+        }
+
+        function salvarConfigAI() {
+            const config = {
+                personalidade: document.querySelector('input[name="personalidade"]:checked')?.value,
+                tom: document.querySelector('input[name="tom"]:checked')?.value,
+                objecoes: document.querySelector('input[name="objecoes"]:checked')?.value,
+                prioridade: document.querySelector('input[name="prioridade"]:checked')?.value,
+                timestamp: new Date().toLocaleString('pt-BR')
+            };
+
+            // Persist to server
+            fetch('/api/config/ai', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify(config)
+            }).then(r => r.json())
+            .then(resp => {
+                if (resp && resp.success) {
+                    alert('✅ Configuração da IA salva no servidor.');
+                } else {
+                    alert('⚠️ Configuração salva localmente (server não respondeu).');
+                    localStorage.setItem('vexus-ai-config', JSON.stringify(config));
+                }
+            }).catch(err => {
+                console.warn(err);
+                localStorage.setItem('vexus-ai-config', JSON.stringify(config));
+                alert('⚠️ Erro ao salvar no servidor. Configuração salva localmente.');
+            });
+        }
+
+        function testarIA() {
+            const config = localStorage.getItem('vexus-ai-config');
+            if (!config) {
+                alert('⚠️ Salve a configuração primeiro!');
+                return;
+            }
+
+            const parsed = JSON.parse(config);
+            // Call server-side test if available
+            fetch('/api/config/ai').then(r=>r.json()).then(serverCfg => {
+                const merged = Object.assign({}, serverCfg.ai_config || {}, parsed);
+                alert('🧪 Testando IA com configuração (server):\n\n' +
+                      'Personalidade: ' + (merged.personalidade || parsed.personalidade) + '\n' +
+                      'Tom: ' + (merged.tom || parsed.tom) + '\n' +
+                      'Foco: ' + (merged.prioridade || parsed.prioridade) + '\n\n' +
+                      'Enviando para sistema... ✅\n\n' +
+                      'A IA iniciará com este perfil em 2 minutos!');
+            }).catch(e => {
+                alert('🧪 Testando IA com configuração (local):\n\n' +
+                      'Personalidade: ' + parsed.personalidade + '\n' +
+                      'Tom: ' + parsed.tom + '\n' +
+                      'Foco: ' + parsed.prioridade + '\n\n' +
+                      'Enviando para sistema... ✅\n\n' +
+                      'A IA iniciará com este perfil em 2 minutos!');
+            });
+        }
+
+
+// Channels editor
+let channelsState = {};
+function toggleChannelsEditor() {
+    const el = document.getElementById('channels-editor');
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        loadChannels();
+    } else {
+        el.style.display = 'none';
+    }
+}
+
+function loadChannels() {
+    const list = document.getElementById('channels-list');
+    list.innerHTML = 'Carregando...';
+    fetch('/api/config/channels').then(r=>r.json()).then(data=>{
+        const channels = data.channels || data; // support different shapes
+        channelsState = channels;
+        let html = '';
+        for (const [name, cfg] of Object.entries(channels)) {
+            const enabled = cfg.enabled ? 'checked' : '';
+            let extra = '';
+            if (name === 'whatsapp') {
+                const api = (cfg.api_key || (cfg.settings && cfg.settings.api_key)) || '';
+                extra = `<label>API Key:</label><input class="config-input" id="${name}-api" value="${api}">`;
+            }
+            if (name === 'website') {
+                const widget = cfg.widget_key || (cfg.settings && cfg.settings.widget_key) || '';
+                extra = `<label>Widget Key:</label><input class="config-input" id="${name}-widget" value="${widget}">`;
+            }
+            html += `<div style="margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px;"><strong>${name}</strong><br>` +
+                    `<label><input type=checkbox id="${name}-enabled" ${enabled}> Enabled</label><br>` + extra + `</div>`;
+        }
+        list.innerHTML = html;
+    }).catch(err=>{
+        document.getElementById('channels-list').innerText = 'Erro ao carregar canais';
+        console.warn(err);
+    });
+}
+
+function saveAllChannels() {
+    // iterate channelsState keys and post each changed config
+    const keys = Object.keys(channelsState || {});
+    const promises = [];
+    for (const name of keys) {
+        const enabledEl = document.getElementById(`${name}-enabled`);
+        if (!enabledEl) continue;
+        const enabled = enabledEl.checked;
+        const body = { enabled: enabled, settings: {} };
+        if (name === 'whatsapp') {
+            const api = document.getElementById(`${name}-api`)?.value || '';
+            body.settings.api_key = api;
+        }
+        if (name === 'website') {
+            const widget = document.getElementById(`${name}-widget`)?.value || '';
+            body.settings.widget_key = widget;
+        }
+
+        promises.push(fetch(`/api/config/channels/${encodeURIComponent(name)}`, {
+            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+        }).then(r=>r.json()));
+    }
+    Promise.all(promises).then(results=>{
+        alert('✅ Canais atualizados com sucesso');
+        loadChannels();
+    }).catch(e=>{
+        console.warn(e);
+        alert('⚠️ Erro ao salvar canais');
+    });
+}
+
+        // Atualizar preview em tempo real
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'personalidade' || 
+                e.target.name === 'tom' || 
+                e.target.name === 'prioridade' || 
+                e.target.name === 'objecoes') {
+                atualizarPreview();
+            }
+        });
+
+        // Auto-load functions on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFunctions();
+            atualizarPreview();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+════════════════════════════════════════════════════════════════════════════════
+   ⚡ RESUMÃO - 3 PASSOS SUPER RÁPIDOS (5 MINUTOS)
+════════════════════════════════════════════════════════════════════════════════
+
+Seu Número: 22988030759
+
+════════════════════════════════════════════════════════════════════════════════
+   PASSO 1: BUSINESS.FACEBOOK.COM (2 MINUTOS)
+════════════════════════════════════════════════════════════════════════════════
+
+1. Abra: https://business.facebook.com
+2. Faça login (Facebook/conta que usa)
+3. Settings (lado esquerdo ou engrenagem)
+4. Business Info
+
+COPIE:
+   ✓ Business ID (ou WAID...)
+   ✓ WhatsApp Phone Number ID (números)
+
+
+════════════════════════════════════════════════════════════════════════════════
+   PASSO 2: DEVELOPERS.FACEBOOK.COM (2 MINUTOS)
+════════════════════════════════════════════════════════════════════════════════
+
+1. Abra: https://developers.facebook.com
+2. Faça login
+3. Meus Aplicativos → seu app (ou crie um novo)
+4. Settings → Basic
+5. Gerar Token de Usuário
+6. Marque:
+   ☑️ whatsapp_business_messaging
+   ☑️ whatsapp_business_management
+7. Gerar Token
+
+COPIE: O longo token que apareceu (EAA...muito...longo...)
+
+
+════════════════════════════════════════════════════════════════════════════════
+   PASSO 3: NEXUS CRM (1 MINUTO)
+════════════════════════════════════════════════════════════════════════════════
+
+1. Abra: http://localhost:8000/frontend/app.html
+2. Faça login
+3. ⚙️ Configurações
+4. Procure: "💬 WhatsApp Business API"
+5. Preencha:
+
+   📱 Phone Number ID: [cole aqui os números do Passo 1]
+   🏢 Business Account ID: [cole aqui o ID do Passo 1]
+   🔐 Access Token: [cole aqui o longo token do Passo 2]
+   🔗 Webhook Verify Token: [digite algo tipo: abc123]
+
+6. Clique: ✅ SALVAR
+7. Clique: 🧪 TESTAR
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ✅ ESPERADO:
+════════════════════════════════════════════════════════════════════════════════
+
+Status: ✅ Conectado ao WhatsApp Business
+
+🎉 PRONTO!
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ❌ DEU ERRO? LEIA:
+════════════════════════════════════════════════════════════════════════════════
+
+WHATSAPP_TROUBLESHOOTING.txt (soluções rápidas)
+
+
+════════════════════════════════════════════════════════════════════════════════

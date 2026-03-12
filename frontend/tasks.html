@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarefas - Vexus CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; }
+        .sidebar {
+            width: 256px;
+            background-color: #4338ca;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar a { 
+            display: block; 
+            padding: 0.75rem; 
+            border-radius: 0.375rem; 
+            margin-bottom: 0.5rem;
+            color: white;
+            text-decoration: none;
+        }
+        .sidebar a:hover { background-color: rgba(255,255,255,0.1); }
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div style="font-weight: bold; margin-bottom: 1.5rem; font-size: 1.25rem;">📊 Vexus CRM</div>
+            <a href="/dashboard.html">🏠 Dashboard</a>
+            <a href="/contacts.html">👥 Contatos</a>
+            <a href="/pipeline.html">📊 Pipeline</a>
+            <a href="/tasks.html" style="background-color: rgba(255,255,255,0.2);">✅ Tarefas</a>
+            <a href="/automations.html">⚙️ Automações</a>
+            <a href="/reports.html">📈 Relatórios</a>
+            <a href="/settings.html">⚙️ Configurações</a>
+            <div style="flex: 1;"></div>
+            <button onclick="logout()" style="padding: 0.75rem; background-color: rgba(255,255,255,0.1); border: none; color: white; border-radius: 0.375rem; cursor: pointer;">🚪 Sair</button>
+        </nav>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="header">
+                <h1 style="font-size: 1.875rem; font-weight: 600; color: #1f2937;">Tarefas e Compromissos</h1>
+                <button onclick="openTaskModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition font-medium">+ Nova Tarefa</button>
+            </div>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Task List -->
+                    <div class="lg:col-span-2 bg-white rounded-lg shadow p-6">
+                        <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Minhas Tarefas</h2>
+                        <div class="space-y-3" id="task-list">
+                            <p class="text-gray-500 text-sm">Nenhuma tarefa. <a href="#" onclick="openTaskModal(); return false" class="text-indigo-600">Criar uma agora</a></p>
+                        </div>
+                    </div>
+
+                    <!-- Filter Sidebar -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 style="font-weight: 600; margin-bottom: 1rem;">Filtros</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem;">Status</label>
+                                <select id="filterStatus" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="filterTasks()">
+                                    <option value="">Todos</option>
+                                    <option value="pending">Pendente</option>
+                                    <option value="done">Concluído</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem;">Tipo</label>
+                                <select id="filterType" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="filterTasks()">
+                                    <option value="">Todos</option>
+                                    <option value="task">Tarefa</option>
+                                    <option value="call">Ligação</option>
+                                    <option value="meeting">Reunião</option>
+                                    <option value="followup">Follow-up</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal de nova tarefa -->
+    <div id="taskModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg w-full max-w-lg p-6">
+            <h3 class="text-lg font-semibold mb-4">Nova Tarefa</h3>
+            <form id="taskForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+                    <input type="text" id="taskTitle" required class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                    <select id="taskType" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="task">Tarefa</option>
+                        <option value="call">Ligação</option>
+                        <option value="meeting">Reunião</option>
+                        <option value="followup">Follow-up</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data de Vencimento</label>
+                    <input type="date" id="taskDate" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex justify-end space-x-2 pt-4 border-t">
+                    <button type="button" onclick="closeTaskModal()" class="px-4 py-2 border rounded-lg hover:bg-gray-50 transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [
+            { id: 1, title: 'Ligar para João Silva', type: 'call', date: '2026-02-17', status: 'pending' },
+            { id: 2, title: 'Reunião com equipe', type: 'meeting', date: '2026-02-18', status: 'pending' },
+            { id: 3, title: 'Enviar proposta', type: 'task', date: '2026-02-16', status: 'done' }
+        ];
+
+        async function checkAuthPage() {
+            await checkAuth();
+        }
+
+        // logout() será importado do auth.js (remove localStorage user também)
+
+
+        function openTaskModal() {
+            document.getElementById('taskModal').classList.remove('hidden');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+            document.getElementById('taskForm').reset();
+        }
+
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function filterTasks() {
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const status = document.getElementById('filterStatus').value;
+            const type = document.getElementById('filterType').value;
+            
+            const filtered = tasks.filter(t => {
+                if (status && t.status !== status) return false;
+                if (type && t.type !== type) return false;
+                return true;
+            });
+
+            const taskList = document.getElementById('task-list');
+            
+            if (filtered.length === 0) {
+                taskList.innerHTML = '<p class="text-gray-500 text-sm">Nenhuma tarefa encontrada.</p>';
+                return;
+            }
+
+            taskList.innerHTML = filtered.map(task => `
+                <div style="padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: ${task.status === 'done' ? '#f3f4f6' : 'white'};">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <input type="checkbox" ${task.status === 'done' ? 'checked' : ''} onchange="toggleTask(${task.id})" style="margin-right: 0.5rem;">
+                            <span style="${task.status === 'done' ? 'text-decoration: line-through; color: #9ca3af;' : 'font-weight: 500;'}">${task.title}</span>
+                            <div style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                                <span style="display: inline-block; padding: 0.25rem 0.5rem; background-color: #e0e7ff; border-radius: 0.25rem; margin-right: 0.5rem;">${task.type}</span>
+                                📅 ${task.date}
+                            </div>
+                        </div>
+                        <button onclick="deleteTask(${task.id})" style="color: #ef4444; cursor: pointer;">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.status = task.status === 'done' ? 'pending' : 'done';
+                saveTasks();
+                renderTasks();
+            }
+        }
+
+        function deleteTask(id) {
+            if (confirm('Deletar esta tarefa?')) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasks();
+                renderTasks();
+            }
+        }
+
+        document.getElementById('taskForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newTask = {
+                id: Math.max(...tasks.map(t => t.id), 0) + 1,
+                title: document.getElementById('taskTitle').value,
+                type: document.getElementById('taskType').value,
+                date: document.getElementById('taskDate').value,
+                status: 'pending'
+            };
+            tasks.push(newTask);
+            saveTasks();
+            closeTaskModal();
+            renderTasks();
+        });
+
+        checkAuth();
+        renderTasks();
+    </script>
+</body>
+</html>

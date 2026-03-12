@@ -1,0 +1,46 @@
+name: Deploy to Production
+
+on:
+push:
+branches: [ main ]
+tags: [ 'v*' ]
+
+jobs:
+deploy:
+runs-on: ubuntu-latest
+environment: production
+
+steps:
+- uses: actions/checkout@v4
+
+- name: Set up SSH
+run: |
+mkdir -p ~/.ssh
+echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+chmod 600 ~/.ssh/id_rsa
+ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+- name: Deploy to Server
+env:
+DEPLOY_PATH: "/var/www/vexus-service"
+run: |
+ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+cd $DEPLOY_PATH
+git pull origin main
+docker-compose pull
+docker-compose up -d --build
+docker system prune -f
+EOF
+
+- name: Run Database Migrations
+run: |
+ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+cd /var/www/vexus-service
+docker-compose exec -T web python -m alembic upgrade head
+EOF
+
+- name: Health Check
+run: |
+echo "Waiting for services to be ready..."
+sleep 30
+curl -f ${{ secrets.SERVER_URL }}/health || exit 1

@@ -1,0 +1,366 @@
+════════════════════════════════════════════════════════════════════════════════
+   🆘 GUIA PRÁTICO: ENCONTRAR TOKEN WHATSAPP BUSINESS - SEU NÚMERO
+════════════════════════════════════════════════════════════════════════════════
+
+Seu Telefone: 22988030759 (RJ, Oi/Claro/Vivo)
+Status: ❌ Token não encontrado, conexão falhando
+
+⏱️  TEMPO ESTIMADO: 5-10 minutos
+
+════════════════════════════════════════════════════════════════════════════════
+   PARTE 1: TEM CONTA META (FACEBOOK)? ✅ VERIFICAR PRIMEIRO
+════════════════════════════════════════════════════════════════════════════════
+
+☑️  Passo 1.1: Verificar conta Meta
+
+   1. Abra seu navegador
+   2. Acesse: https://www.facebook.com
+   3. Faça login com seu email/número
+   
+   ❓ Você conseguiu fazer login?
+      
+   SIM ✅ → Continue para Passo 1.2
+   NÃO ❌ → Crie uma conta em facebook.com primeiro (leva 2 min)
+
+
+☑️  Passo 1.2: Ter uma Página Facebook
+
+   1. Ainda logado no Facebook
+   2. Clique seu nome (canto superior direito)
+   3. → Configurações e Privacidade
+   4. → Configurações
+   5. → Páginas (lado esquerdo)
+   6. → Clique "Criar Página"
+   
+   Ou procure por: "criar página facebook"
+   
+   Preencha:
+   └─ Nome: "Minha Empresa" (ou qualquer nome)
+   └─ Categoria: "Negócio Local" ou "E-commerce"
+   └─ Clique "Criar Página"
+   
+   ⏱️ Tempo: ~2 minutos
+
+
+════════════════════════════════════════════════════════════════════════════════
+   PARTE 2: OBTER CREDENCIAIS DO WHATSAPP BUSINESS
+════════════════════════════════════════════════════════════════════════════════
+
+☑️  Passo 2.1: Acessar Meta Business Suite
+
+   1. Abra: https://business.facebook.com
+   2. Faça login com sua conta Facebook
+   3. Você verá um painel com suas páginas/negócios
+   4. Se não tiver nenhum, clique "Criar Conta de Negócio"
+   
+   Preencha:
+   └─ Nome: "Meu Negócio"
+   └─ País: "Brasil"
+   └─ Clique "Criar"
+   
+   ⏱️ Tempo: ~1 minuto
+
+
+☑️  Passo 2.2: Adicionar WhatsApp na Conta
+
+   1. Na página inicial de business.facebook.com
+   2. Clique "Configurações" (canto inferior esquerdo)
+   3. → Apps e Websites
+   4. → Adicionar Apps
+   5. Procure por "WhatsApp Business"
+   6. Clique nela → "Adicionar App"
+   
+   ⏱️ Tempo: ~1 minuto
+
+
+☑️  Passo 2.3: Conectar seu Número de WhatsApp 🔑 IMPORTANTE
+
+   1. Após adicionar app WhatsApp, aparecerá um painel
+   2. Clique em "Começar" ou "Get Started"
+   3. Selecione: "Conectar número de negócio"
+   
+   4. ⚠️ AQUI VÊEM OPÇÕES:
+   
+      a) "Usar número existente":
+         └─ Se você já tem o número de WhatsApp
+         └─ Escolha seu país: Brasil 🇧🇷
+         └─ Digite seu número: 22988030759
+         └─ Confirme o código que receberá
+         
+      b) "Comprar número novo":
+         └─ Se não tiver um número especificamente de negócio
+         └─ Selecione país e linguagem
+         └─ Siga instruções
+   
+   5. Depois de confirmar número → Clique "Próximo"
+   
+   ⏱️ Tempo: ~2 minutos
+
+
+════════════════════════════════════════════════════════════════════════════════
+   PARTE 3: ENCONTRAR OS 3 IDs NECESSÁRIOS 🔑🔑🔑
+════════════════════════════════════════════════════════════════════════════════
+
+Você precisa de EXATAMENTE 3 coisas:
+
+   1️⃣  PHONE_NUMBER_ID (ID do seu telefone comercial)
+   2️⃣  BUSINESS_ACCOUNT_ID (ID da empresa)
+   3️⃣  ACCESS_TOKEN (Senha/Token de autorização)
+
+
+☑️  Passo 3.1: Encontrar PHONE_NUMBER_ID
+
+   1. Ainda em business.facebook.com
+   2. Vá para: "Settings" (engrenagem) → "API Setup"
+   3. Procure por: "Phone Number" ou "WhatsApp Phone Number"
+   4. Você verá algo como:
+      
+      ┌─────────────────────────────────┐
+      │ Phone Number ID: 1234567890     │
+      └─────────────────────────────────┘
+   
+   5. COPIE este número (só números, nada de + ou parênteses)
+   6. Cole em um bloco de notas (vamos precisar depois)
+
+
+☑️  Passo 3.2: Encontrar BUSINESS_ACCOUNT_ID
+
+   1. Ainda em business.facebook.com
+   2. Clique seu avatar (canto superior direito)
+   3. → Configurações
+   4. → Informações da Empresa (lado esquerdo, embaixo)
+   5. Procure por: "Business ID" ou "WAID"
+   6. Você verá algo como:
+      
+      ┌─────────────────────────────────┐
+      │ Business ID: WAID98765432....    │
+      └─────────────────────────────────┘
+   
+   7. COPIE este ID
+   8. Cole no bloco de notas
+
+
+☑️  Passo 3.3: Gerar ACCESS_TOKEN 🔐 SUPER IMPORTANTE
+
+   ⚠️  Este é o "token secreto" que faz tudo funcionar
+   
+   1. Abra: https://developers.facebook.com (NOTA: é diferentes.facebook.com)
+   2. Se não tiver conta, crie com seu email
+   3. Faça login
+   4. Você vê: "Meus Aplicativos" (canto superior direito)
+   5. Clique em "Meus Aplicativos"
+   6. Procure por seu app WhatsApp (pode estar listado)
+   
+   ❓ NÃO VÊ SEU APP?
+      
+      └─ Clique "Criar Aplicativos"
+      └─ Tipo: "Business"
+      └─ Nome: "Nexus CRM"
+      └─ Selecione: "WhatsApp"
+      └─ Pressione "Criar"
+   
+   7. Dentro do seu app, clique "Settings" (engrenagem) → "About"
+   8. NO LADO DIREITO, clique "Gerar Token de Usuário"
+   9. Selecione permissões:
+      
+      ✓ whatsapp_business_messaging
+      ✓ whatsapp_business_management
+   
+   10. Clique "Gerar Token"
+   11. Você verá um LONGO TOKEN assim:
+       
+       EAA...muito...comprido...mais...caracteres
+   
+   12. ⚠️  COPIE O TOKEN COMPLETO e GUARDE EM LUGAR SEGURO
+   13. Cole no bloco de notas
+
+
+════════════════════════════════════════════════════════════════════════════════
+   PARTE 4: CONFIGURAR NO NEXUS CRM
+════════════════════════════════════════════════════════════════════════════════
+
+Agora você tem os 3 items:
+   ✓ PHONE_NUMBER_ID = ______________ (copie aqui)
+   ✓ BUSINESS_ACCOUNT_ID = ______________ (copie aqui)
+   ✓ ACCESS_TOKEN = ______________ (copie aqui)
+
+
+☑️  Passo 4.1: Abrir o Nexus CRM
+
+   1. Abra seu navegador
+   2. Digite: http://localhost:8000/frontend/app.html
+   3. Faça login com sua conta do Nexus
+   4. Você verá o Dashboard
+
+
+☑️  Passo 4.2: Ir para Configurações
+
+   1. Procure pelo ícone ⚙️ (engrenagem) no canto inferior direito
+   2. Clique nele
+   3. A página carrega (pode demorar 1-2 segundos)
+   4. Procure por: "💬 WhatsApp Business API"
+
+
+☑️  Passo 4.3: Preencher os Campos
+
+   Na tela de WhatsApp, você verá:
+   
+   📱 Phone Number ID
+   └─ Cole aqui o valor do Passo 3.1
+   
+   🏢 Business Account ID
+   └─ Cole aqui o valor do Passo 3.2
+   
+   🔐 Access Token
+   └─ Cole aqui o LONGO TOKEN do Passo 3.3
+   
+   🔗 Webhook Verify Token
+   └─ Digite qualquer coisa aleatória, tipo: "meutoken123"
+
+
+☑️  Passo 4.4: Testar e Salvar
+
+   1. Clique "✅ Salvar Configuração"
+   2. Espere a mensagem: "Configuração salva com sucesso"
+   3. Clique "🧪 Testar Conexão"
+   4. Você verá:
+      
+      ✅ "Conectado ao WhatsApp Business" = SUCESSO!!
+      ❌ Qualquer erro = leia a seção ERROS abaixo
+
+
+════════════════════════════════════════════════════════════════════════════════
+   🆘 SE ALGO DER ERRADO - ERROS COMUNS
+════════════════════════════════════════════════════════════════════════════════
+
+❌ ERRO: "401 Unauthorized - Invalid token"
+   └─ Problema: Token está errado ou expirado
+   └─ Solução:
+      1. Copie o token COMPLETO (não deixe nada de fora)
+      2. Se não funcionar, gere um novo em developers.facebook.com
+      3. Espere 30 segundos antes de testar novamente
+
+
+❌ ERRO: "Phone number ID inválido"
+   └─ Problema: Copiar ID errado
+   └─ Solução:
+      1. Volte em business.facebook.com
+      2. Vá para Settings → API Setup
+      3. Procure novamente pelo Phone Number ID
+      4. Cole CERTINHO, sem espaços ou símbolos
+
+
+❌ ERRO: "Business Account ID inválido"
+   └─ Problema: Id está incompleto
+   └─ Solução:
+      1. Copie o WAID inteiro (não deixe nada de fora)
+      2. Se começar com "WAID", deixe assim mesmo
+
+
+❌ ERRO: "Preencha os campos obrigatórios"
+   └─ Problema: Deixou algum campo em branco
+   └─ Solução:
+      Certifique que preencheu:
+      ✓ Phone Number ID (números)
+      ✓ Business Account ID (pode começar com WAID)
+      ✓ Access Token (longo, começa com EAA)
+      ✓ Webhook Verify Token (qualquer coisa simples)
+
+
+❌ ERRO: "Webhook verification failed"
+   └─ Problema: Seu servidor não está acessível
+   └─ Solução:
+      1. Certifique que servidor está rodando
+      2. Teste: curl http://localhost:8000
+      3. Se não responde, rode: python app_server.py
+
+
+════════════════════════════════════════════════════════════════════════════════
+   🎯 CHECKLIST FINAL
+════════════════════════════════════════════════════════════════════════════════
+
+Antes de testar, você tem:
+
+[ ] Uma conta Facebook criada e ativa
+[ ] Uma página comercial criada
+[ ] Conta Meta Business Suite criada
+[ ] WhatsApp conectado à conta comercial
+[ ] Confirmou seu número: 22988030759
+[ ] Copiou o PHONE_NUMBER_ID
+[ ] Copiou o BUSINESS_ACCOUNT_ID
+[ ] Gerou um novo ACCESS_TOKEN
+[ ] Criou um WEBHOOK_VERIFY_TOKEN simples
+[ ] Nexus CRM aberto e logado
+[ ] Preencher todos os 4 campos em Configurações
+[ ] Clicou "Salvar Configuração"
+[ ] Clicou "Testar Conexão"
+[ ] Viu mensagem: ✅ Conectado
+
+
+════════════════════════════════════════════════════════════════════════════════
+   💡 DICAS IMPORTANTES
+════════════════════════════════════════════════════════════════════════════════
+
+1️⃣  O ACCESS_TOKEN expira (geralmente 60 dias)
+    └─ Se parar de funcionar depois de um mês, gere um novo
+
+2️⃣  NUNCA compartilhe seu ACCESS_TOKEN
+    └─ Qualquer um com este token pode enviar mensagens em seu nome
+
+3️⃣  Copie TUDO: espaços, underscores, traços
+    └─ Um caractere errado = não funciona
+
+4️⃣  Se mudar de internet/IP, webhook pode não funcionar
+    └─ Para teste em produção, use Ngrok ou Railway
+
+5️⃣  WhatsApp limita a 1000 mensagens/dia no início
+    └─ Após aprovação, aumenta para milhares
+
+
+════════════════════════════════════════════════════════════════════════════════
+   ✨ QUANDO FUNCIONAR...
+════════════════════════════════════════════════════════════════════════════════
+
+Depois que conectar:
+
+1. Você conseguirá ENVIAR mensagens
+   └─ No Nexus: Configurações > WhatsApp > Enviar Mensagem
+   └─ Digite um número e mensagem
+   └─ Verá chegar no seu WhatsApp em segundos
+
+2. Você conseguirá RECEBER mensagens
+   └─ Quando alguém mandar mensagem no seu número comercial
+   └─ Aparecerá em: Configurações > WhatsApp > "Últimas Mensagens"
+
+3. Criar LEADS automaticamente
+   └─ Cada mensagem recebida = novo lead no CRM
+
+4. Responder com IA integrada
+   └─ Padrão: IA responde
+   └─ Manual: Você responde manualmente
+
+
+════════════════════════════════════════════════════════════════════════════════
+   📞 RESUMO RÁPIDO - COPIE APÓS SEGUIR TUDO:
+════════════════════════════════════════════════════════════════════════════════
+
+MEU TOKEN/IDS (Guardar aqui):
+
+   Meu Número: 22988030759
+   
+   PHONE_NUMBER_ID: _________________________________
+   
+   BUSINESS_ACCOUNT_ID: _________________________________
+   
+   ACCESS_TOKEN: _________________________________
+   
+   WEBHOOK_VERIFY_TOKEN: _________________________________
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+PRONTO! Siga estes passos e seu WhatsApp vai funcionar! 🚀
+
+Se travar em algum passo, me avise qual é!
+
+════════════════════════════════════════════════════════════════════════════════

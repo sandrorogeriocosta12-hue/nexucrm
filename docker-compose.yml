@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: vexus-postgres
+    environment:
+      POSTGRES_USER: vexus
+      POSTGRES_PASSWORD: vexus_password_123
+      POSTGRES_DB: vexus_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vexus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # use host networking to avoid creation of custom bridge network
+    network_mode: host
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: vexus-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    network_mode: host
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: vexus-backend
+    environment:
+      DATABASE_URL: postgresql://vexus:vexus_password_123@localhost:5432/vexus_db
+      REDIS_URL: redis://localhost:6379/0
+      SECRET_KEY: ${SECRET_KEY:-vexus-secret-key-change-in-production}
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:9000,http://localhost:8081,http://localhost:8080"
+      ENV: ${ENV:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8000"   # host port changed to 8080 to avoid conflicts
+    volumes:
+      - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    network_mode: host
+    command: uvicorn app.api:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend (Nginx)
+  frontend:
+    image: nginx:alpine
+    container_name: vexus-frontend
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8081:80"   # frontend served on host port 8081 to avoid collisions
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    network_mode: host
+
+volumes:
+  postgres_data:
+  redis_data:
+
+# networks:
+#   vexus-network:
+#     driver: bridge
+
+# Start: docker-compose -f docker-compose.yml up -d
+# Stop:  docker-compose -f docker-compose.yml down
+# Logs:  docker-compose -f docker-compose.yml logs -f
+# Reset: docker-compose -f docker-compose.yml down -v

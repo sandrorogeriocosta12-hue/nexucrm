@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Serviços existentes da Parte 1 (extensões)
+  web:
+    environment:
+      - ENABLE_SALES_DASHBOARD=true
+      - ENABLE_PARTNER_PORTAL=true
+      - SALES_TEAM_EMAILS=team@vexus.ai
+    volumes:
+      - ./sales_templates:/app/sales_templates
+      - ./partner_docs:/app/partner_docs
+
+  # Novo serviço para processamento de comissões
+  commission-processor:
+    build: .
+    command: python -m app.commission_processor
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://vexus:password@db:5432/vexus_hub
+      - REDIS_URL=redis://redis:6379/0
+      - PAGARME_API_KEY=${PAGARME_API_KEY}
+    depends_on:
+      - db
+      - redis
+    restart: daily
+
+  # Serviço de notificações comerciais
+  sales-notifier:
+    build: .
+    command: python -m app.sales_notifier
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://vexus:password@db:5432/vexus_hub
+      - SMTP_SERVER=smtp.gmail.com
+      - SMTP_PORT=587
+    depends_on:
+      - web
+    restart: unless-stopped
+
+  # Painel de parceiros (separado para escalabilidade)
+  partner-portal:
+    build: .
+    command: gunicorn -w 4 -b 0.0.0.0:5001 app.partner_dashboard:partner_bp
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://vexus:password@db:5432/vexus_hub
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  sales_templates:
+  partner_docs:

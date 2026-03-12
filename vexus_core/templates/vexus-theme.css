@@ -1,0 +1,108 @@
+/* vexus-theme.css - Vexus Oceanic Blue Palette */
+:root {
+  --vexus-bg: #0A1120;
+  --vexus-card: #161F32;
+  --vexus-card-hover: #1E2D3F;
+  --vexus-border: #2D3F4F;
+  --vexus-primary: #00D1FF; /* Electric Blue - IA/Ação */
+  --vexus-secondary: #0062FF; /* Cyber Cyan - Corporativo */
+  --vexus-success: #10B981; /* Emerald - Conversão */
+  --vexus-text: #F8FAFC;
+  --vexus-glow-primary: 0 0 20px rgba(0, 209, 255, 0.4);
+  --vexus-glow-secondary: 0 0 15px rgba(0, 98, 255, 0.3);
+}
+
+body {
+  background-color: var(--vexus-bg);
+  color: var(--vexus-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Efeito Glassmorphism para cards */
+.glass-card {
+  background: rgba(22, 31, 50, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(45, 63, 79, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 209, 255, 0.05);
+}
+
+/* Botão com glow do accent (electric blue) pulsante */
+.btn-glow {
+  background-color: var(--vexus-primary);
+  color: var(--vexus-bg);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: var(--vexus-glow-primary);
+  border: none;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 6px;
+}
+.btn-glow:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(0, 209, 255, 0.6);
+  background-color: #00E6FF;
+}
+
+/* Barra de temperatura para lead score */
+.lead-temp {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #00D1FF, #0062FF, #FF1744);
+}
+.lead-temp-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--vexus-primary);
+  mix-blend-mode: screen;
+}
+
+/* botões secundários */
+.btn-secondary {
+  background-color: var(--vexus-secondary);
+  color: white;
+  transition: background 0.3s;
+  border: none;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+.btn-secondary:hover {
+  background-color: #0052CC;
+}
+
+/* inputs padrão */
+.input-base {
+  background: var(--vexus-card);
+  border: 1px solid var(--vexus-border);
+  color: var(--vexus-text);
+  padding: 0.65rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.input-base:focus {
+  outline: none;
+  border-color: var(--vexus-primary);
+  box-shadow: var(--vexus-glow-primary);
+  background: rgba(22, 31, 50, 1);
+}
+
+/* modal simples */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal {
+  background: var(--vexus-card);
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 0 40px rgba(0, 209, 255, 0.2);
+  border: 1px solid var(--vexus-border);
+  max-width: 90vw;
+}

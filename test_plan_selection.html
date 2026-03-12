@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Plan Selection</title>
+</head>
+<body>
+    <h1>Test Plan Selection Debug</h1>
+    <p>Open DevTools Console to see debug output</p>
+    
+    <script>
+        // Simular o que deveria acontecer
+        console.log('=== Testing Plan Card Selection ===');
+        
+        // Carregar o HTML da aplicação
+        fetch('http://localhost:8000/frontend/app.html')
+            .then(response => response.text())
+            .then(html => {
+                // Parsear o HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Procurar pelos plan-cards
+                const planCards = doc.querySelectorAll('.plan-card');
+                console.log('Found plan-cards:', planCards.length);
+                
+                planCards.forEach((card, idx) => {
+                    console.log(`Card ${idx}:`, {
+                        dataplan: card.getAttribute('data-plan'),
+                        hasRadio: !!card.querySelector('.plan-radio'),
+                        radioValue: card.querySelector('.plan-radio')?.value,
+                        radioName: card.querySelector('.plan-radio')?.name
+                    });
+                });
+                
+                // Procurar pela função setupSignupStepListeners
+                const scripts = Array.from(doc.querySelectorAll('script'));
+                const setupScript = scripts.find(s => s.textContent.includes('setupSignupStepListeners'));
+                if (setupScript) {
+                    console.log('✅ setupSignupStepListeners function found');
+                    // Procurar por "🎯 DEBUG"
+                    if (setupScript.textContent.includes('🎯 DEBUG')) {
+                        console.log('✅ Debug code is present');
+                    }
+                }
+            });
+    </script>
+</body>
+</html>

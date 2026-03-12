@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Service - Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .gradient-text {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-box {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-gradient:hover {
+            box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+        input {
+            width: 100%;
+            padding: 10px 16px;
+            background-color: rgb(71, 85, 105);
+            border: 1px solid rgb(71, 85, 105);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        input::placeholder {
+            color: rgb(156, 163, 175);
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            color: rgb(209, 213, 219);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .error {
+            color: #fca5a5;
+            background-color: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .success {
+            color: #86efac;
+            background-color: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-950 to-black">
+    <div style="width: 384px; padding: 32px; border-radius: 8px; border: 1px solid rgb(55, 65, 81); background: linear-gradient(135deg, rgb(30, 41, 59), rgb(15, 23, 42)); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);">
+        
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 32px;">
+            <div class="logo-box">N</div>
+        </div>
+        
+        <h1 class="gradient-text" style="font-size: 30px; font-weight: bold; text-align: center; margin-bottom: 8px;">Nexus Service</h1>
+        <p style="text-align: center; color: rgb(156, 163, 175); font-size: 14px; margin-bottom: 4px;">Criar Conta</p>
+        <p style="text-align: center; color: rgb(107, 114, 128); font-size: 12px; margin-bottom: 32px;">Cadastre-se e comece a qualificar leads com IA</p>
+        
+        <div id="errorMessage" class="error" style="display: none;"></div>
+        <div id="successMessage" class="success" style="display: none;"></div>
+        
+        <form id="signupForm">
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" id="fullName" placeholder="Seu nome completo" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Empresa</label>
+                <input type="text" id="company" placeholder="Sua empresa (opcional)">
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="password" placeholder="••••••" required>
+            </div>
+
+            <div class="form-group">
+                <label>Confirmar Senha</label>
+                <input type="password" id="confirmPassword" placeholder="••••••" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <input type="checkbox" id="terms" required style="width: auto; margin: 0;">
+                <label for="terms" style="display: inline; margin-left: 8px;">Aceito os <a href="#" style="color: rgb(168, 85, 247); text-decoration: none;">termos de serviço</a></label>
+            </div>
+
+            <button type="submit" class="btn-gradient">Criar Conta</button>
+        </form>
+
+        <p style="text-align: center; font-size: 14px; color: rgb(156, 163, 175); margin-top: 24px;">
+            Já tem conta? <a href="login-nexus.html" style="color: rgb(168, 85, 247); font-weight: 600; text-decoration: none;">Faça login</a>
+        </p>
+    </div>
+
+    <script>
+        console.log('Signup page loaded');
+        
+        const form = document.getElementById('signupForm');
+        const errorEl = document.getElementById('errorMessage');
+        const successEl = document.getElementById('successMessage');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('Form submitted');
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const company = document.getElementById('company').value.trim();
+            
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+            
+            try {
+                // Validação básica
+                if (!fullName || !email || !password) {
+                    throw new Error('Nome, email e senha são obrigatórios');
+                }
+                if (password !== confirmPassword) {
+                    throw new Error('As senhas não coincidem');
+                }
+                if (password.length < 6) {
+                    throw new Error('A senha deve ter pelo menos 6 caracteres');
+                }
+
+                console.log('Sending registration request to API');
+                
+                // Chamar API
+                const response = await fetch('http://localhost:8002/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        full_name: fullName,
+                        company: company || null
+                    })
+                });
+
+                const data = await response.json();
+                console.log('API response:', data);
+                
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Erro ao criar conta');
+                }
+
+                // Sucesso
+                successEl.textContent = '✅ Conta criada com sucesso! Redirecionando para login...';
+                successEl.style.display = 'block';
+                form.style.display = 'none';
+                
+                setTimeout(() => {
+                    window.location.href = 'login-nexus.html';
+                }, 2000);
+
+            } catch (err) {
+                console.error('Error:', err);
+                errorEl.textContent = '❌ ' + err.message;
+                errorEl.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

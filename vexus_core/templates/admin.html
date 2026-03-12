@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexus IA - Dashboard Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="vexus-theme.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0A1120 0%, #162538 50%, #0A1120 100%);
+            min-height: 100vh;
+            color: #E2E8F0;
+        }
+
+        nav {
+            background: linear-gradient(135deg, rgba(22, 31, 50, 0.95), rgba(15, 24, 36, 0.95));
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.1), inset 0 1px 0 rgba(0, 209, 255, 0.15);
+            border-bottom: 1px solid rgba(0, 209, 255, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: #00D1FF;
+            text-decoration: none;
+            padding: 15px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #94A3B8;
+            font-weight: 600;
+            padding: 15px 0;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            display: block;
+            font-size: 14px;
+            letter-spacing: 0.2px;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #00D1FF;
+            border-bottom-color: #00D1FF;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, rgba(22, 31, 50, 0.95), rgba(15, 24, 36, 0.95));
+            border-radius: 15px;
+            padding: 35px;
+            margin-bottom: 35px;
+            box-shadow: 0 0 30px rgba(0, 209, 255, 0.15), 0 0 60px rgba(0, 209, 255, 0.05), inset 0 1px 0 rgba(0, 209, 255, 0.2);
+            border: 1px solid rgba(0, 209, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            color: #00D1FF;
+            font-size: 32px;
+            margin-bottom: 5px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .user-section {
+            text-align: right;
+        }
+
+        .user-info {
+            color: #94A3B8;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #DC2626 0%, #991b1b 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.3);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(220, 38, 38, 0.5);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(31, 45, 66, 0.8), rgba(22, 31, 50, 0.8));
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 25px rgba(0, 209, 255, 0.12), 0 0 50px rgba(0, 209, 255, 0.03), inset 0 1px 0 rgba(0, 209, 255, 0.2);
+            border: 1px solid rgba(0, 209, 255, 0.25);
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 209, 255, 0.5), transparent);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 0 40px rgba(0, 209, 255, 0.25), 0 0 80px rgba(0, 209, 255, 0.1), inset 0 1px 0 rgba(0, 209, 255, 0.3);
+            border-color: rgba(0, 209, 255, 0.4);
+        }
+
+        .card h2 {
+            color: #00D1FF;
+            margin-bottom: 25px;
+            font-size: 22px;
+            border-bottom: 2px solid rgba(0, 209, 255, 0.3);
+            padding-bottom: 12px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, rgba(0, 209, 255, 0.1), rgba(0, 98, 255, 0.08));
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1.5px solid rgba(0, 209, 255, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(0, 209, 255, 0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: linear-gradient(135deg, rgba(0, 209, 255, 0.15), rgba(0, 98, 255, 0.12));
+            border-color: rgba(0, 209, 255, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.15);
+        }
+
+        .stat-item:hover::after {
+            opacity: 1;
+        }
+
+        .stat-label {
+            display: block;
+            color: #94A3B8;
+            font-size: 11px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            display: block;
+            background: linear-gradient(135deg, #00D1FF 0%, #0062FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th {
+            background: linear-gradient(135deg, rgba(15, 24, 36, 0.8), rgba(22, 31, 50, 0.6));
+            padding: 16px;
+            text-align: left;
+            border-bottom: 2px solid rgba(0, 209, 255, 0.3);
+            font-weight: 700;
+            color: #00D1FF;
+            letter-spacing: 0.3px;
+        }
+
+        table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(0, 209, 255, 0.1);
+            color: #E2E8F0;
+            font-size: 14px;
+        }
+
+        table tr:hover {
+            background: linear-gradient(135deg, rgba(31, 45, 66, 0.7), rgba(22, 31, 50, 0.5));
+            box-shadow: 0 0 15px rgba(0, 209, 255, 0.08);
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .status.confirmado {
+            background: rgba(16, 185, 129, 0.2);
+            color: #86EFAC;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .status.pendente {
+            background: rgba(245, 158, 11, 0.2);
+            color: #FCD34D;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #00D1FF 0%, #0062FF 100%);
+            color: #0A1120;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            font-size: 14px;
+            box-shadow: 0 0 20px rgba(0, 209, 255, 0.3), 0 4px 15px rgba(0, 209, 255, 0.2);
+            letter-spacing: 0.3px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(0, 209, 255, 0.5), 0 6px 20px rgba(0, 209, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                gap: 10px;
+            }
+
+            .nav-links a {
+                padding: 12px 8px;
+                font-size: 14px;
+            }
+
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-white shadow sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
+            <a href="index.html" class="text-2xl font-bold text-[#00D1FF]">🚀 Vexus</a>
+            <ul class="flex space-x-6">
+                <li><a href="dashboard.html" class="text-gray-700 hover:text-[#00D1FF]">💼 Dashboard</a></li>
+                <li><a href="admin.html" class="text-gray-700 hover:text-[#00D1FF] font-semibold">🏥 Admin</a></li>
+                <li><a href="leads.html" class="text-gray-700 hover:text-[#00D1FF]">📋 Leads</a></li>
+                <li><a href="appointments.html" class="text-gray-700 hover:text-[#00D1FF]">📅 Agendamentos</a></li>
+                <li><a href="agents.html" class="text-gray-700 hover:text-[#00D1FF]">🤖 Agentes IA</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div>
+                <h1>🏥 Painel Administrativo</h1>
+                <p style="color: #666;">Gerencie sua empresa, clínicas e configurações</p>
+            </div>
+            <div class="user-section">
+                <div class="user-info" id="userInfo">Carregando...</div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard">
+            <!-- Resumo Executivo -->
+            <div class="card">
+                <h2>📊 Resumo Executivo</h2>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Clínicas Ativas</span>
+                        <span class="stat-value" id="clinicCount">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Usuários</span>
+                        <span class="stat-value" id="userCount">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Agendamentos Hoje</span>
+                        <span class="stat-value" id="appointmentCount">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empresas/Clínicas -->
+            <div class="card">
+                <h2>🏢 Empresas Cadastradas</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Contato</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="companiesList">
+                        <tr><td colspan="3" style="text-align: center;">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Últimos Agendamentos -->
+            <div class="card">
+                <h2>📅 Últimos Agendamentos</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Paciente</th>
+                            <th>Serviço</th>
+                            <th>Data</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentsList">
+                        <tr><td colspan="4" style="text-align: center;">Carregando...</td></tr>
+                    </tbody>
+                </table>
+                <div class="button-group">
+                    <button onclick="goTo('appointments.html')">Ver Todos →</button>
+                </div>
+            </div>
+
+            <!-- Configurações Rápidas -->
+            <div class="card full-width">
+                <h2>⚙️ Ações Rápidas</h2>
+                <div class="button-group">
+                    <button onclick="goTo('settings.html')">⚙️ Configurações</button>
+                    <button onclick="goTo('users.html')">👥 Usuários</button>
+                    <button onclick="goTo('billing.html')">💳 Planos</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080';
+
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const url = `${API_URL}${endpoint}`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.statusText}`);
+                }
+                
+                return response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                return null;
+            }
+        }
+
+        async function loadUserInfo() {
+            try {
+                const user = await apiCall('/me');
+                if (user) {
+                    document.getElementById('userInfo').textContent = `👤 ${user.name}`;
+                } else {
+                    document.getElementById('userInfo').textContent = 'Não autenticado';
+                }
+            } catch (error) {
+                document.getElementById('userInfo').textContent = 'Não autenticado';
+            }
+        }
+
+        async function loadData() {
+            try {
+                const appointments = await apiCall('/appointments');
+                if (appointments) {
+                    document.getElementById('appointmentCount').textContent = appointments.length;
+
+                    const tbody = document.getElementById('appointmentsList');
+                    tbody.innerHTML = '';
+                    
+                    appointments.slice(0, 5).forEach(apt => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${apt.patient_name}</td>
+                            <td>${apt.service}</td>
+                            <td>${apt.date}</td>
+                            <td><span class="status ${apt.status}">${apt.status}</span></td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                // Mock companies
+                document.getElementById('clinicCount').textContent = '3';
+                document.getElementById('userCount').textContent = '5';
+
+                const companiesList = document.getElementById('companiesList');
+                const companies = [
+                    { name: 'Clínica Premium', contact: '(11) 98765-4321', status: 'Ativa' },
+                    { name: 'Consultório Silva', contact: '(11) 99876-5432', status: 'Ativa' },
+                    { name: 'Dental Center', contact: '(11) 97654-3210', status: 'Ativa' }
+                ];
+
+                companiesList.innerHTML = '';
+                companies.forEach(company => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${company.name}</strong></td>
+                        <td>${company.contact}</td>
+                        <td><span class="status confirmado">${company.status}</span></td>
+                    `;
+                    companiesList.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function goTo(page) {
+            window.location.href = page;
+        }
+
+        function logout() {
+            if (confirm('Deseja sair?')) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserInfo();
+            loadData();
+            fetch('components.html')
+                .then(r => r.text())
+                .then(html => {
+                    const div = document.createElement('div');
+                    div.style.display = 'none';
+                    div.innerHTML = html;
+                    document.body.appendChild(div);
+                });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+🚀 VEXUS CRM - SISTEMA COMPLETO RODANDO
+=====================================
+
+✅ API ATIVO EM: http://localhost:8000
+
+📊 ENDPOINTS PARA TESTAR:
+
+AUTENTICAÇÃO (http://localhost:8000/api/auth)
+  POST   /login                    - Login (email, password)
+  POST   /register                 - Registrar novo usuário
+  GET    /me                       - Obter perfil (requer token)
+  POST   /refresh                  - Renovar token
+  POST   /forgot-password          - Solicitar reset de senha
+  POST   /reset-password           - Reset de senha com token
+  POST   /verify-email             - Verificar email com token
+  POST   /resend-verification      - Resend email verification
+
+KNOWLEDGE LAB (http://localhost:8000/api/knowledge)
+  POST   /upload                   - Upload de documentos
+  POST   /query                    - Query na base de conhecimento
+  GET    /health                   - Health check da KB
+
+AGENTES (http://localhost:8000/api/agents)
+  GET    /                         - Listar configuração dos agentes
+  GET    /proposals/*              - Endpoints de propostas
+
+LEADS (http://localhost:8000/api/leads)
+  POST   /                         - Criar novo lead
+  GET    /                         - Listar leads
+  GET    /{lead_id}                - Obter lead específico
+  PUT    /{lead_id}                - Atualizar lead
+  DELETE /{lead_id}                - Deletar lead
+
+CAMPANHAS (http://localhost:8000/api/campaigns)
+  POST   /                         - Criar campanha
+  GET    /                         - Listar campanhas
+  GET    /{campaign_id}            - Obter campanha
+  PUT    /{campaign_id}            - Atualizar campanha
+  DELETE /{campaign_id}            - Deletar campanha
+
+🎨 FRONTEND PAGES (http://localhost:8000/frontend)
+  /index.html           - Dashboard principal
+  /login.html           - Tela de login
+  /dashboard.html       - Dashboard v2
+  /pipeline.html        - Pipeline Kanban
+  /contacts.html        - Gerenciador de contatos
+  /tasks.html           - Tarefas
+  /inbox-nexus.html     - Inbox de mensagens
+
+📚 DOCUMENTAÇÃO INTERATIVA:
+  http://localhost:8000/docs          - Swagger UI
+  http://localhost:8000/redoc         - ReDoc
+
+💾 DATABASE:
+  SQLite: vexus.db (local)
+  Tabelas criadas automaticamente no startup
+
+🔑 EXEMPLO DE FLUXO:
+
+1. REGISTRAR USUÁRIO:
+   curl -X POST http://localhost:8000/api/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{"email":"test@example.com","password":"Pass123!","full_name":"Test User"}'
+
+2. LOGIN:
+   curl -X POST http://localhost:8000/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"username":"test@example.com","password":"Pass123!"}'
+   
+   → Resposta contém: access_token, refresh_token
+
+3. USAR TOKEN PARA ACESSAR /me:
+   curl -H "Authorization: Bearer <access_token>" \
+     http://localhost:8000/api/auth/me
+
+4. CRIAR LEAD:
+   curl -X POST http://localhost:8000/api/leads \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <access_token>" \
+     -d '{
+       "name":"João Silva",
+       "email":"joao@example.com",
+       "phone":"+5511999999999",
+       "company":"Acme Corp",
+       "source":"website"
+     }'
+
+5. QUERY KNOWLEDGE BASE:
+   curl -X POST "http://localhost:8000/api/knowledge/query?company_id=acme&query=produto" \
+     -H "Authorization: Bearer <access_token>"
+
+🧪 TESTES AUTOMATIZADOS:
+
+Backend:
+  pytest tests/test_crm_api.py -v
+
+Frontend:
+  pytest tests/test_frontend_screens.py -v
+
+Todos:
+  pytest tests/ -v
+
+📋 STATUS DE TESTES:
+  ✅ 5/5 Testes Backend passando (100%)
+  ✅ 11/11 Testes Frontend passando (100%)
+  ✅ 16/16 Testes Totais passando (100%)
+
+⚡ PRONTO PARA TESTAR E ESTUDAR O CÓDIGO!
+
+Terminal ID: c38975dd-27fb-4139-a38e-448bba8095ef

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vexus IA - Hub de Serviços</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Vexus IA - Hub de Serviços</h1>
+            <p class="subtitle">Sistema Operacional de Crescimento para PMEs</p>
+        </header>
+        
+        <div class="dashboard">
+            <div class="card">
+                <h2>📊 Visão Geral</h2>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Agendamentos Hoje</span>
+                        <span class="stat-value" id="today-appointments">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Conversas Ativas</span>
+                        <span class="stat-value" id="active-conversations">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Taxa de Conversão</span>
+                        <span class="stat-value" id="conversion-rate">0%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🤖 Testar Fluxo de Agendamento</h2>
+                <div class="test-flow">
+                    <input type="text" id="test-phone" placeholder="Número de telefone (ex: 11999999999)">
+                    <textarea id="test-message" placeholder="Digite uma mensagem de teste..."></textarea>
+                    <button onclick="testFlow()">Enviar Mensagem</button>
+                    <div id="test-response" class="response-box"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>📋 Últimos Agendamentos</h2>
+                <div id="recent-appointments">
+                    <p>Carregando...</p>
+                </div>
+                <a href="/admin" class="btn">Ver Painel Completo</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        async function testFlow() {
+            const phone = document.getElementById('test-phone').value;
+            const message = document.getElementById('test-message').value;
+            
+            if (!phone || !message) {
+                alert('Por favor, preencha todos os campos');
+                return;
+            }
+            
+            const response = await fetch('/api/send_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phone: phone,
+                    message: message,
+                    clinic_id: 1
+                })
+            });
+            
+            const data = await response.json();
+            const responseBox = document.getElementById('test-response');
+            
+            if (data.response) {
+                responseBox.innerHTML = `<strong>Resposta:</strong><br>${data.response.replace(/\n/g, '<br>')}`;
+                responseBox.style.display = 'block';
+            }
+        }
+        
+        async function loadAppointments() {
+            const response = await fetch('/api/appointments');
+            const appointments = await response.json();
+            
+            const container = document.getElementById('recent-appointments');
+            container.innerHTML = '';
+            
+            const recent = appointments.slice(0, 5);
+            
+            if (recent.length === 0) {
+                container.innerHTML = '<p>Nenhum agendamento encontrado</p>';
+                return;
+            }
+            
+            const list = document.createElement('ul');
+            list.className = 'appointment-list';
+            
+            recent.forEach(appt => {
+                const item = document.createElement('li');
+                item.innerHTML = `
+                    <strong>${appt.patient_name}</strong><br>
+                    ${appt.service} - ${appt.date} às ${appt.time}
+                    <span class="status ${appt.status}">${appt.status}</span>
+                `;
+                list.appendChild(item);
+            });
+            
+            container.appendChild(list);
+        }
+        
+        // Carrega dados iniciais
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAppointments();
+            setInterval(loadAppointments, 30000); // Atualiza a cada 30 segundos
+        });
+    </script>
+</body>
+</html>
