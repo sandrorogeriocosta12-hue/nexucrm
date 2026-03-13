@@ -6,8 +6,8 @@ import stripe
 import logging
 from typing import Optional
 
-# Pydantic v2: BaseSettings is in pydantic-settings
-from pydantic_settings import BaseSettings
+# Pydantic v1: BaseSettings está no próprio pydantic
+from pydantic import BaseSettings
 
 logger = logging.getLogger(__name__)
 

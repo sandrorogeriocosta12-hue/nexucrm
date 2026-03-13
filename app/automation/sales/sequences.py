@@ -8,7 +8,7 @@
     import asyncio
     import json
     from dataclasses import dataclass
-    from pydantic import BaseModel, Field, field_validator
+    from pydantic import BaseModel, Field, validator
     from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, JSON, Float
     from sqlalchemy.ext.declarative import declarative_base
     from sqlalchemy.orm import relationship
@@ -49,7 +49,7 @@ class EmailStep(BaseModel):
     actions: List[str] = Field(default_factory=list, description="Ações após envio")
     is_active: bool = Field(default=True, description="Passo ativo")
 
-@field_validator('delay_hours')
+@validator('delay_hours')
 def validate_delay(cls, v):
         if v < 0:
             raise ValueError("Delay não pode ser negativo")
