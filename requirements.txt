@@ -1,8 +1,9 @@
 # PRODUCTION MINIMAL - Render Deployment
-# Python 3.12 - Zero C extensions, zero numpy/pandas dependencies
+# Python 3.14 - Pydantic v2 compatible
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-pydantic==1.10.13
+pydantic==2.5.3
+pydantic-settings==2.1.0
 python-multipart==0.0.6
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4

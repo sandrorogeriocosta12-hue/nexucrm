@@ -6,15 +6,8 @@ import stripe
 import logging
 from typing import Optional
 
-# Pydantic v2 moved BaseSettings to its own package. Try importing from
-# the main pydantic namespace first, falling back to pydantic-settings if
-# the older alias raises a migration error.
-try:
-    from pydantic import BaseSettings
-except Exception:
-    # If the import failed due to the migration, the pydantic-settings package
-    # provides the class we need.
-    from pydantic_settings import BaseSettings
+# Pydantic v2: BaseSettings is in pydantic-settings
+from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
 
