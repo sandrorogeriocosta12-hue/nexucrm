@@ -6,7 +6,7 @@ import json
 from typing import Any, Dict, List, Optional, Union
 from email_validator import validate_email, EmailNotValidError
 import phonenumbers
-from pydantic import BaseModel, field_validator, ValidationError
+from pydantic import BaseModel, validator, ValidationError
 from urllib.parse import urlparse
 
 
@@ -148,7 +148,7 @@ class InputValidator:
 class SecureBaseModel(BaseModel):
     """Base model with automatic validation"""
 
-    @field_validator("*", mode="before")
+    @validator("*")
     @classmethod
     def validate_input(cls, v):
         """Validate each field input"""
@@ -170,14 +170,14 @@ class UserRegistration(SecureBaseModel):
     password: str
     phone: Optional[str] = None
 
-    @field_validator("email")
+    @validator("email")
     @classmethod
     def validate_email_field(cls, v):
         if not InputValidator.validate_email(v):
             raise ValueError("Invalid email format")
         return v
 
-    @field_validator("phone")
+    @validator("phone")
     @classmethod
     def validate_phone_field(cls, v):
         if v and not InputValidator.validate_phone(v):
@@ -190,7 +190,7 @@ class FileUpload(SecureBaseModel):
     content_type: str
     size: int
 
-    @field_validator("filename")
+    @validator("filename")
     @classmethod
     def validate_filename(cls, v):
         if InputValidator.detect_path_traversal(v):
