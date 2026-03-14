@@ -22,3 +22,6 @@ starlette==0.17.1
 # REMOVED for compatibility:
 # - langchain (pulls numpy, pandas, heavy ML stack)
 # - pandas, numpy, alembic, stripe, sentry, redis, celery
+
+# Required for uvicorn
+click==8.0.4
