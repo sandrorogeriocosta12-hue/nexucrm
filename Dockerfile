@@ -27,5 +27,5 @@ ENV PORT=8000
 ENV DEBUG=False
 ENV PYDANTIC_SKIP_VALIDATION=1
 
-# Run the application
-CMD ["python", "app_server.py"]
+# Run the test application
+CMD ["python", "app_test.py"]
