@@ -22,6 +22,9 @@ app = FastAPI(
     title="Vexus CRM API",
     description="Plataforma de CRM inteligente com IA, RAG e Automação de Vendas",
     version="1.0.0",
+    openapi_url=None,  # Disable OpenAPI schema generation to avoid Pydantic V2 issues
+    docs_url=None,     # Disable docs
+    redoc_url=None,    # Disable redoc
 )
 
 # CORS middleware
