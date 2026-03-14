@@ -52,60 +52,37 @@ async def startup_db():
         logger.error(f"Error creating database schema: {e}")
 
 
-# Importar routers
-try:
-    from vexus_crm.routes.knowledge_lab import router as knowledge_router
-    app.include_router(knowledge_router, tags=["Knowledge Lab"])
-except (ImportError, Exception) as e:
-    logger.warning(f"⚠ Knowledge Lab router not available: {e}")
-
-try:
-    from vexus_crm.agents_api import router as agents_router
-    app.include_router(agents_router, prefix="/api", tags=["Agents"])
-except (ImportError, Exception) as e:
-    logger.warning(f"⚠ Agents router not available: {e}")
-
+# Importar routers (simplificado para Railway)
 try:
     from vexus_crm.routes.auth import router as auth_router
     app.include_router(auth_router)
+    logger.info("✓ Auth router loaded")
 except (ImportError, Exception) as e:
     logger.warning(f"⚠ Auth router not available: {e}")
 
 try:
     from vexus_crm.routes.leads import router as leads_router
     app.include_router(leads_router, prefix="/api")
+    logger.info("✓ Leads router loaded")
 except (ImportError, Exception) as e:
     logger.warning(f"⚠ Leads router not available: {e}")
 
 try:
     from vexus_crm.routes.campaigns import router as campaigns_router
     app.include_router(campaigns_router, prefix="/api")
+    logger.info("✓ Campaigns router loaded")
 except (ImportError, Exception) as e:
     logger.warning(f"⚠ Campaigns router not available: {e}")
 
-try:
-    from vexus_crm.routes.whatsapp_business import router as whatsapp_router
-    app.include_router(whatsapp_router)  # Already has /api/whatsapp prefix
-    logger.info("✓ WhatsApp Business router loaded")
-except (ImportError, Exception) as e:
-    logger.warning(f"⚠ WhatsApp Business router not available: {e}")
 
-
-# Rota raiz
+# Rota raiz - Healthcheck simples para Railway
 @app.get("/")
 async def root():
     return {
-        "name": "Vexus CRM API",
-        "version": "1.0.0",
         "status": "online",
-        "timestamp": datetime.now().isoformat(),
-        "endpoints": {
-            "health": "/api/knowledge/health",
-            "knowledge_lab": "/api/knowledge/*",
-            "proposals": "/api/agents/proposals/*",
-            "ui": "/frontend/index.html",
-            "docs": "/docs",
-        },
+        "service": "Vexus CRM API",
+        "version": "1.0.0",
+        "timestamp": datetime.now().isoformat()
     }
 
 
@@ -137,25 +114,12 @@ async def not_found(request, exc):
 
 # ensure database tables exist when running directly
 if __name__ == "__main__":
-    # create database schema if needed
-    try:
-        from vexus_crm.database import engine
-        from vexus_crm import models
-
-        models.Base.metadata.create_all(bind=engine)
-    except Exception as e:
-        logger.error(f"Erro criando esquema de banco: {e}")
-
     import uvicorn
 
-    print("\n" + "=" * 60)
-    print("  🚀 VEXUS CRM API")
-    print("=" * 60)
-    print("\n📚 Documentação: http://localhost:8000/docs")
-    print("🔧 ReDoc: http://localhost:8000/redoc")
-    print("✓ Status: http://localhost:8000/health\n")
-
+    print("🚀 Starting Vexus CRM API...")
     port = int(os.environ.get("PORT", 8000))
+    print(f"📡 Listening on port {port}")
+
     uvicorn.run(
         "app_server:app", host="0.0.0.0", port=port, reload=False, log_level="info"
     )
