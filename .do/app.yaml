@@ -1,0 +1,22 @@
+# DigitalOcean App Platform
+# .do/app.yaml
+name: vexus-crm
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: sandrorogeriocosta12-hue/nexucrm
+    branch: master
+  run_command: python app_server.py
+  environment_slug: python
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  envs:
+  - key: DEBUG
+    value: "False"
+  - key: PORT
+    value: "8080"
+  health_check:
+    http_path: /
+  routes:
+  - path: /

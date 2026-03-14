@@ -1,0 +1,23 @@
+# Vercel Configuration
+# vercel.json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app_server.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app_server.py"
+    }
+  ],
+  "env": {
+    "DEBUG": "False"
+  }
+}
