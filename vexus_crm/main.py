@@ -105,6 +105,9 @@ class LeadResponse(BaseModel):
     created_at: str
     ai_analysis: Dict[str, Any]
 
+    class Config:
+        orm_mode = True
+
 
 class FlowDefinition(BaseModel):
     """Schema para definir fluxo"""

@@ -30,7 +30,7 @@ class CampaignOut(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 @router.get("/", response_model=List[CampaignOut])

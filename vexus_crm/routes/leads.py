@@ -28,7 +28,7 @@ class LeadOut(BaseModel):
     source: Optional[str] = None
     status: Optional[str] = None
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 @router.get("/", response_model=List[LeadOut])
