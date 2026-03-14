@@ -4,7 +4,7 @@ services:
     env: python
     pythonVersion: 3.10
     plan: free
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install --no-deps -r requirements.txt
     startCommand: python app_server.py
     envVars:
       - key: PORT
