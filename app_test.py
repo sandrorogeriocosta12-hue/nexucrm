@@ -19,12 +19,13 @@ async def root():
     return {
         "status": "online",
         "service": "Vexus CRM Test API",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "port": os.environ.get("PORT", "8000")
     }
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy"}
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 if __name__ == "__main__":
     import uvicorn
