@@ -2,9 +2,9 @@ services:
   - type: web
     name: nexuscrm
     env: python
-    pythonVersion: 3.10
+    pythonVersion: 3.9
     plan: free
-    buildCommand: pip install --upgrade pip && pip install --no-deps -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install --no-deps -r requirements.txt -c constraints.txt
     startCommand: python app_server.py
     envVars:
       - key: PORT
