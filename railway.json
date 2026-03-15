@@ -16,3 +16,11 @@
     }
   }
 }
+  "environments": {
+    "production": {
+      "variables": {
+        "PORT": "8000"
+      }
+    }
+  }
+}
