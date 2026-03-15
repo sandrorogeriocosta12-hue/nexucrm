@@ -52,26 +52,26 @@ async def startup_db():
         logger.error(f"Error creating database schema: {e}")
 
 
-# Importar routers (simplificado para Railway)
+# Importar routers (simplificado e seguro para Railway)
 try:
     from vexus_crm.routes.auth import router as auth_router
     app.include_router(auth_router)
     logger.info("✓ Auth router loaded")
-except (ImportError, Exception) as e:
+except Exception as e:
     logger.warning(f"⚠ Auth router not available: {e}")
 
 try:
     from vexus_crm.routes.leads import router as leads_router
     app.include_router(leads_router, prefix="/api")
     logger.info("✓ Leads router loaded")
-except (ImportError, Exception) as e:
+except Exception as e:
     logger.warning(f"⚠ Leads router not available: {e}")
 
 try:
     from vexus_crm.routes.campaigns import router as campaigns_router
     app.include_router(campaigns_router, prefix="/api")
     logger.info("✓ Campaigns router loaded")
-except (ImportError, Exception) as e:
+except Exception as e:
     logger.warning(f"⚠ Campaigns router not available: {e}")
 
 
@@ -93,10 +93,10 @@ if os.path.exists(frontend_path):
     logger.info(f"✓ Frontend mounted at /frontend from {frontend_path}")
 
 
-# Health check
+# Health check - SIMPLIFIED for Railway
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+    return {"status": "healthy", "timestamp": datetime.now().isoformat(), "service": "Vexus CRM API"}
 
 
 # 404 Handler
