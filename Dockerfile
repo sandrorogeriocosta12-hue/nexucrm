@@ -28,4 +28,4 @@ ENV DEBUG=False
 ENV PYDANTIC_SKIP_VALIDATION=1
 
 # Run the test application (simpler and more reliable for Railway)
-CMD uvicorn app_test:app --host 0.0.0.0 --port 8000
+CMD uvicorn app_test:app --host 0.0.0.0 --port $PORT
