@@ -9,11 +9,11 @@ from app.models.campaign import Campaign
 from app.schemas.lead import LeadCreate, LeadUpdate
 
 class TestUserCRUD:
-"""Testes CRUD para usuários"""
+    """Testes CRUD para usuários"""
 
-@pytest.mark.asyncio
-async def test_get_users_paginated(self, client: AsyncClient, auth_headers):
-"""Testa listagem paginada de usuários"""
+    @pytest.mark.asyncio
+    async def test_get_users_paginated(self, client: AsyncClient, auth_headers):
+        """Testa listagem paginada de usuários"""
 response = await client.get(
 "/api/v1/users/",
 headers=auth_headers,

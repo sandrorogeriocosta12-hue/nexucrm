@@ -7,11 +7,11 @@ from app.core.security import create_access_token
 from app.models.user import User
 
 class TestAuthAPI:
-"""Testes para endpoints de autenticação"""
+    """Testes para endpoints de autenticação"""
 
-@pytest.mark.asyncio
-async def test_register_user_success(self, client: AsyncClient):
-"""Testa registro bem-sucedido de usuário"""
+    @pytest.mark.asyncio
+    async def test_register_user_success(self, client: AsyncClient):
+        """Testa registro bem-sucedido de usuário"""
 user_data = {
 "email": "newuser@example.com",
 "password": "StrongPass123!",
