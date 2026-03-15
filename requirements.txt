@@ -23,4 +23,4 @@ starlette==0.17.1
 # - langchain (pulls numpy, pandas, heavy ML stack)
 # - pandas, numpy, alembic, stripe, sentry, redis, celery
 
-# click dependency is handled by constraints.txt
+# click is now installed as uvicorn dependency
