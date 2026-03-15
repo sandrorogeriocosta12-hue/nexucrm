@@ -14,7 +14,7 @@ COPY requirements.txt constraints.txt ./
 
 # Install Python dependencies with constraints
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir --no-deps -r requirements.txt -c constraints.txt
+    pip install --no-cache-dir -r requirements.txt -c constraints.txt
 
 # Copy application code
 COPY . .
