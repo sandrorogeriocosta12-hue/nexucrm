@@ -12,7 +12,7 @@ cryptography==39.0.1
 python-dotenv==0.19.0
 requests==2.28.2
 sqlalchemy==1.4.46
-starlette==0.26.1
+# starlette==0.26.1  # REMOVED - let FastAPI decide compatible version
 
 # REMOVED for compatibility:
 # - langchain (pulls numpy, pandas, heavy ML stack)
