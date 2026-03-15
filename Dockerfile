@@ -28,4 +28,5 @@ ENV DEBUG=False
 ENV PYDANTIC_SKIP_VALIDATION=1
 
 # Run the test application (simpler and more reliable for Railway)
-CMD uvicorn app_test:app --host 0.0.0.0 --port $PORT
+# Show PORT value for debugging
+CMD echo "PORT is: $PORT" && uvicorn app_test:app --host 0.0.0.0 --port ${PORT:-8000}
