@@ -96,7 +96,8 @@ def create_notification(
         title=notification.title,
         message=notification.message,
         type=notification.type,
-        user_id=user_id if notification.user_id else None,  # None = broadcast
+        # Always set user_id to current user to avoid NOT NULL constraint issues
+        user_id=user_id,
         is_read=False,
         created_at=datetime.now()
     )
