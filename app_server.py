@@ -1,6 +1,7 @@
 """
 Vexus CRM - FastAPI Main Server
 Integra: Knowledge Lab, Proposal Generator, Chat, Analytics
+Force redeploy: 2026-03-16
 """
 
 from fastapi import FastAPI
