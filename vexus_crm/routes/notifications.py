@@ -4,6 +4,7 @@ Gerencia notificações em tempo real e alertas do sistema
 """
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
@@ -111,7 +112,14 @@ def create_notification(
 
     except Exception as e:
         logging.exception("Erro ao criar notificação")
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        # Return structured error to aid debugging in production
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "Internal Server Error",
+                "details": str(e)
+            },
+        )
 
 @router.put("/{notification_id}/read", response_model=NotificationOut)
 def mark_as_read(

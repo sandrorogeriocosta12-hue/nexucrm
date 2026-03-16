@@ -183,6 +183,22 @@ async def not_found(request, exc):
         },
     )
 
+# Global exception handler (debugging)
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    import traceback
+
+    tb = traceback.format_exc()
+    logger.error("Unhandled exception: %s", exc)
+    logger.error(tb)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": str(exc),
+            "trace": tb,
+        },
+    )
+
 
 # ensure database tables exist when running directly
 if __name__ == "__main__":
