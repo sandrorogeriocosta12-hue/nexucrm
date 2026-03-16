@@ -67,13 +67,13 @@ class Lead(Base):
     __tablename__ = "leads"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String)
-    email = Column(String, unique=True)
-    phone = Column(String)
-    company = Column(String)
-    interest = Column(String)
-    budget = Column(Float)
-    source = Column(String)  # website, email, whatsapp, etc
+    name = Column(String, nullable=True)
+    email = Column(String, unique=True, nullable=True)
+    phone = Column(String, nullable=True)
+    company = Column(String, nullable=True)
+    interest = Column(String, nullable=True)
+    budget = Column(Float, nullable=True)
+    source = Column(String, nullable=True)  # website, email, whatsapp, etc
     
     # Scoring & Status
     lead_score = Column(Integer, default=50)
@@ -301,12 +301,12 @@ class Campaign(Base):
     __tablename__ = "campaigns"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String)
-    description = Column(String)
+    name = Column(String, nullable=True)
+    description = Column(String, nullable=True)
     status = Column(String, default="draft")  # draft, active, paused, completed
-    launch_date = Column(DateTime)
-    end_date = Column(DateTime)
-    budget = Column(Float)
+    launch_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    budget = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
@@ -344,6 +344,20 @@ class Report(Base):
     created_at = Column(DateTime, default=datetime.now)
     period_start = Column(DateTime)
     period_end = Column(DateTime)
+
+
+class Notification(Base):
+    """Notificações do sistema"""
+    __tablename__ = "notifications"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    title = Column(String, nullable=True)
+    message = Column(String, nullable=True)
+    type = Column(String, default="info")  # info, warning, error, success
+    user_id = Column(String, nullable=True)  # None = broadcast to all users
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 # ==================== CONFIGURAÇÃO ====================

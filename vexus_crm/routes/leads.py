@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import datetime
 
 from vexus_crm.database import get_db
-from vexus_crm.models import Lead as LeadModel
+from vexus_crm.models import Lead as LeadModel, User
+from vexus_crm.routes.auth import get_current_user
 
 from pydantic import BaseModel, EmailStr
 
@@ -27,8 +29,14 @@ class LeadOut(BaseModel):
     phone: Optional[str] = None
     source: Optional[str] = None
     status: Optional[str] = None
+    interest: Optional[str] = None
+    budget: Optional[float] = None
+    lead_score: Optional[int] = None
+    phase: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 @router.get("/", response_model=List[LeadOut])
@@ -36,17 +44,18 @@ def list_leads(
     skip: int = 0,
     limit: int = 10,
     status: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     query = db.query(LeadModel)
     if status:
         query = query.filter(LeadModel.status == status)
     items = query.offset(skip).limit(limit).all()
-    return items
+    return [LeadOut(**item.__dict__) for item in items]
 
 
 @router.post("/", response_model=LeadOut, status_code=201)
-def create_lead(lead: LeadCreate, db: Session = Depends(get_db)):
+def create_lead(lead: LeadCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     db_lead = LeadModel(
         email=lead.email,
         name=lead.name,
@@ -58,19 +67,19 @@ def create_lead(lead: LeadCreate, db: Session = Depends(get_db)):
     db.add(db_lead)
     db.commit()
     db.refresh(db_lead)
-    return db_lead
+    return LeadOut(**db_lead.__dict__)
 
 
 @router.get("/{lead_id}", response_model=LeadOut)
-def get_lead(lead_id: str, db: Session = Depends(get_db)):
+def get_lead(lead_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     lead = db.query(LeadModel).get(lead_id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
-    return lead
+    return LeadOut(**lead.__dict__)
 
 
 @router.put("/{lead_id}", response_model=LeadOut)
-def update_lead(lead_id: str, lead: LeadCreate, db: Session = Depends(get_db)):
+def update_lead(lead_id: str, lead: LeadCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     db_lead = db.query(LeadModel).get(lead_id)
     if not db_lead:
         raise HTTPException(status_code=404, detail="Lead not found")
@@ -78,11 +87,11 @@ def update_lead(lead_id: str, lead: LeadCreate, db: Session = Depends(get_db)):
         setattr(db_lead, field, value)
     db.commit()
     db.refresh(db_lead)
-    return db_lead
+    return LeadOut(**db_lead.__dict__)
 
 
 @router.delete("/{lead_id}", status_code=204)
-def delete_lead(lead_id: str, db: Session = Depends(get_db)):
+def delete_lead(lead_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     lead = db.query(LeadModel).get(lead_id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
