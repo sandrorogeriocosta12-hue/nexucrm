@@ -30,6 +30,7 @@ class NotificationOut(BaseModel):
     user_id: Optional[str]
     is_read: bool = False
     created_at: datetime
+    # Removido updated_at que pode causar problemas de serialização
 
     class Config:
         from_attributes = True
