@@ -7,8 +7,9 @@ import os
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    # Use a relative SQLite file to avoid permission issues in container environments
-    DATABASE_URL = "sqlite:///./vexus.db"
+    # Use a writable filesystem location for SQLite in container environments
+    # (Railway and similar often have /tmp writable)
+    DATABASE_URL = "sqlite:////tmp/vexus.db"
     print("⚠️  No DATABASE_URL found, using SQLite fallback")
 
 # Configure engine based on database type
