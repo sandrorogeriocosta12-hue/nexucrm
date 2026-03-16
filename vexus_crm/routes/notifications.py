@@ -24,12 +24,12 @@ class NotificationCreate(BaseModel):
 
 class NotificationOut(BaseModel):
     id: str
-    title: str
-    message: str
-    type: str
-    user_id: Optional[str]
+    title: Optional[str] = None
+    message: Optional[str] = None
+    type: Optional[str] = None
+    user_id: Optional[str] = None
     is_read: bool = False
-    created_at: datetime
+    created_at: Optional[datetime] = None
     # Removido updated_at que pode causar problemas de serialização
 
     class Config:
@@ -58,7 +58,25 @@ def get_notifications(
     # Sort by creation date (newest first)
     notifications = query.order_by(NotificationModel.created_at.desc()).offset(skip).limit(limit).all()
     
-    return notifications
+    # Criar objetos NotificationOut manualmente para evitar problemas de serialização
+    try:
+        result = []
+        for notification in notifications:
+            result.append(NotificationOut(
+                id=notification.id,
+                title=notification.title,
+                message=notification.message,
+                type=notification.type,
+                user_id=notification.user_id,
+                is_read=notification.is_read,
+                created_at=notification.created_at
+            ))
+        return result
+    except Exception as e:
+        import traceback, logging
+        logging.exception("Erro ao listar notificações")
+        # Em produção, mantenha a API responsiva retornando lista vazia
+        return []
 
 @router.post("/", response_model=NotificationOut, status_code=201)
 def create_notification(

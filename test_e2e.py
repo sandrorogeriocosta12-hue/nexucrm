@@ -11,7 +11,7 @@ import sys
 from typing import Dict, Any
 
 # Configurações
-BASE_URL = "https://web-production-c726e.up.railway.app"
+BASE_URL = "http://localhost:8001"
 API_BASE = f"{BASE_URL}/api"
 
 class VexusCRMTestSuite:
