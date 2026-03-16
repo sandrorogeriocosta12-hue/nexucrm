@@ -87,31 +87,31 @@ def create_notification(
 ):
     """Create a new notification"""
     import uuid
+    import logging
 
-    # If no user_id specified, it's a broadcast notification
-    user_id = notification.user_id or current_user.id
+    try:
+        # If no user_id specified, use current user (avoid NULL constraints)
+        user_id = notification.user_id or current_user.id
 
-    new_notification = NotificationModel(
-        id=str(uuid.uuid4()),
-        title=notification.title,
-        message=notification.message,
-        type=notification.type,
-        # Always set user_id to current user to avoid NOT NULL constraint issues
-        user_id=user_id,
-        is_read=False,
-        created_at=datetime.now()
-    )
+        new_notification = NotificationModel(
+            id=str(uuid.uuid4()),
+            title=notification.title,
+            message=notification.message,
+            type=notification.type,
+            user_id=user_id,
+            is_read=False,
+            created_at=datetime.now()
+        )
 
-    db.add(new_notification)
-    db.commit()
-    db.refresh(new_notification)
-    
-    return new_notification
+        db.add(new_notification)
+        db.commit()
+        db.refresh(new_notification)
 
-    # Background task for real-time notifications (WebSocket, email, etc.)
-    background_tasks.add_task(send_notification_alert, new_notification)
+        return new_notification
 
-    return NotificationOut.from_orm(new_notification)
+    except Exception as e:
+        logging.exception("Erro ao criar notificação")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @router.put("/{notification_id}/read", response_model=NotificationOut)
 def mark_as_read(
