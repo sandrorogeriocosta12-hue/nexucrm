@@ -7,11 +7,8 @@ import os
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    # Use absolute path for Railway persistence
-    if os.getenv("RAILWAY_ENVIRONMENT"):
-        DATABASE_URL = "sqlite:////app/vexus.db"
-    else:
-        DATABASE_URL = "sqlite:///./vexus.db"
+    # Use a relative SQLite file to avoid permission issues in container environments
+    DATABASE_URL = "sqlite:///./vexus.db"
     print("⚠️  No DATABASE_URL found, using SQLite fallback")
 
 # Configure engine based on database type
@@ -23,6 +20,23 @@ if DATABASE_URL.startswith("postgresql"):
     )
     print("🐘 Using PostgreSQL database")
 else:
+    # Ensure the directory exists for SQLite file paths
+    if DATABASE_URL.startswith("sqlite://"):
+        # Strip sqlite:// prefix to extract file path
+        sqlite_path = DATABASE_URL[len("sqlite://"):]
+        # Normalize leading slashes (sqlite:////path should map to /path)
+        if sqlite_path.startswith("//"):
+            sqlite_path = sqlite_path[1:]
+        sqlite_path = os.path.normpath(sqlite_path)
+        sqlite_dir = os.path.dirname(sqlite_path)
+        if sqlite_dir:
+            try:
+                os.makedirs(sqlite_dir, exist_ok=True)
+            except PermissionError:
+                # In some environments (read-only root), cannot create directories.
+                # We'll rely on the existing directory structure.
+                pass
+
     engine = create_engine(
         DATABASE_URL,
         connect_args={"check_same_thread": False}
