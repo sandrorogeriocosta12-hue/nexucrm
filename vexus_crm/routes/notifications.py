@@ -108,7 +108,16 @@ def create_notification(
         db.commit()
         db.refresh(new_notification)
 
-        return new_notification
+        # Return explicit Pydantic model to satisfy response_model validation
+        return NotificationOut(
+            id=new_notification.id,
+            title=new_notification.title,
+            message=new_notification.message,
+            type=new_notification.type,
+            user_id=new_notification.user_id,
+            is_read=new_notification.is_read,
+            created_at=new_notification.created_at,
+        )
 
     except Exception as e:
         logging.exception("Erro ao criar notificação")
