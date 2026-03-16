@@ -34,6 +34,9 @@ class NotificationOut(BaseModel):
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
 
 @router.get("/", response_model=List[NotificationOut])
 def get_notifications(
