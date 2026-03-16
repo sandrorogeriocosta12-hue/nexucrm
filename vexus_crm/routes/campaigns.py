@@ -29,7 +29,7 @@ class CampaignOut(BaseModel):
     end_date: Optional[datetime] = None
     budget: Optional[float] = None
     created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    # Removido updated_at que pode causar problemas de serialização
     class Config:
         from_attributes = True
 
