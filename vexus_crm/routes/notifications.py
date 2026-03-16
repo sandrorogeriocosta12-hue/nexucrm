@@ -47,19 +47,19 @@ def get_notifications(
     current_user: User = Depends(get_current_user)
 ):
     """Get notifications for current user"""
-    query = db.query(NotificationModel)
-    
-    if user_only:
-        query = query.filter(
-            (NotificationModel.user_id == current_user.id) | 
-            (NotificationModel.user_id.is_(None))
-        )
-    
-    # Sort by creation date (newest first)
-    notifications = query.order_by(NotificationModel.created_at.desc()).offset(skip).limit(limit).all()
-    
-    # Criar objetos NotificationOut manualmente para evitar problemas de serialização
     try:
+        query = db.query(NotificationModel)
+        
+        if user_only:
+            query = query.filter(
+                (NotificationModel.user_id == current_user.id) | 
+                (NotificationModel.user_id.is_(None))
+            )
+        
+        # Sort by creation date (newest first)
+        notifications = query.order_by(NotificationModel.created_at.desc()).offset(skip).limit(limit).all()
+        
+        # Criar objetos NotificationOut manualmente para evitar problemas de serialização
         result = []
         for notification in notifications:
             result.append(NotificationOut(
