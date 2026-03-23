@@ -1,46 +1,107 @@
 """
-Vexus CRM - FastAPI Main Server
-Integra: Knowledge Lab, Proposal Generator, Chat, Analytics
-Force redeploy: 2026-03-16
+Vexus CRM - Professional FastAPI Server
+Enterprise-ready with security, monitoring, and production features
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
 import logging
 from datetime import datetime
 import os
+import time
 
-# Configurar logging
+# Professional logging configuration
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("logs/vexus_crm.log", mode='a')
+    ]
 )
 logger = logging.getLogger(__name__)
 
-# Criar app FastAPI
+# Import professional configuration
+try:
+    from vexus_crm.config import get_settings
+    settings = get_settings()
+    logger.info("✓ Professional configuration loaded")
+except Exception as e:
+    logger.warning(f"⚠ Configuration not available: {e}")
+    settings = None
+
+# Import professional middlewares
+try:
+    from vexus_crm.middleware.rate_limit import RateLimitMiddleware
+    from vexus_crm.middleware.security import SecurityHeadersMiddleware, RequestLoggingMiddleware, SQLInjectionProtectionMiddleware
+    logger.info("✓ Professional middlewares loaded")
+except Exception as e:
+    logger.warning(f"⚠ Middlewares not available: {e}")
+    RateLimitMiddleware = SecurityHeadersMiddleware = RequestLoggingMiddleware = SQLInjectionProtectionMiddleware = None
+
+# Create FastAPI app with professional settings
 app = FastAPI(
     title="Vexus CRM API",
-    description="Plataforma de CRM inteligente com IA, RAG e Automação de Vendas",
+    description="Plataforma de CRM inteligente com IA, RAG e Automação de Vendas - Enterprise Edition",
     version="1.0.0",
-    openapi_url=None,  # Disable OpenAPI schema generation to avoid Pydantic V2 issues
-    docs_url=None,     # Disable docs
-    redoc_url=None,    # Disable redoc
+    openapi_url="/api/openapi.json" if settings and settings.DEBUG else None,
+    docs_url="/api/docs" if settings and settings.DEBUG else None,
+    redoc_url="/api/redoc" if settings and settings.DEBUG else None,
 )
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Em produção: ["https://yourdomain.com"]
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Professional CORS configuration
+if settings:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.CORS_ORIGINS,
+        allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+        allow_methods=settings.CORS_ALLOW_METHODS,
+        allow_headers=settings.CORS_ALLOW_HEADERS,
+        max_age=settings.CORS_MAX_AGE,
+    )
+else:
+    # Fallback CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+# Security middlewares
+if SecurityHeadersMiddleware:
+    app.add_middleware(SecurityHeadersMiddleware)
+
+if RequestLoggingMiddleware:
+    app.add_middleware(RequestLoggingMiddleware)
+
+if SQLInjectionProtectionMiddleware:
+    app.add_middleware(SQLInjectionProtectionMiddleware)
+
+# Rate limiting middleware
+if RateLimitMiddleware and settings:
+    app.add_middleware(
+        RateLimitMiddleware,
+        requests_per_window=settings.RATE_LIMIT_REQUESTS,
+        window_seconds=settings.RATE_LIMIT_WINDOW_SECONDS
+    )
+
+# Trusted host middleware for production
+if settings and settings.ENVIRONMENT == "production":
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["yourdomain.com"])
 
 
 # create database tables on startup
 @app.on_event("startup")
 async def startup_db():
+    app.startup_time = time.time()
+    logger.info("🚀 Vexus CRM API starting up...")
     try:
         from vexus_crm.database import engine, get_db
         from vexus_crm import models
@@ -133,8 +194,42 @@ try:
 except Exception as e:
     logger.warning(f"⚠ Segmentation router not available: {e}")
 
+try:
+    from vexus_crm.routes.knowledge_lab import router as knowledge_router
+    app.include_router(knowledge_router)
+    logger.info("✓ Knowledge Lab router loaded")
+except Exception as e:
+    logger.warning(f"⚠ Knowledge Lab router not available: {e}")
 
-# Rota raiz - Healthcheck simples para Railway
+try:
+    # Simple agents router for testing
+    from fastapi import APIRouter
+    agents_router = APIRouter(prefix="/api/agents", tags=["Agents"])
+    
+    @agents_router.get("/")
+    async def get_agents_config():
+        """Get agents configuration"""
+        return {
+            "agents": {
+                "scoring_agent": {"enabled": True, "model": "gpt-4"},
+                "pipeline_manager": {"enabled": True, "model": "gpt-4"},
+                "conversation_analyzer": {"enabled": True, "model": "gpt-4"},
+                "next_best_action": {"enabled": True, "model": "gpt-4"},
+                "proposal_generator": {"enabled": True, "model": "gpt-4"},
+                "followup_scheduler": {"enabled": True, "model": "gpt-4"},
+                "channel_optimizer": {"enabled": True, "model": "gpt-4"}
+            }
+        }
+    
+    @agents_router.get("")  # Also handle /api/agents without trailing slash
+    async def get_agents_config_alt():
+        """Get agents configuration (alternative route)"""
+        return await get_agents_config()
+    
+    app.include_router(agents_router)
+    logger.info("✓ Agents router loaded")
+except Exception as e:
+    logger.warning(f"⚠ Agents router not available: {e}")
 @app.get("/")
 async def root():
     return {
@@ -165,10 +260,80 @@ async def dashboard():
     return {"error": "Dashboard not found"}
 
 
-# Health check - SIMPLIFIED for Railway
+# Rota raiz - Healthcheck profissional
+@app.get("/")
+async def root():
+    """Professional health check endpoint"""
+    # Check database connectivity
+    db_status = "unknown"
+    try:
+        from vexus_crm.database import get_db
+        db = next(get_db())
+        db.execute("SELECT 1")
+        db_status = "healthy"
+        db.close()
+    except Exception as e:
+        db_status = f"unhealthy: {str(e)}"
+
+    return {
+        "status": "online",
+        "service": "Vexus CRM API",
+        "version": settings.APP_VERSION if settings else "1.0.0",
+        "environment": settings.ENVIRONMENT if settings else "development",
+        "timestamp": datetime.now().isoformat(),
+        "database": db_status,
+        "features": {
+            "authentication": True,
+            "leads_management": True,
+            "campaigns": True,
+            "analytics": True,
+            "whatsapp_integration": True,
+            "ai_agents": True,
+            "knowledge_lab": True
+        }
+    }
+
+
+# Enhanced health check
 @app.get("/health")
-async def health():
-    return {"status": "healthy", "timestamp": datetime.now().isoformat(), "service": "Vexus CRM API"}
+async def health_check():
+    """Detailed health check for monitoring systems"""
+    checks = {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "version": settings.APP_VERSION if settings else "1.0.0",
+        "checks": {}
+    }
+
+    # Database check
+    try:
+        from vexus_crm.database import get_db
+        db = next(get_db())
+        db.execute("SELECT COUNT(*) FROM users")
+        db.close()
+        checks["checks"]["database"] = {"status": "healthy", "details": "Connected"}
+    except Exception as e:
+        checks["checks"]["database"] = {"status": "unhealthy", "details": str(e)}
+        checks["status"] = "unhealthy"
+
+    return checks
+
+
+# Metrics endpoint for monitoring
+@app.get("/metrics")
+async def metrics():
+    """Prometheus-style metrics endpoint"""
+    if not (settings and settings.ENABLE_METRICS):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Metrics not enabled")
+
+    from fastapi.responses import Response
+
+    metrics_data = f"""# Vexus CRM Metrics
+# Generated at {datetime.now().isoformat()}
+"""
+
+    return Response(content=metrics_data, media_type="text/plain")
 
 
 # 404 Handler

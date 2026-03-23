@@ -1,48 +1,96 @@
-# Virtual Environment
-venv/
-.venv/
-ENV/
-env/
-
-# Database
-*.sqlite
-*.sqlite3
-*.db
-instance/
-
-# Pycache
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv/
+venv/
+ENV/
+env/
+.env
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.DS_Store
+out/
+
+# Flutter
+/ios
+/android
+/build
+/.dart_tool
+/.flutter-plugins
+/.flutter-plugins-dependencies
+/pubspec.lock
+
+# Node
+node_modules/
+npm-debug.log
+yarn.lock
+package-lock.json
+.npm/
+
+# Django
+*.log
+local_settings.py
+/media
+/staticfiles
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.bak
+*.zip
+*.tar.gz
+.temp/
+temp/
 
 # OS
-.DS_Store
-.env
+Thumbs.db
+.vagrant
+.cache/
 
-# Logs
-*.log
-logs/
-
-# Build
-build/
-dist/
-*.egg-info/
-
-# Testing
+# IDE/Tool
+.pyc
 .pytest_cache/
 .coverage
 htmlcov/
+.tox/
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# Node modules (if present)
-node_modules/
+# MacOS
+.AppleDouble
+.LSOverride
 
-# Temporary files
-temp/
-tmp/
-vexus_core/venv/
+# Windows
+$RECYCLE.BIN/
