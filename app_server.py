@@ -263,6 +263,16 @@ if os.path.exists(frontend_path):
 
 
 # Dashboard route
+@app.get("/signup", response_class=HTMLResponse)
+async def signup(request: Request):
+    """Serve signup page"""
+    signup_path = os.path.join(frontend_path, "signup-v2.html")
+    if os.path.exists(signup_path):
+        with open(signup_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse("<h2>Página de cadastro não encontrada</h2>", status_code=404)
+
+
 @app.get("/dashboard")
 async def dashboard():
     """Serve the functional dashboard after login"""
