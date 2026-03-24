@@ -265,8 +265,8 @@ if os.path.exists(frontend_path):
 # Dashboard route
 @app.get("/dashboard")
 async def dashboard():
-    """Serve the JWT-authenticated dashboard"""
-    dashboard_path = os.path.join(frontend_path, "dashboard-jwt.html")
+    """Serve the functional dashboard after login"""
+    dashboard_path = os.path.join(frontend_path, "dashboard-functional.html")
     if os.path.exists(dashboard_path):
         with open(dashboard_path, "r", encoding="utf-8") as f:
             content = f.read()
@@ -275,22 +275,21 @@ async def dashboard():
     return {"error": "Dashboard not found"}
 
 
-# Rota raiz - Servir frontend funcional
+# Rota raiz - Servir página de login
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    """Serve functional dashboard with API integration"""
-    dashboard_path = os.path.join(frontend_path, "dashboard-functional.html")
-    if os.path.exists(dashboard_path):
-        with open(dashboard_path, "r", encoding="utf-8") as f:
+    """Serve login page"""
+    login_path = os.path.join(frontend_path, "login-nexus.html")
+    if os.path.exists(login_path):
+        with open(login_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     
-    # Fallback to dashboard.html
-    dashboard_path = os.path.join(frontend_path, "dashboard.html")
-    if os.path.exists(dashboard_path):
-        with open(dashboard_path, "r", encoding="utf-8") as f:
+    # Fallback to login.html
+    login_path = os.path.join(frontend_path, "login.html")
+    if os.path.exists(login_path):
+        with open(login_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-
-    return HTMLResponse("<h2>Vexus CRM Frontend não encontrado</h2>", status_code=404)
+    return HTMLResponse("<h2>Nexus CRM Login não encontrado</h2>", status_code=404)
 
 
 @app.get("/status")
