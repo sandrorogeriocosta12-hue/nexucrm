@@ -268,19 +268,19 @@ async def dashboard():
     return {"error": "Dashboard not found"}
 
 
-# Rota raiz - Servir frontend principal (UI)
+# Rota raiz - Servir frontend funcional
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    """Serve frontend HTML, always return UI unless explicit API call"""
-    # Serve the frontend UI
-    index_path = os.path.join(frontend_path, "index.html")
-    if os.path.exists(index_path):
-        with open(index_path, "r", encoding="utf-8") as f:
+    """Serve functional dashboard with API integration"""
+    dashboard_path = os.path.join(frontend_path, "dashboard-functional.html")
+    if os.path.exists(dashboard_path):
+        with open(dashboard_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-
-    app_html_path = os.path.join(frontend_path, "app.html")
-    if os.path.exists(app_html_path):
-        with open(app_html_path, "r", encoding="utf-8") as f:
+    
+    # Fallback to dashboard.html
+    dashboard_path = os.path.join(frontend_path, "dashboard.html")
+    if os.path.exists(dashboard_path):
+        with open(dashboard_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
 
     return HTMLResponse("<h2>Vexus CRM Frontend não encontrado</h2>", status_code=404)
