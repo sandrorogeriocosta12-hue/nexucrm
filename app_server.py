@@ -169,6 +169,13 @@ except Exception as e:
     logger.warning(f"⚠ Campaigns router not available: {e}")
 
 try:
+    from vexus_crm.routes.contacts import router as contacts_router
+    app.include_router(contacts_router, prefix="/api")
+    logger.info("✓ Contacts router loaded")
+except Exception as e:
+    logger.warning(f"⚠ Contacts router not available: {e}")
+
+try:
     from vexus_crm.routes.notifications import router as notifications_router
     app.include_router(notifications_router, prefix="/api")
     logger.info("✓ Notifications router loaded")
