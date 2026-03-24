@@ -280,38 +280,8 @@ async def dashboard():
 # Rota raiz - Servir frontend principal (UI)
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    # Se requisitado por API (JSON), retorna status em JSON
-    accept = request.headers.get("accept", "")
-    if "application/json" in accept.lower():
-        db_status = "unknown"
-        try:
-            from vexus_crm.database import get_db
-            db = next(get_db())
-            db.execute("SELECT 1")
-            db_status = "healthy"
-            db.close()
-        except Exception as e:
-            db_status = f"unhealthy: {str(e)}"
-
-        return JSONResponse({
-            "status": "online",
-            "service": "Vexus CRM API",
-            "version": settings.APP_VERSION if settings else "1.0.0",
-            "environment": settings.ENVIRONMENT if settings else "development",
-            "timestamp": datetime.now().isoformat(),
-            "database": db_status,
-            "features": {
-                "authentication": True,
-                "leads_management": True,
-                "campaigns": True,
-                "analytics": True,
-                "whatsapp_integration": True,
-                "ai_agents": True,
-                "knowledge_lab": True
-            }
-        })
-
-    # Senão, serve a UI
+    """Serve frontend HTML, always return UI unless explicit API call"""
+    # Serve the frontend UI
     index_path = os.path.join(frontend_path, "index.html")
     if os.path.exists(index_path):
         with open(index_path, "r", encoding="utf-8") as f:
@@ -322,10 +292,39 @@ async def root(request: Request):
         with open(app_html_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
 
-    return JSONResponse({
-        "status": "offline",
-        "message": "Frontend not found",
-    }, status_code=404)
+    return HTMLResponse("<h2>Vexus CRM Frontend não encontrado</h2>", status_code=404)
+
+
+@app.get("/status")
+async def status():
+    """API endpoint para status da aplicação"""
+    db_status = "unknown"
+    try:
+        from vexus_crm.database import get_db
+        db = next(get_db())
+        db.execute("SELECT 1")
+        db_status = "healthy"
+        db.close()
+    except Exception as e:
+        db_status = f"unhealthy: {str(e)}"
+
+    return {
+        "status": "online",
+        "service": "Vexus CRM API",
+        "version": settings.APP_VERSION if settings else "1.0.0",
+        "environment": settings.ENVIRONMENT if settings else "development",
+        "timestamp": datetime.now().isoformat(),
+        "database": db_status,
+        "features": {
+            "authentication": True,
+            "leads_management": True,
+            "campaigns": True,
+            "analytics": True,
+            "whatsapp_integration": True,
+            "ai_agents": True,
+            "knowledge_lab": True
+        }
+    }
 
 
 # Enhanced health check
