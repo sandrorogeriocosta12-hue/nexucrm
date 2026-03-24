@@ -118,12 +118,12 @@ async def startup_db():
             from vexus_crm.models import User
             from vexus_crm.routes.auth import get_password_hash
             
-            test_user = db.query(User).filter(User.email == "test@vexus.com").first()
+            test_user = db.query(User).filter(User.email == "test@nexus.com").first()
             if not test_user:
                 hashed_password = get_password_hash("test123")
                 test_user = User(
                     id="test-user-id",
-                    email="test@vexus.com",
+                    email="test@nexus.com",
                     name="Test User",
                     password_hash=hashed_password,
                     role="user",

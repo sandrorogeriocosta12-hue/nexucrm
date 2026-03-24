@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vexus CRM - Dashboard Funcional</title>
+    <title>Nexus CRM - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
@@ -18,8 +18,8 @@
     <!-- Navbar -->
     <nav class="bg-slate-900 border-b border-slate-700 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold">V</div>
-            <h1 class="text-2xl font-bold">Vexus CRM</h1>
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold">N</div>
+            <h1 class="text-2xl font-bold">Nexus CRM</h1>
         </div>
         <div class="flex items-center gap-4">
             <span id="userEmail" class="text-gray-300">Conectando...</span>
@@ -251,7 +251,7 @@
 
 <script>
 const API_BASE = window.location.origin;
-let authToken = localStorage.getItem('vexus_token');
+let authToken = localStorage.getItem('nexus_token');
 
 // ============ API Functions ============
 async function apiFetch(endpoint, options = {}) {
@@ -268,7 +268,7 @@ async function apiFetch(endpoint, options = {}) {
         });
 
         if (response.status === 401) {
-            localStorage.removeItem('vexus_token');
+            localStorage.removeItem('nexus_token');
             authToken = null;
             showLoginModal();
             return null;
@@ -324,7 +324,7 @@ async function doLogin(e) {
         
         if (data.access_token) {
             authToken = data.access_token;
-            localStorage.setItem('vexus_token', authToken);
+            localStorage.setItem('nexus_token', authToken);
             showNotification('✅ Login bem-sucedido!');
             document.getElementById('loginModal').classList.add('hidden');
             document.getElementById('loginEmail').value = '';
@@ -343,7 +343,7 @@ async function doLogin(e) {
 }
 
 function logout() {
-    localStorage.removeItem('vexus_token');
+    localStorage.removeItem('nexus_token');
     authToken = null;
     document.getElementById('userEmail').textContent = 'Desconectado';
     showLoginModal();
@@ -617,9 +617,9 @@ document.addEventListener('DOMContentLoaded', initialize);
 <div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
     <div class="bg-slate-800 p-8 rounded-lg border border-slate-700 w-96 shadow-xl">
         <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold text-2xl mx-auto mb-4">V</div>
-            <h2 class="text-2xl font-bold">Vexus CRM</h2>
-            <p class="text-gray-400 mt-2">Faça login para acessar o CRM</p>
+            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold text-2xl mx-auto mb-4">N</div>
+            <h2 class="text-2xl font-bold">Nexus CRM</h2>
+            <p class="text-gray-400 mt-2">Acesse sua plataforma de vendas</p>
         </div>
 
         <form onsubmit="doLogin(event)">
@@ -635,8 +635,9 @@ document.addEventListener('DOMContentLoaded', initialize);
 
             <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded transition">Entrar</button>
 
-            <div class="mt-6 text-center text-gray-400 text-sm">
-                <p>Clientes: test@vexus.com / test123</p>
+            <div class="mt-6 text-center text-gray-400 text-xs">
+                <p>Ambiente de Demonstração</p>
+                <p class="text-gray-500">test@nexus.com / test123</p>
             </div>
         </form>
     </div>
