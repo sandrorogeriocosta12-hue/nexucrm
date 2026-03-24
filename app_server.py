@@ -277,38 +277,55 @@ async def dashboard():
     return {"error": "Dashboard not found"}
 
 
-# Rota raiz - Healthcheck profissional
-@app.get("/")
-async def root():
-    """Professional health check endpoint"""
-    # Check database connectivity
-    db_status = "unknown"
-    try:
-        from vexus_crm.database import get_db
-        db = next(get_db())
-        db.execute("SELECT 1")
-        db_status = "healthy"
-        db.close()
-    except Exception as e:
-        db_status = f"unhealthy: {str(e)}"
+# Rota raiz - Servir frontend principal (UI)
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    # Se requisitado por API (JSON), retorna status em JSON
+    accept = request.headers.get("accept", "")
+    if "application/json" in accept.lower():
+        db_status = "unknown"
+        try:
+            from vexus_crm.database import get_db
+            db = next(get_db())
+            db.execute("SELECT 1")
+            db_status = "healthy"
+            db.close()
+        except Exception as e:
+            db_status = f"unhealthy: {str(e)}"
 
-    return {
-        "status": "online",
-        "service": "Vexus CRM API",
-        "version": settings.APP_VERSION if settings else "1.0.0",
-        "environment": settings.ENVIRONMENT if settings else "development",
-        "timestamp": datetime.now().isoformat(),
-        "database": db_status,
-        "features": {
-            "authentication": True,
-            "leads_management": True,
-            "campaigns": True,
-            "analytics": True,
-            "whatsapp_integration": True,
-            "ai_agents": True,
-            "knowledge_lab": True
-        }
-    }
+        return JSONResponse({
+            "status": "online",
+            "service": "Vexus CRM API",
+            "version": settings.APP_VERSION if settings else "1.0.0",
+            "environment": settings.ENVIRONMENT if settings else "development",
+            "timestamp": datetime.now().isoformat(),
+            "database": db_status,
+            "features": {
+                "authentication": True,
+                "leads_management": True,
+                "campaigns": True,
+                "analytics": True,
+                "whatsapp_integration": True,
+                "ai_agents": True,
+                "knowledge_lab": True
+            }
+        })
+
+    # Senão, serve a UI
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    app_html_path = os.path.join(frontend_path, "app.html")
+    if os.path.exists(app_html_path):
+        with open(app_html_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    return JSONResponse({
+        "status": "offline",
+        "message": "Frontend not found",
+    }, status_code=404)
 
 
 # Enhanced health check
