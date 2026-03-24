@@ -268,7 +268,9 @@ async function apiFetch(endpoint, options = {}) {
         });
 
         if (response.status === 401) {
-            logout();
+            localStorage.removeItem('vexus_token');
+            authToken = null;
+            showLoginModal();
             return null;
         }
 
@@ -282,7 +284,7 @@ async function apiFetch(endpoint, options = {}) {
 // ============ Auth Functions ============
 async function checkAuth() {
     if (!authToken) {
-        window.location.href = '/frontend/login-nexus.html';
+        showLoginModal();
         return false;
     }
 
@@ -290,6 +292,7 @@ async function checkAuth() {
         const user = await apiFetch('/api/auth/me');
         if (user && user.email) {
             document.getElementById('userEmail').textContent = `👤 ${user.name || user.email}`;
+            document.getElementById('loginModal').classList.add('hidden');
             return true;
         } else {
             logout();
@@ -301,9 +304,49 @@ async function checkAuth() {
     }
 }
 
+function showLoginModal() {
+    document.getElementById('loginModal').classList.remove('hidden');
+}
+
+async function doLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+        const response = await fetch(API_BASE + '/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+        
+        if (data.access_token) {
+            authToken = data.access_token;
+            localStorage.setItem('vexus_token', authToken);
+            showNotification('✅ Login bem-sucedido!');
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            checkAuth();
+            loadLeads();
+            loadCampaigns();
+            loadContacts();
+            loadAgents();
+        } else {
+            showNotification('❌ Email ou senha incorretos', true);
+        }
+    } catch (e) {
+        showNotification('❌ Erro ao fazer login', true);
+    }
+}
+
 function logout() {
     localStorage.removeItem('vexus_token');
-    window.location.href = '/frontend/login-nexus.html';
+    authToken = null;
+    document.getElementById('userEmail').textContent = 'Desconectado';
+    showLoginModal();
 }
 
 // ============ Toast Notifications ============
@@ -569,6 +612,35 @@ async function initialize() {
 // Start
 document.addEventListener('DOMContentLoaded', initialize);
 </script>
+
+<!-- Login Modal -->
+<div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div class="bg-slate-800 p-8 rounded-lg border border-slate-700 w-96 shadow-xl">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold text-2xl mx-auto mb-4">V</div>
+            <h2 class="text-2xl font-bold">Vexus CRM</h2>
+            <p class="text-gray-400 mt-2">Faça login para acessar o CRM</p>
+        </div>
+
+        <form onsubmit="doLogin(event)">
+            <div class="mb-4">
+                <label class="block text-gray-300 font-semibold mb-2">Email</label>
+                <input type="email" id="loginEmail" required class="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500" placeholder="seu@email.com">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-300 font-semibold mb-2">Senha</label>
+                <input type="password" id="loginPassword" required class="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500" placeholder="Sua senha">
+            </div>
+
+            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded transition">Entrar</button>
+
+            <div class="mt-6 text-center text-gray-400 text-sm">
+                <p>Clientes: test@vexus.com / test123</p>
+            </div>
+        </form>
+    </div>
+</div>
 
 </body>
 </html>
