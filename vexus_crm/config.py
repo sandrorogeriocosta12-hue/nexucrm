@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     
     # CORS
     CORS_ORIGINS: list = ["*"]
+
+    # Trusted hosts (para produção com domínio customizado)
+    ALLOWED_HOSTS: list = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,::1,nexuscrm.tech,www.nexuscrm.tech").split(",")
     
     # Security - Enhanced
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")

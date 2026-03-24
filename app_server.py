@@ -94,7 +94,9 @@ if RateLimitMiddleware and settings:
 
 # Trusted host middleware for production
 if settings and settings.ENVIRONMENT == "production":
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["yourdomain.com"])
+    allowed = [h.strip() for h in getattr(settings, 'ALLOWED_HOSTS', ['yourdomain.com']) if h.strip()]
+    if allowed:
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed)
 
 
 # create database tables on startup
@@ -232,12 +234,27 @@ except Exception as e:
     logger.warning(f"⚠ Agents router not available: {e}")
 @app.get("/")
 async def root():
-    return {
+    return JSONResponse({
         "status": "online",
         "service": "Vexus CRM API",
         "version": "1.0.0",
         "timestamp": datetime.now().isoformat()
-    }
+    })
+
+
+@app.get("/app", response_class=HTMLResponse)
+async def app_frontend():
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    app_html_path = os.path.join(frontend_path, "app.html")
+    if os.path.exists(app_html_path):
+        with open(app_html_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    return HTMLResponse("<h2>Vexus CRM Frontend não encontrado</h2>", status_code=404)
 
 
 # Mount static files (frontend)
@@ -334,6 +351,25 @@ async def metrics():
 """
 
     return Response(content=metrics_data, media_type="text/plain")
+
+
+# SPA fallback route - rota cliente, depois das rotas API/health/metrics
+@app.get("/{full_path:path}", response_class=HTMLResponse)
+async def spa_fallback(full_path: str, request: Request):
+    if full_path.startswith("api") or full_path.startswith("health") or full_path.startswith("metrics") or full_path.startswith("docs") or full_path.startswith("openapi") or full_path.startswith("dashboard"):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    index_path = os.path.join(frontend_path, "index.html")
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    app_html_path = os.path.join(frontend_path, "app.html")
+    if os.path.exists(app_html_path):
+        with open(app_html_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+
+    raise HTTPException(status_code=404, detail="Frontend not found")
 
 
 # 404 Handler
