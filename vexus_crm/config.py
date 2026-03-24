@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: list = [".pdf", ".doc", ".docx", ".txt", ".png", ".jpg", ".jpeg", ".gif"]
 
     # CORS - Production Ready
-    CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000").split(",")
+    CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000,https://nexuscrm.tech,https://www.nexuscrm.tech,https://api.nexuscrm.tech").split(",")
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
     CORS_ALLOW_HEADERS: list = ["*"]

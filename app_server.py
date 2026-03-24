@@ -232,15 +232,6 @@ try:
     logger.info("✓ Agents router loaded")
 except Exception as e:
     logger.warning(f"⚠ Agents router not available: {e}")
-@app.get("/")
-async def root():
-    return JSONResponse({
-        "status": "online",
-        "service": "Vexus CRM API",
-        "version": "1.0.0",
-        "timestamp": datetime.now().isoformat()
-    })
-
 
 @app.get("/app", response_class=HTMLResponse)
 async def app_frontend():

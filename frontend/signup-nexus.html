@@ -97,7 +97,7 @@
         if (typeof apiFetch === 'undefined') {
             console.warn('apiFetch not available, creating fallback');
             async function apiFetch(endpoint, options = {}) {
-                const API_BASE = 'http://localhost:8002';
+                const API_BASE = window.location.origin;
                 const headers = {
                     'Content-Type': 'application/json',
                     ...(options.headers || {})
