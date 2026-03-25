@@ -1,0 +1,61 @@
+🚀 DEPLOY RAILWAY - INSTRUÇÕES RÁPIDAS
+=========================================
+
+PASSO 1: Acesse https://railway.app
+- Faça login ou crie conta gratuita
+- Você ganha $5 de crédito automaticamente
+
+PASSO 2: Conecte o GitHub
+- Clique "New Project" → "Deploy from GitHub repo"
+- Autorize o Railway no seu GitHub
+- Selecione o repositório: sandrorogeriocosta12-hue/nexucrm
+
+PASSO 3: Configure o Deploy
+- Railway detectará automaticamente o Dockerfile
+- Branch: main
+- Build Command: docker build .
+- Start Command: docker run (já configurado no Dockerfile)
+
+PASSO 4: Environment Variables (CRÍTICO!)
+Adicione estas variáveis nas "Variables" do Railway:
+
+# Ambiente
+ENVIRONMENT=production
+LOG_LEVEL=INFO
+DEBUG=False
+VERSION=1.0.0
+
+# Database (PostgreSQL)
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+DATABASE_POOL_SIZE=20
+DATABASE_MAX_OVERFLOW=10
+
+# Redis (opcional)
+REDIS_URL=${{Redis.REDIS_URL}}
+REDIS_SSL=false
+
+# APIs OBRIGATÓRIAS
+OPENAI_API_KEY=sk-proj-SEU_API_KEY_AQUI
+OPENAI_MODEL=gpt-4
+OPENAI_TEMPERATURE=0.7
+
+# WhatsApp (OBRIGATÓRIO)
+WHATSAPP_BUSINESS_API_KEY=Bearer SEU_TOKEN_AQUI
+WHATSAPP_PHONE_NUMBER_ID=1234567890
+WHATSAPP_WEBHOOK_TOKEN=SEU_WEBHOOK_TOKEN_AQUI
+WHATSAPP_VERIFY_TOKEN=SEU_VERIFY_TOKEN_AQUI
+
+PASSO 5: Adicione Serviços
+- Clique "Add" → "Database" → "PostgreSQL"
+- Clique "Add" → "Database" → "Redis" (opcional)
+
+PASSO 6: Deploy
+- Clique "Deploy"
+- Aguarde o build (3-5 minutos)
+- URL será gerada automaticamente
+
+PASSO 7: Teste
+- Acesse a URL gerada + /health
+- Deve retornar: {"status": "ok"}
+- Teste signup: URL + /signup
+
