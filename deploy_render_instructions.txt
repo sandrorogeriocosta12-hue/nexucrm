@@ -1,0 +1,43 @@
+🚀 DEPLOY RENDER - INSTRUÇÕES RÁPIDAS
+========================================
+
+PASSO 1: Acesse https://render.com
+- Faça login ou crie conta gratuita
+- Clique "New" → "Web Service"
+
+PASSO 2: Conecte o GitHub
+- Escolha "Connect GitHub"
+- Autorize o Render no seu GitHub
+- Selecione o repositório: sandrorogeriocosta12-hue/nexucrm
+
+PASSO 3: Configure o Deploy
+- Name: nexuscrm
+- Environment: Docker
+- Branch: main
+- Dockerfile Path: ./Dockerfile (já configurado)
+
+PASSO 4: Environment Variables (IMPORTANTE!)
+Copie estas variáveis do seu .env.production:
+
+ENVIRONMENT=production
+LOG_LEVEL=INFO
+DEBUG=False
+VERSION=1.0.0
+DATABASE_URL=postgresql://user:password@db.example.com:5432/vexus_crm
+REDIS_URL=redis://user:password@redis.example.com:6379/0
+OPENAI_API_KEY=sk-proj-SEU_API_KEY_AQUI
+WHATSAPP_BUSINESS_API_KEY=Bearer SEU_TOKEN_AQUI
+WHATSAPP_PHONE_NUMBER_ID=1234567890
+WHATSAPP_WEBHOOK_TOKEN=SEU_WEBHOOK_TOKEN_AQUI
+WHATSAPP_VERIFY_TOKEN=SEU_VERIFY_TOKEN_AQUI
+
+PASSO 5: Deploy
+- Clique "Create Web Service"
+- Aguarde o build (5-10 minutos)
+- URL será algo como: https://nexuscrm.onrender.com
+
+PASSO 6: Teste
+- Acesse: https://nexuscrm.onrender.com/health
+- Deve retornar: {"status": "ok"}
+- Teste signup: https://nexuscrm.onrender.com/signup
+

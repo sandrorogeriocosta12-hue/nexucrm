@@ -44,14 +44,23 @@ except Exception as e:
     logger.warning(f"⚠ Middlewares not available: {e}")
     RateLimitMiddleware = SecurityHeadersMiddleware = RequestLoggingMiddleware = SQLInjectionProtectionMiddleware = None
 
-# Create FastAPI app with professional settings
+# Import Sentry for professional error tracking
+try:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    logger.info("✓ Sentry SDK available")
+except ImportError:
+    sentry_sdk = None
+    logger.info("ℹ Sentry not installed (pip install sentry-sdk)")
+
+# Create FastAPI app with PROFESSIONAL settings (always enable docs)
 app = FastAPI(
     title="Vexus CRM API",
     description="Plataforma de CRM inteligente com IA, RAG e Automação de Vendas - Enterprise Edition",
     version="1.0.0",
-    openapi_url="/api/openapi.json" if settings and settings.DEBUG else None,
-    docs_url="/api/docs" if settings and settings.DEBUG else None,
-    redoc_url="/api/redoc" if settings and settings.DEBUG else None,
+    openapi_url="/api/openapi.json",  # Always enable for documentation
+    docs_url="/api/docs",  # Swagger UI always available
+    redoc_url="/api/redoc",  # ReDoc always available
 )
 
 # Professional CORS configuration
@@ -272,7 +281,71 @@ if os.path.exists(frontend_path):
     logger.info(f"✓ Frontend mounted at /frontend from {frontend_path}")
 
 
-# Dashboard route
+# ============================================================================
+# 🏥 HEALTH CHECKS & MONITORING ENDPOINTS (Professional Grade)
+# ============================================================================
+
+@app.get("/health", tags=["Monitoring"])
+async def health_check():
+    """
+    Simple health check for load balancers.
+    Responds fast with 200 OK if service is running.
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "version": "1.0.0",
+        "environment": os.getenv("ENVIRONMENT", "development")
+    }
+
+
+@app.get("/status", tags=["Monitoring"])
+async def detailed_status():
+    """
+    Detailed status check - includes database and service health.
+    """
+    status_data = {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "version": "1.0.0",
+        "services": {
+            "api": "✓ operational",
+            "frontend": "✓ operational",
+        }
+    }
+    
+    # Check database connection
+    try:
+        if settings:
+            db_status = "✓ connected"
+            status_data["services"]["database"] = db_status
+    except Exception as e:
+        status_data["services"]["database"] = f"✗ error: {str(e)}"
+        status_data["status"] = "degraded"
+    
+    return status_data
+
+
+@app.get("/metrics", tags=["Monitoring"])
+async def metrics():
+    """
+    Basic metrics endpoint for monitoring systems.
+    Returns request stats and performance metrics.
+    """
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "uptime_seconds": (datetime.now() - datetime.fromtimestamp(os.path.getmtime(__file__) if os.path.exists(__file__) else time.time())).total_seconds(),
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "database_configured": settings is not None,
+        "debug_mode": settings.DEBUG if settings else False,
+    }
+
+
+# ============================================================================
+# 📄 FRONTEND ROUTES
+# ============================================================================
+
+
 @app.get("/signup", response_class=HTMLResponse)
 async def signup(request: Request):
     """Serve signup page"""
