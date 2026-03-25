@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termos de Serviço - Nexus Service</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, rgb(30, 41, 59), rgb(15, 23, 42));
+            color: rgb(209, 213, 219);
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-box {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-gradient:hover {
+            box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: rgba(71, 85, 105, 0.5);
+            color: rgb(209, 213, 219);
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid rgb(71, 85, 105);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-secondary:hover {
+            background: rgba(71, 85, 105, 0.7);
+        }
+        .terms-content {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgb(55, 65, 81);
+            border-radius: 12px;
+            padding: 24px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .terms-content h2 {
+            color: rgb(168, 85, 247);
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+        .terms-content h3 {
+            color: rgb(139, 92, 246);
+            margin-top: 18px;
+            margin-bottom: 8px;
+        }
+        .terms-content p {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        .terms-content ul {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+        .terms-content li {
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center mb-4">
+                <div class="logo-box mr-4">N</div>
+                <h1 class="gradient-text text-3xl font-bold">Nexus Service</h1>
+            </div>
+            <h2 class="text-xl text-gray-300 mb-2">Termos de Serviço</h2>
+            <p class="text-gray-400">Última atualização: Dezembro 2024</p>
+        </div>
+
+        <!-- Terms Content -->
+        <div class="terms-content">
+            <h2>1. Aceitação dos Termos</h2>
+            <p>Ao acessar e usar o Nexus Service, você concorda em cumprir e estar vinculado a estes Termos de Serviço. Se você não concordar com estes termos, não use nossos serviços.</p>
+
+            <h2>2. Descrição do Serviço</h2>
+            <p>O Nexus Service é uma plataforma de CRM alimentada por IA que ajuda empresas a qualificar leads, gerenciar contatos e automatizar processos de vendas. Nossos serviços incluem:</p>
+            <ul>
+                <li>Qualificação automática de leads usando inteligência artificial</li>
+                <li>Gerenciamento de contatos e pipeline de vendas</li>
+                <li>Relatórios e análises de performance</li>
+                <li>Integração com WhatsApp e outras ferramentas</li>
+                <li>Automações personalizadas</li>
+            </ul>
+
+            <h2>3. Uso Aceitável</h2>
+            <p>Você concorda em usar o Nexus Service apenas para fins legais e de acordo com estes termos. É proibido:</p>
+            <ul>
+                <li>Usar o serviço para atividades ilegais ou fraudulentas</li>
+                <li>Compartilhar credenciais de acesso</li>
+                <li>Tentar acessar sistemas não autorizados</li>
+                <li>Enviar spam ou conteúdo malicioso</li>
+                <li>Violar direitos de propriedade intelectual</li>
+            </ul>
+
+            <h2>4. Privacidade e Dados</h2>
+            <p>Sua privacidade é importante para nós. Coletamos e processamos dados pessoais de acordo com nossa Política de Privacidade. Você mantém a propriedade dos seus dados comerciais, mas concede ao Nexus Service o direito de processá-los para fornecer nossos serviços.</p>
+
+            <h2>5. Planos e Pagamento</h2>
+            <p>Oferecemos diferentes planos de serviço:</p>
+            <ul>
+                <li><strong>Free:</strong> Até 100 leads por mês, recursos básicos</li>
+                <li><strong>Pro:</strong> Até 1.000 leads por mês, automações avançadas</li>
+                <li><strong>Enterprise:</strong> Leads ilimitados, suporte prioritário, integrações personalizadas</li>
+            </ul>
+            <p>Os pagamentos são processados mensalmente. Você pode cancelar a qualquer momento, mas não haverá reembolso por períodos já faturados.</p>
+
+            <h2>6. Limitação de Responsabilidade</h2>
+            <p>O Nexus Service é fornecido "como está". Não garantimos que o serviço estará sempre disponível ou livre de erros. Não nos responsabilizamos por danos indiretos, lucros cessantes ou perda de dados.</p>
+
+            <h2>7. Modificações</h2>
+            <p>Reservamo-nos o direito de modificar estes termos a qualquer momento. As mudanças entrarão em vigor imediatamente após a publicação. O uso continuado do serviço constitui aceitação dos novos termos.</p>
+
+            <h2>8. Lei Aplicável</h2>
+            <p>Estes termos são regidos pelas leis brasileiras. Qualquer disputa será resolvida nos tribunais competentes de São Paulo, SP.</p>
+
+            <h2>9. Contato</h2>
+            <p>Para dúvidas sobre estes termos, entre em contato conosco através do email: suporte@nexuscrm.tech</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-center space-x-4 mt-8">
+            <button onclick="acceptTerms()" class="btn-gradient">Aceito os Termos</button>
+            <button onclick="declineTerms()" class="btn-secondary">Não Aceito</button>
+        </div>
+    </div>
+
+    <script>
+        function acceptTerms() {
+            // Fechar modal ou redirecionar
+            if (window.parent && window.parent.closeTermsModal) {
+                window.parent.closeTermsModal(true);
+            } else {
+                window.location.href = '/signup';
+            }
+        }
+
+        function declineTerms() {
+            // Fechar modal ou redirecionar
+            if (window.parent && window.parent.closeTermsModal) {
+                window.parent.closeTermsModal(false);
+            } else {
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>

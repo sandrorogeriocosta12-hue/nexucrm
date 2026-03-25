@@ -6,7 +6,6 @@ Professional security headers and protection
 import logging
 from typing import List
 from fastapi import Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 import hashlib
 import time

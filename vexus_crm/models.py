@@ -382,6 +382,7 @@ class User(Base):
     email = Column(String, unique=True)
     password_hash = Column(String)  # Deve ser hasheado com bcrypt
     role = Column(String)  # admin, manager, user
+    plan = Column(String, default="free")  # free, pro, enterprise
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.now)
 

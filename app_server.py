@@ -120,14 +120,16 @@ async def startup_db():
             
             test_user = db.query(User).filter(User.email == "test@nexus.com").first()
             if not test_user:
+                import uuid
                 hashed_password = get_password_hash("test123")
                 test_user = User(
-                    id="test-user-id",
+                    id=str(uuid.uuid4()),
                     email="test@nexus.com",
                     name="Test User",
                     password_hash=hashed_password,
                     role="user",
-                    is_active=True
+                    plan="free",
+                    is_active=True,
                 )
                 db.add(test_user)
                 db.commit()
@@ -240,6 +242,14 @@ try:
 except Exception as e:
     logger.warning(f"⚠ Agents router not available: {e}")
 
+# Include main API router from app/api_main
+try:
+    from app.api_main import app as api_main_app
+    app.include_router(api_main_app.router)
+    logger.info("✓ Main API router loaded")
+except Exception as e:
+    logger.warning(f"⚠ Main API router not available: {e}")
+
 @app.get("/app", response_class=HTMLResponse)
 async def app_frontend():
     index_path = os.path.join(frontend_path, "index.html")
@@ -271,6 +281,26 @@ async def signup(request: Request):
         with open(signup_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     return HTMLResponse("<h2>Página de cadastro não encontrada</h2>", status_code=404)
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms(request: Request):
+    """Serve terms of service page"""
+    terms_path = os.path.join(frontend_path, "terms.html")
+    if os.path.exists(terms_path):
+        with open(terms_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse("<h2>Termos de serviço não encontrados</h2>", status_code=404)
+
+
+@app.get("/test-modal", response_class=HTMLResponse)
+async def test_modal(request: Request):
+    """Serve test modal page"""
+    test_path = os.path.join(os.getcwd(), "test_modal.html")
+    if os.path.exists(test_path):
+        with open(test_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse("<h2>Página de teste não encontrada</h2>", status_code=404)
 
 
 @app.get("/dashboard")

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+        .test-btn {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Modal</h1>
+    <button onclick="openTermsModal()" class="test-btn">Test Terms Modal</button>
+
+    <!-- Terms Modal -->
+    <div id="termsModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 50; display: none; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem;">
+        <div style="background-color: rgb(30, 41, 59); border-radius: 0.5rem; max-width: 56rem; width: 100%; max-height: 90vh; overflow: hidden;">
+            <div style="padding: 1.5rem; border-bottom: 1px solid rgb(51, 65, 85);">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <h3 style="font-size: 1.25rem; line-height: 1.75rem; font-weight: 700;" class="gradient-text">Termos de Serviço</h3>
+                    <button onclick="closeTermsModal()" style="color: rgb(156, 163, 175); font-size: 1.5rem; line-height: 2rem;">&times;</button>
+                </div>
+            </div>
+            <div style="padding: 1.5rem; overflow-y: auto; max-height: 70vh;">
+                <div class="terms-content" style="color: rgb(209, 213, 219);">
+                    <h4 style="color: rgb(196, 181, 253); font-weight: 600; margin-bottom: 1rem;">1. Aceitação dos Termos</h4>
+                    <p style="margin-bottom: 1rem;">Test modal content...</p>
+                </div>
+            </div>
+            <div style="padding: 1.5rem; border-top: 1px solid rgb(51, 65, 85); display: flex; justify-content: flex-end; gap: 1rem;">
+                <button onclick="closeTermsModal()" class="btn-secondary">Fechar</button>
+                <button onclick="acceptTerms()" class="btn-gradient" style="background: linear-gradient(135deg, #a855f7, #ec4899); color: white; padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">Aceito os Termos</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Terms modal functions
+        function openTermsModal() {
+            console.log('Opening terms modal - function called');
+            const modal = document.getElementById('termsModal');
+            console.log('Modal element:', modal);
+            if (modal) {
+                modal.style.display = 'flex';
+                console.log('Modal display set to flex');
+                console.log('Modal computed style display:', window.getComputedStyle(modal).display);
+            } else {
+                console.error('Modal element not found!');
+            }
+        }
+
+        function closeTermsModal() {
+            console.log('Closing terms modal');
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                modal.style.display = 'none';
+                console.log('Modal display set to none');
+            }
+        }
+
+        function acceptTerms() {
+            console.log('Terms accepted');
+            closeTermsModal();
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('termsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeTermsModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -11,6 +11,7 @@ try:
     HAS_HTTPX = True
 except ImportError:
     HAS_HTTPX = False
+import logging
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer
@@ -30,6 +31,8 @@ from app.core.auth import (
     verify_password_reset_token,
     verify_token,
 )
+
+logger = logging.getLogger(__name__)
 
 # encryption helpers
 try:
@@ -59,6 +62,8 @@ class UserCreate(BaseModel):
     password: str
     full_name: Optional[str] = None
     company: Optional[str] = None
+    plan: Optional[str] = "free"
+    terms: bool
 
 
 class LoginRequest(BaseModel):
@@ -75,10 +80,11 @@ class UserOut(BaseModel):
     email: EmailStr
     name: Optional[str] = None
     role: Optional[str] = None
+    plan: Optional[str] = "free"
     is_active: bool = True
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 def get_current_user(
@@ -101,20 +107,30 @@ def get_current_user(
 
 @router.post("/register", response_model=UserOut, status_code=201)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
+    # check terms acceptance (legal requirement)
+    if not user.terms:
+        raise HTTPException(status_code=400, detail="É necessário aceitar os termos de serviço")
+
     # check existing
     existing = db.query(UserModel).filter(UserModel.email == user.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
+
     hashed = get_password_hash(user.password)
     db_user = UserModel(
         email=user.email,
         password_hash=hashed,
         name=user.full_name,
         role="user",
+        plan=user.plan or "free",
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+
+    # Audit log for legal trace
+    logger.info(f"User registered with terms accepted: {user.email}")
+
     return db_user
 
 
@@ -160,6 +176,7 @@ async def me(current: UserModel = Depends(get_current_user)):
         email=current.email,
         name=current.name,
         role=current.role,
+        plan=current.plan or "free",
         is_active=current.is_active,
     )
 
