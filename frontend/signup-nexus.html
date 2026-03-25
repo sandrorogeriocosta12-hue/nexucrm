@@ -74,7 +74,7 @@
 
             <div class="flex items-center">
                 <input type="checkbox" id="terms" class="w-4 h-4 bg-slate-700 border border-slate-600 rounded focus:ring-2 focus:ring-purple-500" required>
-                <label for="terms" class="ml-2 text-sm text-gray-400">Aceito os <a href="#" class="text-purple-400 hover:text-purple-300">termos de serviço</a></label>
+                <label for="terms" class="ml-2 text-sm text-gray-400">Aceito os <a href="#" onclick="event.preventDefault(); openTermsModal(); return false;" class="text-purple-400 hover:text-purple-300">termos de serviço</a></label>
             </div>
 
             <button type="submit" class="w-full btn-gradient text-white py-2.5 px-4 rounded-lg font-semibold">Criar Conta</button>
@@ -86,6 +86,33 @@
         <p class="text-center text-sm text-gray-400 mt-6">
             Já tem conta? <a href="login-nexus.html" class="text-purple-400 font-semibold hover:text-purple-300 transition">Faça login</a>
         </p>
+    </div>
+
+    <!-- Terms Modal -->
+    <div id="termsModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden shadow-2xl">
+            <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+                <h3 class="text-xl font-bold gradient-text">Termos de Serviço</h3>
+                <button onclick="closeTermsModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-96 text-gray-300">
+                <h4 class="text-purple-400 font-semibold mb-3">1. Aceitação dos Termos</h4>
+                <p class="mb-4">Ao acessar e usar o Nexus Service, você concorda em cumprir e estar vinculado a estes Termos de Serviço. Se você não concordar com estes termos, não use nossos serviços.</p>
+
+                <h4 class="text-purple-400 font-semibold mb-3">2. Descrição do Serviço</h4>
+                <p class="mb-4">O Nexus Service é uma plataforma de CRM alimentada por IA que ajuda empresas a qualificar leads, gerenciar contatos e automatizar processos de vendas.</p>
+
+                <h4 class="text-purple-400 font-semibold mb-3">3. Privacidade e Dados</h4>
+                <p class="mb-4">Sua privacidade é importante para nós. Coletamos e processamos dados pessoais de acordo com nossa Política de Privacidade.</p>
+
+                <h4 class="text-purple-400 font-semibold mb-3">4. Limitação de Responsabilidade</h4>
+                <p class="mb-4">O Nexus Service é fornecido "como está". Não garantimos que o serviço estará sempre disponível ou livre de erros.</p>
+            </div>
+            <div class="p-6 border-t border-slate-700 flex justify-end gap-3">
+                <button onclick="closeTermsModal()" class="px-4 py-2 bg-slate-600 text-gray-300 rounded hover:bg-slate-500 transition">Fechar</button>
+                <button onclick="acceptTerms()" class="px-4 py-2 btn-gradient text-white rounded font-semibold">Aceito os Termos</button>
+            </div>
+        </div>
     </div>
 
     <script src="js/api.js"></script>
@@ -170,6 +197,42 @@
                 console.error('Signup error:', err);
                 errorEl.textContent = err.message || 'Erro ao criar conta. Tente novamente.';
                 errorEl.classList.remove('hidden');
+            }
+        });
+
+        // Terms modal functions
+        window.openTermsModal = function() {
+            console.log('Opening terms modal');
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                console.log('Modal opened');
+            }
+        };
+
+        window.closeTermsModal = function() {
+            console.log('Closing terms modal');
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                console.log('Modal closed');
+            }
+        };
+
+        window.acceptTerms = function() {
+            document.getElementById('terms').checked = true;
+            window.closeTermsModal();
+        };
+
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        window.closeTermsModal();
+                    }
+                });
             }
         });
     </script>
