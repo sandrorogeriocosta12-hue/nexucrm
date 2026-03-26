@@ -980,6 +980,8 @@ async def signup(request: Request, t: str = None):
     response.headers["Last-Modified"] = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
     response.headers["X-Cache-Bypass"] = current_version  # Unique per request
     response.headers["X-Version"] = current_version  # Custom version header
+    response.headers["CF-Cache-Status"] = "BYPASS"  # Force Cloudflare to bypass cache
+    response.headers["CDN-Cache-Control"] = "no-cache"  # Additional CDN bypass
     return response
 
 
