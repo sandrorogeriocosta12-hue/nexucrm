@@ -349,8 +349,11 @@ async def metrics():
 @app.get("/signup", response_class=HTMLResponse)
 async def signup(request: Request):
     """Serve signup page with NO-CACHE headers to prevent Cloudflare caching - EMBEDDED HTML VERSION"""
+    # 🔥 FINAL ATTEMPT: Dynamic version parameter to force cache bypass
+    current_version = f"v{int(time.time() * 1000000)}"  # Unique version per microsecond
+    
     # 🔥 TEMPORARY PATCH: Serve embedded HTML with fixed modal to bypass file sync issues
-    signup_html = """<!DOCTYPE html>
+    signup_html = f"""<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -360,22 +363,22 @@ async def signup(request: Request):
     <meta http-equiv="Expires" content="0">
     <title>Nexus Service - Cadastro</title>
     <style>
-        body {
+        body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             min-height: 100vh;
             margin: 0;
             padding: 0;
-        }
-        .container {
+        }}
+        .container {{
             max-width: 400px;
             margin: 0 auto;
             padding: 2rem 1rem;
-        }
-        .form-group {
+        }}
+        .form-group {{
             margin-bottom: 1.5rem;
-        }
-        .form-input {
+        }}
+        .form-input {{
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #374151;
@@ -384,18 +387,18 @@ async def signup(request: Request):
             color: #f9fafb;
             font-size: 16px;
             transition: border-color 0.2s ease;
-        }
-        .form-input:focus {
+        }}
+        .form-input:focus {{
             outline: none;
             border-color: #8b5cf6;
             box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-        }
-        .password-wrapper {
+        }}
+        .password-wrapper {{
             position: relative;
             display: flex;
             align-items: center;
-        }
-        .password-toggle {
+        }}
+        .password-toggle {{
             position: absolute;
             right: 12px;
             background: none;
@@ -406,11 +409,11 @@ async def signup(request: Request):
             padding: 4px;
             border-radius: 4px;
             transition: color 0.2s ease;
-        }
-        .password-toggle:hover {
+        }}
+        .password-toggle:hover {{
             color: #f9fafb;
-        }
-        .btn-primary {
+        }}
+        .btn-primary {{
             width: 100%;
             padding: 14px;
             background: linear-gradient(135deg, #8b5cf6, #ec4899);
@@ -421,23 +424,23 @@ async def signup(request: Request):
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .btn-primary:hover {
+        }}
+        .btn-primary:hover {{
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-        }
-        .btn-primary:disabled {
+        }}
+        .btn-primary:disabled {{
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
-        }
-        .gradient-text {
+        }}
+        .gradient-text {{
             background: linear-gradient(135deg, #8b5cf6, #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-        }
-        .terms-modal {
+        }}
+        .terms-modal {{
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -452,8 +455,8 @@ async def signup(request: Request):
             padding: 1rem !important;
             visibility: hidden !important;
             opacity: 0 !important;
-        }
-        .modal-content {
+        }}
+        .modal-content {{
             background-color: #1f2937 !important;
             border-radius: 12px !important;
             max-width: 56rem !important;
@@ -461,27 +464,27 @@ async def signup(request: Request):
             max-height: 90vh !important;
             overflow: hidden !important;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-        }
-        .modal-header {
+        }}
+        .modal-header {{
             padding: 1.5rem !important;
             border-bottom: 1px solid #374151 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: space-between !important;
-        }
-        .modal-body {
+        }}
+        .modal-body {{
             padding: 1.5rem !important;
             overflow-y: auto !important;
             max-height: 70vh !important;
-        }
-        .modal-footer {
+        }}
+        .modal-footer {{
             padding: 1.5rem !important;
             border-top: 1px solid #374151 !important;
             display: flex !important;
             justify-content: flex-end !important;
             gap: 1rem !important;
-        }
-        .btn-secondary {
+        }}
+        .btn-secondary {{
             background: rgba(71, 85, 105, 0.5) !important;
             color: #d1d5db !important;
             padding: 12px 24px !important;
@@ -490,11 +493,11 @@ async def signup(request: Request):
             cursor: pointer !important;
             font-weight: 500 !important;
             transition: background-color 0.2s ease !important;
-        }
-        .btn-secondary:hover {
+        }}
+        .btn-secondary:hover {{
             background: rgba(71, 85, 105, 0.7) !important;
-        }
-        .btn-gradient {
+        }}
+        .btn-gradient {{
             background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
             color: white !important;
             padding: 12px 24px !important;
@@ -503,20 +506,20 @@ async def signup(request: Request):
             cursor: pointer !important;
             font-weight: 600 !important;
             transition: transform 0.2s ease !important;
-        }
-        .btn-gradient:hover {
+        }}
+        .btn-gradient:hover {{
             transform: translateY(-1px) !important;
-        }
-        .terms-link {
+        }}
+        .terms-link {{
             color: #8b5cf6 !important;
             text-decoration: none !important;
             font-weight: 500 !important;
-        }
-        .terms-link:hover {
+        }}
+        .terms-link:hover {{
             color: #a855f7 !important;
             text-decoration: underline !important;
-        }
-        .logo-box {
+        }}
+        .logo-box {{
             width: 60px;
             height: 60px;
             background: linear-gradient(135deg, #a855f7, #ec4899);
@@ -528,8 +531,8 @@ async def signup(request: Request):
             font-size: 28px;
             color: white;
             box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
-        }
-        .btn-gradient {
+        }}
+        .btn-gradient {{
             background: linear-gradient(135deg, #a855f7, #ec4899);
             color: white;
             padding: 10px 16px;
@@ -539,12 +542,12 @@ async def signup(request: Request):
             font-weight: 600;
             width: 100%;
             transition: all 0.3s;
-        }
-        .btn-gradient:hover {
+        }}
+        .btn-gradient:hover {{
             box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4);
             transform: translateY(-2px);
-        }
-        input {
+        }}
+        input {{
             width: 100%;
             padding: 10px 16px;
             background-color: rgb(71, 85, 105);
@@ -553,21 +556,21 @@ async def signup(request: Request):
             border-radius: 8px;
             font-size: 14px;
             margin-bottom: 12px;
-        }
-        input::placeholder {
+        }}
+        input::placeholder {{
             color: rgb(156, 163, 175);
-        }
-        .form-group {
+        }}
+        .form-group {{
             margin-bottom: 16px;
-        }
-        label {
+        }}
+        label {{
             display: block;
             color: rgb(209, 213, 219);
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 8px;
-        }
-        .error {
+        }}
+        .error {{
             color: #fca5a5;
             background-color: rgba(239, 68, 68, 0.2);
             border: 1px solid rgba(239, 68, 68, 0.3);
@@ -575,8 +578,8 @@ async def signup(request: Request):
             border-radius: 8px;
             margin-bottom: 16px;
             font-size: 14px;
-        }
-        .success {
+        }}
+        .success {{
             color: #86efac;
             background-color: rgba(34, 197, 94, 0.2);
             border: 1px solid rgba(34, 197, 94, 0.3);
@@ -584,22 +587,22 @@ async def signup(request: Request):
             border-radius: 8px;
             margin-bottom: 16px;
             font-size: 14px;
-        }
-        .plan-option {
+        }}
+        .plan-option {{
             position: relative;
-        }
-        .plan-option input[type="radio"] {
+        }}
+        .plan-option input[type="radio"] {{
             position: absolute;
             opacity: 0;
             width: 100%;
             height: 100%;
             margin: 0;
-        }
-        .plan-option input[type="radio"]:checked + label > div {
+        }}
+        .plan-option input[type="radio"]:checked + label > div {{
             border-color: rgb(168, 85, 247);
             background: rgba(168, 85, 247, 0.1);
-        }
-        .btn-secondary {
+        }}
+        .btn-secondary {{
             background: rgba(71, 85, 105, 0.5);
             color: rgb(209, 213, 219);
             padding: 10px 16px;
@@ -608,11 +611,11 @@ async def signup(request: Request):
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
-        }
-        .btn-secondary:hover {
+        }}
+        .btn-secondary:hover {{
             background: rgba(71, 85, 105, 0.7);
-        }
-        #termsModal {
+        }}
+        #termsModal {{
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -621,14 +624,14 @@ async def signup(request: Request):
             background-color: rgba(0, 0, 0, 0.5) !important;
             z-index: 99999 !important;
             display: none !important;
-        }
-        #termsModal:not(.hidden) {
+        }}
+        #termsModal:not(.hidden) {{
             display: flex !important;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             padding: 1rem;
-        }
+        }}
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-900 via-slate-950 to-black">
@@ -789,28 +792,28 @@ async def signup(request: Request):
     </div>
 
     <script>
-        const cacheVersion = '2.6';
-        console.log('✅ Signup page loaded - Terms Modal v' + cacheVersion + ' activated');
+        const cacheVersion = '{current_version}';
+        console.log('✅ Signup page loaded - Terms Modal ' + cacheVersion + ' activated');
         
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function() {{
             const lastVersion = sessionStorage.getItem('signupVersion');
-            if (lastVersion !== cacheVersion) {
+            if (lastVersion !== cacheVersion) {{
                 sessionStorage.setItem('signupVersion', cacheVersion);
                 console.log('🔄 New version detected, clearing cache...');
-                if ('caches' in window) {
-                    caches.keys().then(names => {
+                if ('caches' in window) {{
+                    caches.keys().then(names => {{
                         names.forEach(name => caches.delete(name));
-                    });
-                }
-            }
-        });
+                    }});
+                }}
+            }}
+        }});
 
-        window.openTermsModal = function() {
+        window.openTermsModal = function() {{
             console.log('🔓 Opening terms modal - function called');
             const modal = document.getElementById('termsModal');
             console.log('📦 Modal element:', modal);
 
-            if (modal) {
+            if (modal) {{
                 modal.classList.remove('hidden');
                 modal.style.display = 'flex !important';
                 modal.style.visibility = 'visible !important';
@@ -829,64 +832,64 @@ async def signup(request: Request):
                 window.scrollTo(0, 0);
                 document.body.style.overflow = 'hidden';
                 console.log('✅ Modal computed style display:', window.getComputedStyle(modal).display);
-            } else {
+            }} else {{
                 console.error('❌ Modal element not found!');
-            }
-        };
+            }}
+        }};
 
-        window.closeTermsModal = function() {
+        window.closeTermsModal = function() {{
             console.log('🔒 Closing terms modal');
             const modal = document.getElementById('termsModal');
-            if (modal) {
+            if (modal) {{
                 modal.classList.add('hidden');
                 modal.style.display = 'none !important';
                 modal.style.visibility = 'hidden !important';
                 modal.style.opacity = '0 !important';
                 document.body.style.overflow = 'auto';
                 console.log('✅ Modal display set to none');
-            }
-        };
+            }}
+        }};
 
-        window.acceptTerms = function() {
+        window.acceptTerms = function() {{
             document.getElementById('terms').checked = true;
             window.closeTermsModal();
-        };
+        }};
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {{
             console.log('DOM fully loaded');
 
             const modal = document.getElementById('termsModal');
-            if (modal) {
-                modal.addEventListener('click', function(e) {
-                    if (e.target === this) {
+            if (modal) {{
+                modal.addEventListener('click', function(e) {{
+                    if (e.target === this) {{
                         window.closeTermsModal();
-                    }
-                });
+                    }}
+                }});
                 console.log('Event listener added to modal');
-            }
+            }}
 
             console.log('openTermsModal function:', typeof window.openTermsModal);
             console.log('closeTermsModal function:', typeof window.closeTermsModal);
-        });
+        }});
 
-        function togglePassword(fieldId) {
+        function togglePassword(fieldId) {{
             const field = document.getElementById(fieldId);
             const button = field.nextElementSibling;
 
-            if (field.type === 'password') {
+            if (field.type === 'password') {{
                 field.type = 'text';
                 button.textContent = '🙈';
-            } else {
+            }} else {{
                 field.type = 'password';
                 button.textContent = '👁️';
-            }
-        }
+            }}
+        }}
         
         const form = document.getElementById('signupForm');
         const errorEl = document.getElementById('errorMessage');
         const successEl = document.getElementById('successMessage');
         
-        form.addEventListener('submit', async (e) => {
+        form.addEventListener('submit', async (e) => {{
             e.preventDefault();
             console.log('Form submitted');
 
@@ -901,74 +904,75 @@ async def signup(request: Request):
             errorEl.style.display = 'none';
             successEl.style.display = 'none';
 
-            try {
-                if (!fullName || !email || !password) {
+            try {{
+                if (!fullName || !email || !password) {{
                     throw new Error('Nome, email e senha são obrigatórios');
-                }
-                if (password !== confirmPassword) {
+                }}
+                if (password !== confirmPassword) {{
                     throw new Error('As senhas não coincidem');
-                }
-                if (password.length < 6) {
+                }}
+                if (password.length < 6) {{
                     throw new Error('A senha deve ter pelo menos 6 caracteres');
-                }
-                if (!termsAccepted) {
+                }}
+                if (!termsAccepted) {{
                     throw new Error('Aceite os termos de serviço é obrigatório');
-                }
+                }}
 
                 console.log('Sending registration request to API');
 
                 const API_BASE = window.location.origin;
-                const response = await fetch(API_BASE + '/api/auth/register', {
+                const response = await fetch(API_BASE + '/api/auth/register', {{
                     method: 'POST',
-                    headers: {
+                    headers: {{
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
+                    }},
+                    body: JSON.stringify({{
                         email: email,
                         password: password,
                         full_name: fullName,
                         company: company || null,
                         plan: plan,
                         terms: termsAccepted
-                    })
-                });
+                    }})
+                }});
 
                 const data = await response.json();
                 console.log('API response:', data);
 
-                if (!response.ok) {
+                if (!response.ok) {{
                     throw new Error(data.detail || 'Erro ao criar conta');
-                }
+                }}
 
                 successEl.textContent = '✅ Conta criada com sucesso! Redirecionando para login...';
                 successEl.style.display = 'block';
                 form.style.display = 'none';
                 
-                setTimeout(() => {
+                setTimeout(() => {{
                     window.location.href = '/';
-                }, 2000);
+                }}, 2000);
 
-            } catch (err) {
+            }} catch (err) {{
                 console.error('Error:', err);
                 errorEl.textContent = '❌ ' + err.message;
                 errorEl.style.display = 'block';
-            }
-        });
+            }}
+        }});
     </script>
 </body>
 </html>"""
     
     response = HTMLResponse(content=signup_html)
-    # 🔥 ULTRA FORCE NO CACHE - Multiple layers to bypass ALL caching
+    # 🔥 NUCLEAR OPTION: Dynamic version in URL forces cache bypass
     timestamp = str(int(time.time() * 1000000))  # Microsecond precision
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, public, max-age=0, s-maxage=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     response.headers["Surrogate-Control"] = "no-store"
     response.headers["X-Accel-Expires"] = "0"
-    response.headers["ETag"] = f'"{timestamp}"'  # Always different ETag
+    response.headers["ETag"] = f'"{current_version}"'  # Dynamic ETag per request
     response.headers["Last-Modified"] = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
-    response.headers["X-Cache-Bypass"] = timestamp  # Custom header to force bypass
+    response.headers["X-Cache-Bypass"] = current_version  # Unique per request
+    response.headers["X-Version"] = current_version  # Custom version header
     return response
 
 
