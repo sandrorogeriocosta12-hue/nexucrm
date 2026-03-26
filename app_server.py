@@ -347,7 +347,7 @@ async def metrics():
 
 
 @app.get("/signup", response_class=HTMLResponse)
-async def signup(request: Request):
+async def signup(request: Request, t: str = None):
     """Serve signup page with NO-CACHE headers to prevent Cloudflare caching - EMBEDDED HTML VERSION"""
     # 🔥 FINAL ATTEMPT: Dynamic version parameter to force cache bypass
     current_version = f"v{int(time.time() * 1000000)}"  # Unique version per microsecond
@@ -794,6 +794,13 @@ async def signup(request: Request):
     <script>
         const cacheVersion = '{current_version}';
         console.log('✅ Signup page loaded - Terms Modal ' + cacheVersion + ' activated');
+        
+        // 🔥 FORCE CACHE BYPASS: Redirect to unique URL if no timestamp parameter
+        if (!window.location.search.includes('t=')) {{
+            const uniqueUrl = window.location.pathname + '?t=' + Date.now() + Math.random().toString(36).substr(2, 9);
+            console.log('🔄 Redirecting to unique URL to bypass cache:', uniqueUrl);
+            window.location.replace(uniqueUrl);
+        }}
         
         window.addEventListener('load', function() {{
             const lastVersion = sessionStorage.getItem('signupVersion');
