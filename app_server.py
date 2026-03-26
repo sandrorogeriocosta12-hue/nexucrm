@@ -644,6 +644,7 @@ async def signup(request: Request, t: str = None):
         <h1 class="gradient-text" style="font-size: 30px; font-weight: bold; text-align: center; margin-bottom: 8px;">Nexus Service</h1>
         <p style="text-align: center; color: rgb(156, 163, 175); font-size: 14px; margin-bottom: 4px;">Criar Conta</p>
         <p style="text-align: center; color: rgb(107, 114, 128); font-size: 12px; margin-bottom: 32px;">Cadastre-se e comece a qualificar leads com IA</p>
+        <p style="text-align: center; color: rgb(34, 197, 94); font-size: 10px; margin-bottom: 16px; font-weight: bold;">✅ VERSION: {current_version}</p>
         
         <div id="errorMessage" class="error" style="display: none;"></div>
         <div id="successMessage" class="success" style="display: none;"></div>
