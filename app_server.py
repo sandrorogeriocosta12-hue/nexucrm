@@ -348,11 +348,19 @@ async def metrics():
 
 @app.get("/signup", response_class=HTMLResponse)
 async def signup(request: Request):
-    """Serve signup page"""
+    """Serve signup page with NO-CACHE headers to prevent Cloudflare caching"""
     signup_path = os.path.join(frontend_path, "signup-v2.html")
     if os.path.exists(signup_path):
         with open(signup_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
+            response = HTMLResponse(content=f.read())
+            # 🔥 FORCE NO CACHE - Override Cloudflare caching
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, public, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            response.headers["Surrogate-Control"] = "no-store"
+            response.headers["X-Accel-Expires"] = "0"
+            response.headers["ETag"] = f'"{datetime.utcnow().timestamp()}"'  # Always different ETag
+            return response
     return HTMLResponse("<h2>Página de cadastro não encontrada</h2>", status_code=404)
 
 

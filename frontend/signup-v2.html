@@ -2,8 +2,10 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <!-- 🔄 CACHE BUSTING v2.5 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Nexus Service - Cadastro</title>
@@ -478,36 +480,78 @@
     </div>
 
     <script>
-        console.log('✅ Signup page loaded - Terms Modal activated');
+        // 🔄 FORCE REFRESH - Cache Busting
+        const cacheVersion = '2.5';
+        console.log('✅ Signup page loaded - Terms Modal v' + cacheVersion + ' activated');
+        
+        // Force browser to reload if old cache detected
+        window.addEventListener('load', function() {
+            const lastVersion = sessionStorage.getItem('signupVersion');
+            if (lastVersion !== cacheVersion) {
+                sessionStorage.setItem('signupVersion', cacheVersion);
+                console.log('🔄 New version detected, clearing cache...');
+                // Clear service worker cache if exists
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => caches.delete(name));
+                    });
+                }
+            }
+        });
 
         // Terms modal functions - defined at global scope
         window.openTermsModal = function() {
-            console.log('Opening terms modal - function called');
+            console.log('🔓 Opening terms modal - function called');
             const modal = document.getElementById('termsModal');
-            console.log('Modal element:', modal);
+            console.log('📦 Modal element:', modal);
 
             if (modal) {
-                // Force show the modal
+                // Remove hidden class completely
+                modal.classList.remove('hidden');
+                
+                // Force show the modal with inline styles (override CSS)
                 modal.style.display = 'flex !important';
                 modal.style.visibility = 'visible !important';
                 modal.style.opacity = '1 !important';
-                modal.style.zIndex = '10000 !important';
+                modal.style.zIndex = '99999 !important';
+                modal.style.position = 'fixed !important';
+                modal.style.top = '0 !important';
+                modal.style.left = '0 !important';
+                modal.style.width = '100% !important';
+                modal.style.height = '100% !important';
+                modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7) !important';
+                modal.style.alignItems = 'center !important';
+                modal.style.justifyContent = 'center !important';
 
-                console.log('Modal display set to flex');
-                console.log('Modal computed style display:', window.getComputedStyle(modal).display);
+                console.log('✅ Modal display set to flex - should be visible now');
+                
+                // Force scroll to top
+                window.scrollTo(0, 0);
+                document.body.style.overflow = 'hidden';
+                
+                // Add a test element to confirm this ran
+                console.log('✅ Modal computed style display:', window.getComputedStyle(modal).display);
             } else {
-                console.error('Modal element not found!');
+                console.error('❌ Modal element not found!');
+                // Try to find it by class instead
+                const modalByClass = document.querySelector('.terms-modal');
+                if (modalByClass) {
+                    console.log('Found modal by class, opening...');
+                    window.openTermsModal();
+                }
             }
         };
 
         window.closeTermsModal = function() {
-            console.log('Closing terms modal');
+            console.log('🔒 Closing terms modal');
             const modal = document.getElementById('termsModal');
             if (modal) {
+                modal.classList.add('hidden');
                 modal.style.display = 'none !important';
                 modal.style.visibility = 'hidden !important';
                 modal.style.opacity = '0 !important';
-                console.log('Modal display set to none');
+                document.body.style.overflow = 'auto';
+                console.log('✅ Modal display set to none');
             }
         };
 
