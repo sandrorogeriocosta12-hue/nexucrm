@@ -146,7 +146,7 @@ class ProspectTracker:
         else:
             print(f"❌ Prospect não encontrado: {name}")
 
-    def _find_prospect(self, name: str) -> Dict or None:
+    def _find_prospect(self, name: str):
         """Encontra prospect por nome (fuzzy match)"""
         name_lower = name.lower()
         for prospect in self.prospects:

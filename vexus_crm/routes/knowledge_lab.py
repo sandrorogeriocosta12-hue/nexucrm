@@ -99,10 +99,26 @@ async def upload_document(
         if not text.strip():
             raise HTTPException(status_code=400, detail="PDF vazio ou protegido")
         
-        # 4. Dividir em chunks
-        from langchain.text_splitter import RecursiveCharacterTextSplitter
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-        chunks = text_splitter.split_text(text)
+        # 4. Dividir em chunks (simple implementation sem langchain)
+        def split_text(text, chunk_size=500, chunk_overlap=50):
+            """Simple text splitter without langchain dependency"""
+            chunks = []
+            words = text.split()
+            current_chunk = []
+            
+            for word in words:
+                current_chunk.append(word)
+                if len(" ".join(current_chunk)) >= chunk_size:
+                    chunks.append(" ".join(current_chunk))
+                    # Overlap para contexto
+                    current_chunk = current_chunk[-int(chunk_overlap/10):]
+            
+            if current_chunk:
+                chunks.append(" ".join(current_chunk))
+            
+            return chunks
+        
+        chunks = split_text(text)
         
         if not chunks:
             raise HTTPException(status_code=400, detail="Não foi possível extrair conteúdo")
@@ -131,13 +147,14 @@ async def upload_document(
         db.refresh(doc)
         for i, chunk in enumerate(chunks):
             emb = get_mock_embedding(chunk)
-            kc = KnowledgeChunk(
-                document_id=doc.id,
-                chunk_number=i,
-                chunk_text=chunk,
-                embedding=emb,
-                tokens=len(chunk.split()),
-            )
+            # Store chunk data (KnowledgeChunk model)
+            chunk_data = {
+                "document_id": doc.id,
+                "chunk_number": i,
+                "chunk_text": chunk,
+                "embedding": emb,
+                "tokens": len(chunk.split()),
+            }
             db.add(kc)
         db.commit()
         os.remove(temp_file)
