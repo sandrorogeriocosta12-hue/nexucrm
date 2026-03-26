@@ -789,7 +789,7 @@ async def signup(request: Request):
     </div>
 
     <script>
-        const cacheVersion = '2.5';
+        const cacheVersion = '2.6';
         console.log('✅ Signup page loaded - Terms Modal v' + cacheVersion + ' activated');
         
         window.addEventListener('load', function() {
@@ -959,13 +959,16 @@ async def signup(request: Request):
 </html>"""
     
     response = HTMLResponse(content=signup_html)
-    # 🔥 FORCE NO CACHE - Override Cloudflare caching
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, public, max-age=0"
+    # 🔥 ULTRA FORCE NO CACHE - Multiple layers to bypass ALL caching
+    timestamp = str(int(time.time() * 1000000))  # Microsecond precision
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, public, max-age=0, s-maxage=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     response.headers["Surrogate-Control"] = "no-store"
     response.headers["X-Accel-Expires"] = "0"
-    response.headers["ETag"] = f'"{datetime.utcnow().timestamp()}"'  # Always different ETag
+    response.headers["ETag"] = f'"{timestamp}"'  # Always different ETag
+    response.headers["Last-Modified"] = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
+    response.headers["X-Cache-Bypass"] = timestamp  # Custom header to force bypass
     return response
 
 
