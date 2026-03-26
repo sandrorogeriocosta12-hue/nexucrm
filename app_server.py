@@ -985,14 +985,172 @@ async def signup(request: Request, t: str = None):
     return response
 
 
-@app.get("/terms", response_class=HTMLResponse)
-async def terms(request: Request):
-    """Serve terms of service page"""
-    terms_path = os.path.join(frontend_path, "terms.html")
-    if os.path.exists(terms_path):
-        with open(terms_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse("<h2>Termos de serviço não encontrados</h2>", status_code=404)
+@app.get("/signup-test", response_class=HTMLResponse)
+async def signup_test(request: Request, t: str = None):
+    """TEST ROUTE: Serve signup page with different URL to bypass Cloudflare cache"""
+    # 🔥 TEST: Different route to bypass cache
+    current_version = f"test-v{int(time.time() * 1000000)}"  # Unique version per microsecond
+    
+    # 🔥 TEMPORARY PATCH: Serve embedded HTML with fixed modal to bypass file sync issues
+    signup_html = f"""<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Nexus Service - Cadastro (TEST)</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }}
+        .container {{
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }}
+        .terms-modal {{
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background-color: rgba(0, 0, 0, 0.8) !important;
+            z-index: 99999 !important;
+            display: none !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 100vh !important;
+            padding: 1rem !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }}
+        #termsModal {{
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            z-index: 99999 !important;
+            display: none !important;
+        }}
+        #termsModal:not(.hidden) {{
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }}
+    </style>
+</head>
+<body>
+    <div style="width: 384px; padding: 32px; border-radius: 8px; border: 1px solid rgb(55, 65, 81); background: linear-gradient(135deg, rgb(30, 41, 59), rgb(15, 23, 42)); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); margin: 50px auto;">
+        
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 32px;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 28px; color: white; box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);">N</div>
+        </div>
+        
+        <h1 style="background: linear-gradient(135deg, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 30px; font-weight: bold; text-align: center; margin-bottom: 8px;">Nexus Service</h1>
+        <p style="text-align: center; color: rgb(156, 163, 175); font-size: 14px; margin-bottom: 4px;">Criar Conta (TEST ROUTE)</p>
+        <p style="text-align: center; color: rgb(107, 114, 128); font-size: 12px; margin-bottom: 32px;">Testando modal sem cache</p>
+        
+        <div id="testResult" style="color: green; background-color: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 16px; display: none;"></div>
+        
+        <button onclick="testModal()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 16px;">🧪 Testar Modal</button>
+        
+        <div class="form-group" style="margin-bottom: 24px;">
+            <input type="checkbox" id="terms" required style="width: auto; margin: 0;">
+            <label for="terms" style="display: inline; margin-left: 8px;">Aceito os <a href="#" onclick="event.preventDefault(); openTermsModal(); return false;" style="color: #8b5cf6; text-decoration: none; font-weight: 500;">termos de serviço</a></label>
+        </div>
+
+        <p style="text-align: center; font-size: 14px; color: rgb(156, 163, 175); margin-top: 24px;">
+            <a href="/signup" style="color: rgb(168, 85, 247); font-weight: 600; text-decoration: none;">← Voltar para signup normal</a>
+        </p>
+    </div>
+
+    <div id="termsModal" class="terms-modal">
+        <div style="background-color: #1f2937; border-radius: 12px; max-width: 56rem; width: 100%; max-height: 90vh; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <div style="padding: 1.5rem; border-bottom: 1px solid #374151; display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="background: linear-gradient(135deg, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0; font-size: 1.25rem; font-weight: 700;">Termos de Serviço</h3>
+                <button onclick="closeTermsModal()" style="color: #9ca3af; font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 0;">&times;</button>
+            </div>
+            <div style="padding: 1.5rem; overflow-y: auto; max-height: 70vh;">
+                <div style="color: #d1d5db;">
+                    <h4 style="color: #8b5cf6; font-weight: 600; margin-bottom: 1rem;">1. Aceitação dos Termos</h4>
+                    <p style="margin-bottom: 1rem;">Ao acessar e usar o Nexus Service, você concorda em cumprir e estar vinculado a estes Termos de Serviço.</p>
+                    <h4 style="color: #8b5cf6; font-weight: 600; margin-bottom: 1rem;">2. Teste do Modal</h4>
+                    <p style="margin-bottom: 1rem;">Esta é uma rota de teste para verificar se o modal funciona sem cache do Cloudflare.</p>
+                </div>
+            </div>
+            <div style="padding: 1.5rem; border-top: 1px solid #374151; display: flex; justify-content: flex-end; gap: 1rem;">
+                <button onclick="closeTermsModal()" style="background: rgba(71, 85, 105, 0.5); color: #d1d5db; padding: 12px 24px; border-radius: 8px; border: 1px solid #374151; cursor: pointer; font-weight: 500;">Fechar</button>
+                <button onclick="acceptTerms()" style="background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600;">Aceito os Termos</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cacheVersion = '{current_version}';
+        console.log('✅ TEST ROUTE: Signup page loaded - Terms Modal ' + cacheVersion + ' activated');
+        
+        function testModal() {{
+            document.getElementById('testResult').textContent = '✅ Modal testado com sucesso!';
+            document.getElementById('testResult').style.display = 'block';
+            openTermsModal();
+        }}
+
+        window.openTermsModal = function() {{
+            console.log('🔓 Opening terms modal - TEST ROUTE');
+            const modal = document.getElementById('termsModal');
+            if (modal) {{
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex !important';
+                modal.style.visibility = 'visible !important';
+                modal.style.opacity = '1 !important';
+                modal.style.zIndex = '99999 !important';
+                console.log('✅ Modal display set to flex - should be visible now');
+            }} else {{
+                console.error('❌ Modal element not found!');
+            }}
+        }};
+
+        window.closeTermsModal = function() {{
+            console.log('🔒 Closing terms modal - TEST ROUTE');
+            const modal = document.getElementById('termsModal');
+            if (modal) {{
+                modal.classList.add('hidden');
+                modal.style.display = 'none !important';
+                modal.style.visibility = 'hidden !important';
+                modal.style.opacity = '0 !important';
+                console.log('✅ Modal display set to none');
+            }}
+        }};
+
+        window.acceptTerms = function() {{
+            document.getElementById('terms').checked = true;
+            document.getElementById('testResult').textContent = '✅ Termos aceitos com sucesso!';
+            window.closeTermsModal();
+        }};
+
+        document.addEventListener('DOMContentLoaded', function() {{
+            console.log('DOM fully loaded - TEST ROUTE');
+            console.log('openTermsModal function:', typeof window.openTermsModal);
+        }});
+    </script>
+</body>
+</html>"""
+    
+    response = HTMLResponse(content=signup_html)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 @app.get("/test-modal", response_class=HTMLResponse)
