@@ -80,24 +80,6 @@ class Settings(BaseSettings):
     CORS_ALLOW_METHODS: list = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
     CORS_ALLOW_HEADERS: list = ["*"]
     CORS_MAX_AGE: int = 86400  # 24 hours
-
-    # Server Configuration
-    HOST: str = os.getenv("HOST", "0.0.0.0")
-    PORT: int = int(os.getenv("PORT", "8000"))
-    WORKERS: int = int(os.getenv("WORKERS", "1"))
-    RELOAD: bool = ENVIRONMENT == "development"
-
-    # Database - Production Settings
-    DATABASE_POOL_SIZE: int = int(os.getenv("DATABASE_POOL_SIZE", "10"))
-    DATABASE_MAX_OVERFLOW: int = int(os.getenv("DATABASE_MAX_OVERFLOW", "20"))
-    DATABASE_POOL_RECYCLE: int = int(os.getenv("DATABASE_POOL_RECYCLE", "3600"))  # 1 hour
-
-    # Cache Settings
-    CACHE_ENABLED: bool = os.getenv("CACHE_ENABLED", "true").lower() == "true"
-    CACHE_TTL: int = int(os.getenv("CACHE_TTL", "300"))  # 5 minutes
-
-    # Monitoring & Metrics
-    ENABLE_METRICS: bool = os.getenv("ENABLE_METRICS", "true").lower() == "true"
     METRICS_PORT: int = int(os.getenv("METRICS_PORT", "9090"))
     SENTRY_DSN: str = os.getenv("SENTRY_DSN", "")
 

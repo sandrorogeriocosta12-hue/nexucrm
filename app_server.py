@@ -15,13 +15,13 @@ from datetime import datetime
 import os
 import time
 
-# Professional logging configuration
+# Professional logging configuration - Railway compatible (no file logging)
+import sys
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("logs/vexus_crm.log", mode='a')
+        logging.StreamHandler(sys.stdout)  # Only stdout for Railway
     ]
 )
 logger = logging.getLogger(__name__)
@@ -113,6 +113,27 @@ if settings and settings.ENVIRONMENT == "production":
 async def startup_db():
     app.startup_time = time.time()
     logger.info("🚀 Vexus CRM API starting up...")
+    
+    # VALIDATION: Check critical environment variables
+    if settings:
+        critical_errors = []
+        
+        # Check DATABASE_URL
+        db_url = os.getenv("DATABASE_URL", "").strip()
+        if not db_url or "localhost" in db_url:
+            critical_errors.append("❌ DATABASE_URL not set or uses localhost (Railway requires production DB)")
+        
+        # Check SECRET_KEY in production
+        if settings.ENVIRONMENT == "production":
+            secret_key = os.getenv("SECRET_KEY", "").strip()
+            if not secret_key or secret_key == "dev-secret-key-change-in-production":
+                critical_errors.append("❌ SECRET_KEY not configured for production")
+        
+        if critical_errors:
+            logger.warning("⚠️  CRITICAL ENVIRONMENT ISSUES:")
+            for error in critical_errors:
+                logger.warning(error)
+    
     try:
         from vexus_crm.database import engine, get_db
         from vexus_crm import models
@@ -277,8 +298,14 @@ async def app_frontend():
 # Mount static files (frontend)
 frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
 if os.path.exists(frontend_path):
-    app.mount("/frontend", StaticFiles(directory=frontend_path), name="frontend")
-    logger.info(f"✓ Frontend mounted at /frontend from {frontend_path}")
+    try:
+        app.mount("/frontend", StaticFiles(directory=frontend_path), name="frontend")
+        logger.info(f"✓ Frontend mounted at /frontend from {frontend_path}")
+    except Exception as e:
+        logger.error(f"❌ Failed to mount frontend: {e}")
+        logger.warning("⚠️  Frontend files may not be accessible from /frontend")
+else:
+    logger.warning(f"⚠️  Frontend directory not found at {frontend_path}")
 
 
 # ============================================================================
