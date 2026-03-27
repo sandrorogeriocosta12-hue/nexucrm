@@ -612,10 +612,393 @@ if (typeof window !== 'undefined') {
     isValidPhone,
     validateForm,
     
+    // CSV & Import
+    parseCSV,
+    autoMapColumns,
+    validateImportData,
+    
+    // Toast System
+    showToast,
+    toastSuccess,
+    toastError,
+    toastWarning,
+    toastInfo,
+    ensureToastContainer,
+    
+    // Charts
+    renderAreaChart,
+    renderBarChart,
+    renderPieChart,
+    
     // Constants
     AVATAR_COLORS,
     TAG_COLORS,
     PRIORITY_COLORS,
     PIPELINE_STAGES,
   };
+}
+
+// ============ CSV & IMPORT FUNCTIONS ============
+
+/**
+ * Parseia arquivo CSV
+ * @param {File} file - Arquivo CSV
+ * @returns {Promise<Array>} Array de objetos
+ */
+async function parseCSV(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const csv = e.target.result;
+                const lines = csv.split('\n').filter(l => l.trim());
+                
+                if (lines.length < 2) {
+                    reject(new Error('Arquivo CSV vazio ou sem dados'));
+                    return;
+                }
+                
+                const headers = lines[0].split(',').map(h => h.trim());
+                
+                const data = lines.slice(1).map((line, idx) => {
+                    const values = line.split(',').map(v => v.trim());
+                    const obj = {};
+                    headers.forEach((h, i) => {
+                        obj[h] = values[i] || '';
+                    });
+                    return obj;
+                });
+                
+                resolve(data);
+            } catch (error) {
+                reject(error);
+            }
+        };
+        reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+        reader.readAsText(file);
+    });
+}
+
+/**
+ * Mapeamento automático de colunas
+ * @param {Array} headers - Headers do arquivo
+ * @returns {Object} Mapa de colunas
+ */
+function autoMapColumns(headers) {
+    const mapping = {};
+    const commonMappings = {
+        'nome': 'name',
+        'name': 'name',
+        'email': 'email',
+        'telefone': 'phone',
+        'phone': 'phone',
+        'empresa': 'company',
+        'company': 'company',
+        'status': 'status',
+        'tags': 'tags',
+        'valor': 'value',
+        'value': 'value',
+        'descrição': 'description',
+        'description': 'description',
+    };
+    
+    headers.forEach(header => {
+        const lower = header.toLowerCase();
+        let mapped = header;
+        
+        for (const [key, val] of Object.entries(commonMappings)) {
+            if (lower.includes(key) || key.includes(lower)) {
+                mapped = val;
+                break;
+            }
+        }
+        
+        mapping[header] = mapped;
+    });
+    
+    return mapping;
+}
+
+/**
+ * Valida dados antes de importar
+ * @param {Array} data - Dados a validar
+ * @returns {Object} {valid, errors, warnings, count}
+ */
+function validateImportData(data) {
+    const errors = [];
+    const warnings = [];
+    
+    if (!Array.isArray(data) || data.length === 0) {
+        return {
+            valid: false,
+            errors: ['Nenhum dado para importar'],
+            warnings: [],
+            count: 0
+        };
+    }
+    
+    data.forEach((row, idx) => {
+        const rowNum = idx + 2;
+        
+        // Validação de nome (obrigatório)
+        if (!row.name || row.name.trim() === '') {
+            errors.push(`Linha ${rowNum}: Nome é obrigatório`);
+        }
+        
+        // Validação de email (se preenchido)
+        if (row.email && row.email.trim() !== '') {
+            if (!isValidEmail(row.email)) {
+                errors.push(`Linha ${rowNum}: Email inválido (${row.email})`);
+            }
+        } else if (!row.email) {
+            warnings.push(`Linha ${rowNum}: Email não preenchido`);
+        }
+        
+        // Validação de telefone (se preenchido)
+        if (row.phone && row.phone.trim() !== '') {
+            if (!isValidPhone(row.phone)) {
+                warnings.push(`Linha ${rowNum}: Telefone pode estar inválido (${row.phone})`);
+            }
+        }
+    });
+    
+    return {
+        valid: errors.length === 0,
+        errors: errors,
+        warnings: warnings,
+        count: data.length
+    };
+}
+
+// ============ TOAST SYSTEM ============
+
+/**
+ * Cria um contêiner para toasts
+ */
+function ensureToastContainer() {
+    if (!document.getElementById('toastContainer')) {
+        const container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    return document.getElementById('toastContainer');
+}
+
+/**
+ * Exibe uma notificação toast
+ * @param {string} message - Mensagem
+ * @param {string} type - 'success', 'error', 'warning', 'info'
+ * @param {number} duration - Duração em ms (0 = manual close)
+ */
+function showToast(message, type = 'info', duration = 3000) {
+    const container = ensureToastContainer();
+    
+    const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+    };
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type]}</span>
+        <span class="toast-message">${escapeHtml(message)}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, duration);
+    }
+}
+
+function toastSuccess(msg, duration = 3000) { return showToast(msg, 'success', duration); }
+function toastError(msg, duration = 3000) { return showToast(msg, 'error', duration); }
+function toastWarning(msg, duration = 3000) { return showToast(msg, 'warning', duration); }
+function toastInfo(msg, duration = 3000) { return showToast(msg, 'info', duration); }
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============ CHARTS (Chart.js) ============
+
+/**
+ * Renderiza AreaChart usando Chart.js
+ * @param {string} containerId - ID do container
+ * @param {Array} data - [{date, value}, ...]
+ * @param {Object} options - Opções customizadas
+ */
+function renderAreaChart(containerId, data, options = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return toastError(`Container ${containerId} não encontrado`);
+    
+    // Criar canvas se não existir
+    let canvas = container.querySelector('canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        container.innerHTML = '';
+        container.appendChild(canvas);
+    }
+    
+    const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false, labels: { color: '#F1F5F9' } },
+            filler: { propagate: true }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: '#94A3B8' },
+                grid: { color: 'rgba(148, 163, 184, 0.1)' }
+            },
+            x: {
+                ticks: { color: '#94A3B8' },
+                grid: { color: 'rgba(148, 163, 184, 0.1)' }
+            }
+        }
+    };
+    
+    if (window.chartInstance) {
+        window.chartInstance.destroy();
+    }
+    
+    window.chartInstance = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.date || d.x),
+            datasets: [{
+                label: options.label || 'Dados',
+                data: data.map(d => d.value || d.y),
+                borderColor: options.borderColor || '#6366f1',
+                backgroundColor: options.backgroundColor || 'rgba(99, 102, 241, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 2,
+                pointBackgroundColor: '#6366f1',
+                pointBorderColor: '#ffffff',
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            }]
+        },
+        options: { ...defaultOptions, ...options }
+    });
+}
+
+/**
+ * Renderiza BarChart
+ * @param {string} containerId - ID do container
+ * @param {Array} data - [{label, value}, ...]
+ * @param {Object} options - Opções customizadas
+ */
+function renderBarChart(containerId, data, options = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return toastError(`Container ${containerId} não encontrado`);
+    
+    let canvas = container.querySelector('canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        container.innerHTML = '';
+        container.appendChild(canvas);
+    }
+    
+    const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: '#94A3B8' },
+                grid: { color: 'rgba(148, 163, 184, 0.1)' }
+            },
+            x: {
+                ticks: { color: '#94A3B8' },
+                grid: { color: 'rgba(148, 163, 184, 0)' }
+            }
+        }
+    };
+    
+    if (window.barChartInstance) {
+        window.barChartInstance.destroy();
+    }
+    
+    window.barChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: data.map(d => d.label || d.x),
+            datasets: [{
+                label: options.label || 'Valor',
+                data: data.map(d => d.value || d.y),
+                backgroundColor: options.backgroundColor || '#6366f1',
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
+        options: { ...defaultOptions, ...options }
+    });
+}
+
+/**
+ * Renderiza PieChart
+ * @param {string} containerId - ID do container
+ * @param {Array} data - [{label, value}, ...]
+ * @param {Object} options - Opções customizadas
+ */
+function renderPieChart(containerId, data, options = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return toastError(`Container ${containerId} não encontrado`);
+    
+    let canvas = container.querySelector('canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        container.innerHTML = '';
+        container.appendChild(canvas);
+    }
+    
+    const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
+    
+    const defaultOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { 
+                position: 'bottom',
+                labels: { color: '#F1F5F9', padding: 15 }
+            }
+        }
+    };
+    
+    if (window.pieChartInstance) {
+        window.pieChartInstance.destroy();
+    }
+    
+    window.pieChartInstance = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: data.map(d => d.label),
+            datasets: [{
+                data: data.map(d => d.value),
+                backgroundColor: colors,
+                borderColor: '#0F172A',
+                borderWidth: 2,
+            }]
+        },
+        options: { ...defaultOptions, ...options }
+    });
 }

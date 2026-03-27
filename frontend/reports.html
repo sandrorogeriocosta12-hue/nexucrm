@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatórios - Nexus CRM</title>
     <link rel="stylesheet" href="css/design-system.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
         .sidebar {
             width: 256px;
@@ -119,115 +120,39 @@
                 </div>
 
                 <!-- Charts -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Revenue by Stage -->
-                    <div class="bg-white p-6 rounded-lg shadow">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <!-- Receita por Estágio -->
+                    <div class="card">
                         <h3 style="font-weight: 600; margin-bottom: 1rem;">Receita por Estágio</h3>
-                        <div id="stageChart" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="background-color: #4f46e5; width: 20px; height: 20px; border-radius: 0.25rem;"></div>
-                                <span>Lead: R$ 0</span>
-                                <div style="flex: 1; background-color: #e5e7eb; height: 8px; border-radius: 4px;"></div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="background-color: #7c3aed; width: 20px; height: 20px; border-radius: 0.25rem;"></div>
-                                <span>Qualificado: R$ 32.500</span>
-                                <div style="flex: 1; background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #7c3aed 30%, #e5e7eb 30%);"></div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="background-color: #a78bfa; width: 20px; height: 20px; border-radius: 0.25rem;"></div>
-                                <span>Proposta: R$ 65.000</span>
-                                <div style="flex: 1; background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #a78bfa 60%, #e5e7eb 60%);"></div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="background-color: #c4b5fd; width: 20px; height: 20px; border-radius: 0.25rem;"></div>
-                                <span>Fechado: R$ 59.000</span>
-                                <div style="flex: 1; background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #c4b5fd 95%, #e5e7eb 5%);"></div>
-                            </div>
+                        <div id="stageChart" class="chart-container" style="height: 300px; position: relative;">
+                            <canvas></canvas>
                         </div>
                     </div>
 
-                    <!-- Leads Source -->
-                    <div class="bg-white p-6 rounded-lg shadow">
+                    <!-- Origem de Leads -->
+                    <div class="card">
                         <h3 style="font-weight: 600; margin-bottom: 1rem;">Origem de Leads</h3>
-                        <div id="sourceChart" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>Website</span>
-                                <span style="font-weight: 600; color: #4f46e5;">35%</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>LinkedIn</span>
-                                <span style="font-weight: 600; color: #0ea5e9;">28%</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>Indicação</span>
-                                <span style="font-weight: 600; color: #10b981;">22%</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>Evento</span>
-                                <span style="font-weight: 600; color: #f59e0b;">10%</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>Outro</span>
-                                <span style="font-weight: 600; color: #6b7280;">5%</span>
-                            </div>
+                        <div id="sourceChart" class="chart-container" style="height: 300px; position: relative;">
+                            <canvas></canvas>
                         </div>
                     </div>
                 </div>
 
-                <!-- Bottom Row -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                    <!-- Team Performance -->
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 style="font-weight: 600; margin-bottom: 1rem;">Performance da Equipe</h3>
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                    <span>Victor Emanuel</span>
-                                    <span style="font-weight: 600;">R$ 45.000</span>
-                                </div>
-                                <div style="background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #4f46e5 100%, #e5e7eb 0%);"></div>
-                            </div>
-                            <div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                    <span>Ana Silva</span>
-                                    <span style="font-weight: 600;">R$ 38.000</span>
-                                </div>
-                                <div style="background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #7c3aed 84%, #e5e7eb 16%);"></div>
-                            </div>
-                            <div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                    <span>Carlos Mendes</span>
-                                    <span style="font-weight: 600;">R$ 32.000</span>
-                                </div>
-                                <div style="background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #a78bfa 71%, #e5e7eb 29%);"></div>
-                            </div>
-                            <div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                    <span>Beatriz Costa</span>
-                                    <span style="font-weight: 600;">R$ 28.000</span>
-                                </div>
-                                <div style="background-color: #e5e7eb; height: 8px; border-radius: 4px; background: linear-gradient(to right, #c4b5fd 62%, #e5e7eb 38%);"></div>
-                            </div>
+                <!-- Bottom Charts -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+                    <!-- Tendência Mensal -->
+                    <div class="card">
+                        <h3 style="font-weight: 600; margin-bottom: 1rem;">Tendência de Receita (últimos 12 meses)</h3>
+                        <div id="trendChart" class="chart-container" style="height: 300px; position: relative;">
+                            <canvas></canvas>
                         </div>
                     </div>
 
-                    <!-- Monthly Trend -->
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 style="font-weight: 600; margin-bottom: 1rem;">Tendência Mensal</h3>
-                        <div style="display: flex; align-items: flex-end; justify-content: space-around; height: 200px; gap: 0.5rem;">
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background-color: #e0e7ff; border-radius: 0.25rem; height: 60%;"></div>
-                                <span style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Jan</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background-color: #c7d2fe; border-radius: 0.25rem; height: 75%;"></div>
-                                <span style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Fev</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
-                                <div style="width: 100%; background-color: #a5b4fc; border-radius: 0.25rem; height: 85%;"></div>
-                                <span style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">Mar</span>
-                            </div>
+                    <!-- Performance da Equipe -->
+                    <div class="card">
+                        <h3 style="font-weight: 600; margin-bottom: 1rem;">Top Vendedores</h3>
+                        <div id="teamChart" class="chart-container" style="height: 300px; position: relative;">
+                            <canvas></canvas>
                         </div>
                     </div>
                 </div>
@@ -235,14 +160,92 @@
         </div>
     </div>
 
+    <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script>
-        async function initPage() {
-            await checkAuth();
+        // Dados de exemplo para gráficos
+        const stageData = [
+            { label: 'Lead', value: 0 },
+            { label: 'Qualificado', value: 32500 },
+            { label: 'Proposta', value: 65000 },
+            { label: 'Fechado', value: 59000 }
+        ];
+
+        const sourceData = [
+            { label: 'Website', value: 35 },
+            { label: 'LinkedIn', value: 28 },
+            { label: 'Indicação', value: 22 },
+            { label: 'Evento', value: 10 },
+            { label: 'Outro', value: 5 }
+        ];
+
+        const trendData = [
+            { date: 'Jan', value: 45000 },
+            { date: 'Fev', value: 52000 },
+            { date: 'Mar', value: 68000 },
+            { date: 'Abr', value: 61000 },
+            { date: 'Mai', value: 75000 },
+            { date: 'Jun', value: 82000 },
+            { date: 'Jul', value: 71000 },
+            { date: 'Ago', value: 85000 },
+            { date: 'Set', value: 79000 },
+            { date: 'Out', value: 92000 },
+            { date: 'Nov', value: 87000 },
+            { date: 'Dez', value: 98000 }
+        ];
+
+        const teamData = [
+            { label: 'Victor Emanuel', value: 45000 },
+            { label: 'Ana Silva', value: 38000 },
+            { label: 'Carlos Mendes', value: 32000 },
+            { label: 'Beatriz Costa', value: 28000 }
+        ];
+
+        // Renderizar gráficos
+        function renderCharts() {
+            // Gráfico de Receita por Estágio (Bar)
+            NexusUtils.renderBarChart('stageChart', stageData, {
+                label: 'Receita (R$)',
+                backgroundColor: '#6366f1'
+            });
+
+            // Gráfico de Origem de Leads (Pie)
+            NexusUtils.renderPieChart('sourceChart', sourceData, {
+                label: 'Origem'
+            });
+
+            // Gráfico de Tendência (Area)
+            NexusUtils.renderAreaChart('trendChart', trendData, {
+                label: 'Receita (R$)',
+                borderColor: '#06b6d4',
+                backgroundColor: 'rgba(6, 182, 212, 0.1)'
+            });
+
+            // Gráfico de Performance (Bar)
+            NexusUtils.renderBarChart('teamChart', teamData, {
+                label: 'Receita (R$)',
+                backgroundColor: '#8b5cf6'
+            });
         }
 
-        // logout() disponível em auth.js
+        async function initPage() {
+            await checkAuth();
+            setTimeout(() => {
+                renderCharts();
+                NexusUtils.toastSuccess('Relatórios carregados com sucesso!', 3000);
+            }, 100);
+        }
+
+        // Escutar mudanças no período
+        document.getElementById('periodSelect')?.addEventListener('change', (e) => {
+            const period = e.target.value;
+            console.log('Período selecionado:', period);
+            // Aqui você poderia fazer uma requisição para carregar dados do período
+            NexusUtils.toastInfo(`Carregando dados de ${period}...`, 3000);
+            setTimeout(() => renderCharts(), 500);
+        });
+
         initPage();
     </script>
 </body>
