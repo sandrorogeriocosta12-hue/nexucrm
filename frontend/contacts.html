@@ -3,197 +3,550 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contatos - Vexus CRM</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Contatos - Nexus Service</title>
+    <link rel="stylesheet" href="css/design-system.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; overflow-x: hidden; }
-        .contact-card { transition: all 0.3s ease; }
-        .contact-card:hover { transform: translateY(-4px); }
-        .avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 16px; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-visible { display: flex !important; }
-        .modal-hidden { display: none !important; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-color), #1e3a8a);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .filter-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .filter-controls {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: var(--spacing-md);
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .select-input {
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .select-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .tag-filters {
+            display: flex;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .tag-filter {
+            padding: 6px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .tag-filter.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .tag-filter:hover:not(.active) {
+            border-color: var(--accent-color);
+        }
+
+        .contacts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .contact-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-color);
+        }
+
+        .contact-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .contact-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+        }
+
+        .contact-info h3 {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .contact-info p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .contact-details {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 0.9rem;
+        }
+
+        .detail-label {
+            color: var(--text-tertiary);
+            font-size: 0.8rem;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .contact-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .tag-badge {
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 50;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            padding: var(--spacing-lg);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: var(--spacing-lg);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-close:hover {
+            transform: scale(1.2);
+        }
+
+        .results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-view {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-view.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-3xl);
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+            }
+
+            .filter-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .contacts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 to-slate-950 text-gray-100">
-    <!-- CONTAINER PRINCIPAL -->
-    <div class="flex h-screen">
-        <!-- SIDEBAR VAZIO -->
-        <div class="w-16 bg-slate-950 border-r border-slate-700"></div>
-        
-        <!-- MAIN CONTENT -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- HEADER VAZIO -->
-            <div class="h-16 bg-slate-800 border-b border-slate-700"></div>
-            
-            <!-- CONTEÚDO PRINCIPAL -->
-            <main class="flex-1 overflow-y-auto p-6 space-y-6">
-                <!-- HEADER DA PÁGINA -->
-                <div class="flex justify-between items-start gap-4">
-                    <div>
-                        <h1 class="text-3xl font-bold text-white mb-2">📇 Contatos</h1>
-                        <p class="text-gray-400">Gerencie e organize todos os seus contatos</p>
-                    </div>
-                    <button onclick="openContactModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition shadow-lg">
-                        ➕ Novo Contato
-                    </button>
+<body>
+    <div style="padding: var(--spacing-xl);">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h1>📇 Contatos</h1>
+                <p>Gerencie e organize todos os seus contatos</p>
+            </div>
+            <button class="btn-primary" onclick="openContactModal()">
+                ➕ Novo Contato
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total de Contatos</div>
+                <div class="stat-value" id="total-contacts">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Contatos Ativos</div>
+                <div class="stat-value" id="active-contacts">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Prospects</div>
+                <div class="stat-value" id="prospect-contacts">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Com Email</div>
+                <div class="stat-value" id="email-contacts">0</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-section">
+            <div class="filter-controls">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="🔍 Buscar por nome, email ou empresa..." 
+                    class="search-input"
+                    onkeyup="filterContacts()"
+                >
+                <select id="filterStatus" class="select-input" onchange="filterContacts()">
+                    <option value="">Status: Todos</option>
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
+                    <option value="prospect">Prospect</option>
+                </select>
+                <button class="btn-primary" onclick="exportContacts()">📥 Exportar</button>
+            </div>
+
+            <!-- Tag Filters -->
+            <div class="tag-filters" id="tagFilters"></div>
+
+            <!-- Results Info -->
+            <div class="results-info">
+                <span>Mostrando <strong id="results-count">0</strong> contatos</span>
+                <div class="view-toggle">
+                    <button class="btn-view active" onclick="toggleView('grid')">⊞ Grade</button>
+                    <button class="btn-view" onclick="toggleView('list')">☰ Lista</button>
                 </div>
+            </div>
+        </div>
 
-                <!-- CARDS DE ESTATÍSTICAS -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                        <p class="text-gray-400 text-sm">Total de Contatos</p>
-                        <p class="text-3xl font-bold text-white mt-2" id="total-contacts">6</p>
-                    </div>
-                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                        <p class="text-gray-400 text-sm">Contatos Ativos</p>
-                        <p class="text-3xl font-bold text-green-400 mt-2" id="active-contacts">5</p>
-                    </div>
-                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                        <p class="text-gray-400 text-sm">Novos (7 dias)</p>
-                        <p class="text-3xl font-bold text-blue-400 mt-2" id="new-contacts">3</p>
-                    </div>
-                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                        <p class="text-gray-400 text-sm">Com Email</p>
-                        <p class="text-3xl font-bold text-purple-400 mt-2" id="email-contacts">6</p>
-                    </div>
-                </div>
-
-                <!-- FILTROS E BUSCA -->
-                <div class="bg-slate-800 rounded-lg p-4 border border-slate-700 space-y-4">
-                    <div class="flex gap-4 flex-wrap">
-                        <div class="flex-1 min-w-64">
-                            <input 
-                                type="text" 
-                                id="searchInput" 
-                                placeholder="🔍 Buscar por nome, email ou empresa..." 
-                                class="w-full bg-slate-700 text-white placeholder-gray-400 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:outline-none"
-                                onkeyup="filterContacts()"
-                            >
-                        </div>
-                        <select id="filterStatus" class="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none" onchange="filterContacts()">
-                            <option value="">Todos os Status</option>
-                            <option value="ativo">Ativo</option>
-                            <option value="inativo">Inativo</option>
-                            <option value="prospect">Prospect</option>
-                        </select>
-                        <button onclick="exportContacts()" class="bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 hover:bg-slate-600 transition">
-                            📥 Exportar
-                        </button>
-                    </div>
-
-                    <!-- VISUALIZAÇÃO DE RESULTADOS -->
-                    <div class="flex justify-between items-center">
-                        <p class="text-sm text-gray-400">
-                            Mostrando <span id="results-count">6</span> contatos
-                        </p>
-                        <div class="flex gap-2">
-                            <button onclick="toggleView('grid')" class="px-3 py-2 bg-blue-600 text-white rounded" title="Visualização em grade">
-                                ◼️ Grade
-                            </button>
-                            <button onclick="toggleView('list')" class="px-3 py-2 bg-slate-700 text-white rounded" title="Visualização em lista">
-                                ☰ Lista
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- GRID DE CONTATOS -->
-                <div id="contactsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-
-                <!-- LISTA DE CONTATOS -->
-                <div id="contactsList" class="hidden space-y-2"></div>
-
-                <!-- PAGINAÇÃO -->
-                <div class="flex justify-center gap-2" id="pagination"></div>
-            </main>
+        <!-- Contacts Grid/List -->
+        <div id="contactsContainer" class="contacts-container"></div>
+        <div id="emptyState" class="empty-state hidden">
+            <div class="empty-state-icon">📭</div>
+            <p>Nenhum contato encontrado</p>
+            <p style="font-size: 0.85rem;">Crie um novo contato para começar</p>
         </div>
     </div>
 
-    <!-- MODAL DE NOVO CONTATO -->
-    <div id="contactModal" class="modal-hidden fixed inset-0 bg-black bg-opacity-70 items-center justify-center z-50 p-4">
-        <div class="bg-slate-800 rounded-lg w-full max-w-2xl border border-slate-700 overflow-hidden">
-            <!-- HEADER DO MODAL -->
-            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
-                <h3 class="text-xl font-bold text-white">✏️ Novo Contato</h3>
-                <button type="button" onclick="closeContactModal()" class="text-gray-300 hover:text-white text-2xl bg-transparent border-0">✕</button>
+    <!-- Modal -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>✏️ Novo Contato</span>
+                <button class="btn-close" onclick="closeContactModal()">✕</button>
             </div>
 
-            <!-- BODY DO MODAL -->
-            <form id="contactForm" class="space-y-6 p-6 max-h-96 overflow-y-auto">
-                <!-- INFORMAÇÕES BÁSICAS -->
-                <div>
-                    <h4 class="text-lg font-semibold text-white mb-4">👤 Informações Básicas</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Nome Completo *</label>
-                            <input 
-                                type="text" 
-                                id="name" 
-                                required 
-                                placeholder="Ex: João Silva"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
-                            >
+            <div class="modal-body">
+                <form id="contactForm" onsubmit="saveContact(event)">
+                    <!-- Informações Básicas -->
+                    <div class="form-group">
+                        <label class="form-label">Nome Completo *</label>
+                        <input type="text" id="name" class="form-input" placeholder="Ex: João Silva" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" id="email" class="form-input" placeholder="email@example.com">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">E-mail</label>
-                            <input 
-                                type="email" 
-                                id="email" 
-                                placeholder="email@example.com"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Telefone</label>
-                            <input 
-                                type="tel" 
-                                id="phone" 
-                                placeholder="(11) 99999-9999"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
-                            >
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <input type="tel" id="phone" class="form-input" placeholder="(11) 99999-9999">
                         </div>
                     </div>
-                </div>
 
-                <!-- EMPRESA -->
-                <div class="border-t border-slate-700 pt-6">
-                    <h4 class="text-lg font-semibold text-white mb-4">🏢 Empresa</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Empresa</label>
-                            <input 
-                                type="text" 
-                                id="company" 
-                                placeholder="Nome da empresa"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
-                            >
+                    <!-- Empresa -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                        <div class="form-group">
+                            <label class="form-label">Empresa</label>
+                            <input type="text" id="company" class="form-input" placeholder="Nome da empresa">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Cargo</label>
-                            <input 
-                                type="text" 
-                                id="position" 
-                                placeholder="Ex: Gerente"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
-                            >
+                        <div class="form-group">
+                            <label class="form-label">Cargo</label>
+                            <input type="text" id="position" class="form-input" placeholder="Ex: Gerente">
                         </div>
                     </div>
-                </div>
 
-                <!-- ADICIONAIS -->
-                <div class="border-t border-slate-700 pt-6">
-                    <h4 class="text-lg font-semibold text-white mb-4">📋 Informações Adicionais</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Fonte</label>
-                            <select 
-                                id="source" 
-                                class="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
-                            >
+                    <!-- Status/Fonte -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                        <div class="form-group">
+                            <label class="form-label">Fonte</label>
+                            <select id="source" class="form-select">
                                 <option value="">Selecione...</option>
                                 <option value="web">Website</option>
                                 <option value="linkedin">LinkedIn</option>
@@ -201,810 +554,179 @@
                                 <option value="referral">Referência</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
-                            <select 
-                                id="status" 
-                                class="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:outline-none"
-                            >
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select id="status" class="form-select">
                                 <option value="ativo">Ativo</option>
                                 <option value="inativo">Inativo</option>
                                 <option value="prospect">Prospect</option>
                             </select>
                         </div>
                     </div>
-                </div>
 
-                <!-- FOOTER -->
-                <div class="flex justify-end gap-3 pt-6 border-t border-slate-700">
-                    <button 
-                        type="button"
-                        onclick="closeContactModal()" 
-                        class="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition font-medium"
-                    >
-                        Cancelar
-                    </button>
-                    <button 
-                        type="submit" 
-                        class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition font-medium"
-                    >
-                        ✓ Salvar Contato
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // DADOS MOCKADOS
-        const mockContacts = [
-            {
-                id: 1,
-                name: "João Silva",
-                email: "joao@empresa1.com",
-                phone: "(11) 98765-4321",
-                company: "Tech Solutions",
-                position: "Gerente de Vendas",
-                status: "ativo",
-                source: "linkedin",
-                avatar: "JS",
-                color: "bg-blue-600"
-            },
-            {
-                id: 2,
-                name: "Maria Santos",
-                email: "maria@empresa2.com",
-                phone: "(21) 97654-3210",
-                company: "Digital Marketing",
-                position: "Diretora",
-                status: "ativo",
-                source: "web",
-                avatar: "MS",
-                color: "bg-purple-600"
-            },
-            {
-                id: 3,
-                name: "Carlos Mendes",
-                email: "carlos@empresa3.com",
-                phone: "(85) 96543-2109",
-                company: "StartUp XYZ",
-                position: "CEO",
-                status: "prospect",
-                source: "referral",
-                avatar: "CM",
-                color: "bg-green-600"
-            },
-            {
-                id: 4,
-                name: "Ana Costa",
-                email: "ana@empresa4.com",
-                phone: "(31) 95432-1098",
-                company: "Consultoria Geral",
-                position: "Consultora",
-                status: "ativo",
-                source: "email",
-                avatar: "AC",
-                color: "bg-pink-600"
-            },
-            {
-                id: 5,
-                name: "Pedro Oliveira",
-                email: "pedro@empresa5.com",
-                phone: "(47) 94321-0987",
-                company: "Desenvolvimento",
-                position: "Tech Lead",
-                status: "inativo",
-                source: "linkedin",
-                avatar: "PO",
-                color: "bg-orange-600"
-            },
-            {
-                id: 6,
-                name: "Lucia Ferreira",
-                email: "lucia@empresa6.com",
-                phone: "(71) 93210-9876",
-                company: "Inovação Labs",
-                position: "Gerente",
-                status: "ativo",
-                source: "web",
-                avatar: "LF",
-                color: "bg-red-600"
-            }
-        ];
-
-        let contacts = [...mockContacts];
-        let currentView = 'grid';
-        let currentPage = 1;
-        const itemsPerPage = 12;
-
-        // MODAL
-        function openContactModal() {
-            document.getElementById('contactModal').classList.remove('modal-hidden');
-            document.getElementById('contactModal').classList.add('modal-visible');
-            document.getElementById('contactForm').reset();
-        }
-
-        function closeContactModal() {
-            document.getElementById('contactModal').classList.remove('modal-visible');
-            document.getElementById('contactModal').classList.add('modal-hidden');
-            document.getElementById('contactForm').reset();
-        }
-
-        // RENDERIZAR GRID
-        function renderContactsGrid(data) {
-            const grid = document.getElementById('contactsGrid');
-            grid.innerHTML = data.map(c => `
-                <div class="contact-card bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500">
-                    <div class="bg-gradient-to-r from-slate-700 to-slate-800 p-4 flex justify-between items-start">
-                        <div class="flex items-center gap-3">
-                            <div class="${c.color} avatar">${c.avatar}</div>
-                            <div>
-                                <h4 class="font-semibold text-white">${c.name}</h4>
-                                <p class="text-sm text-gray-400">${c.position || 'N/A'}</p>
-                            </div>
-                        </div>
-                        <div class="badge ${c.status === 'ativo' ? 'bg-green-900 text-green-200' : c.status === 'prospect' ? 'bg-blue-900 text-blue-200' : 'bg-gray-700 text-gray-200'}">
-                            ${c.status}
-                        </div>
-                    </div>
-                    <div class="p-4 space-y-3">
-                        <div>
-                            <p class="text-xs text-gray-500 mb-1">EMPRESA</p>
-                            <p class="text-sm font-medium text-white">${c.company}</p>
-                        </div>
-                        <div class="flex items-center gap-2 text-sm text-gray-400">
-                            <span>📧</span>
-                            <a href="mailto:${c.email}" class="text-blue-400 hover:underline">${c.email}</a>
-                        </div>
-                        <div class="flex items-center gap-2 text-sm text-gray-400">
-                            <span>☎️</span>
-                            <span>${c.phone}</span>
-                        </div>
-                    </div>
-                    <div class="bg-slate-900 p-3 flex gap-2 border-t border-slate-700">
-                        <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">✎ Editar</button>
-                        <button class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // RENDERIZAR LISTA
-        function renderContactsList(data) {
-            const list = document.getElementById('contactsList');
-            list.innerHTML = data.map(c => `
-                <div class="bg-slate-800 rounded-lg border border-slate-700 p-4 flex justify-between items-center">
-                    <div class="flex items-center gap-4 flex-1">
-                        <div class="${c.color} avatar">${c.avatar}</div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-white">${c.name}</h4>
-                            <div class="flex gap-4 text-sm text-gray-400">
-                                <span>${c.email}</span>
-                                <span>${c.phone}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">✎</button>
-                </div>
-            `).join('');
-        }
-
-        // FILTRAR
-        function filterContacts() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const status = document.getElementById('filterStatus').value;
-
-            contacts = mockContacts.filter(c => {
-                const match = c.name.toLowerCase().includes(search) || c.email.toLowerCase().includes(search) || c.company.toLowerCase().includes(search);
-                const statusMatch = !status || c.status === status;
-                return match && statusMatch;
-            });
-
-            document.getElementById('results-count').textContent = contacts.length;
-            currentPage = 1;
-            renderPage();
-        }
-
-        // TROCAR VIEW
-        function toggleView(view) {
-            currentView = view;
-            document.getElementById('contactsGrid').classList.toggle('hidden', view !== 'grid');
-            document.getElementById('contactsList').classList.toggle('hidden', view !== 'list');
-            renderPage();
-        }
-
-        // RENDERIZAR PÁGINA
-        function renderPage() {
-            const start = (currentPage - 1) * itemsPerPage;
-            const data = contacts.slice(start, start + itemsPerPage);
-            
-            if (currentView === 'grid') {
-                renderContactsGrid(data);
-            } else {
-                renderContactsList(data);
-            }
-        }
-
-        // EXPORTAR
-        function exportContacts() {
-            let csv = 'Nome,Email,Telefone,Empresa,Cargo,Status\n';
-            contacts.forEach(c => {
-                csv += `"${c.name}","${c.email}","${c.phone}","${c.company}","${c.position}","${c.status}"\n`;
-            });
-            
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `contatos-${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
-        }
-
-        // SALVAR CONTATO
-        document.getElementById('contactForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newContact = {
-                id: mockContacts.length + 1,
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                company: document.getElementById('company').value,
-                position: document.getElementById('position').value,
-                status: document.getElementById('status').value,
-                source: document.getElementById('source').value,
-                avatar: document.getElementById('name').value.split(' ').map(n => n[0]).join('').substring(0, 2),
-                color: ['bg-blue-600', 'bg-purple-600', 'bg-green-600', 'bg-pink-600', 'bg-orange-600', 'bg-red-600'][Math.floor(Math.random() * 6)]
-            };
-            
-            mockContacts.push(newContact);
-            closeContactModal();
-            filterContacts();
-            alert('✓ Contato adicionado com sucesso!');
-        });
-
-        // INICIALIZAR
-        window.addEventListener('DOMContentLoaded', () => {
-            renderPage();
-        });
-    </script>
-</body>
-</html>
-            
-            <main class="flex-1 overflow-y-auto p-6 space-y-6">
-                <!-- HEADER DA PÁGINA -->
-                <div class="flex justify-between items-start gap-4">
-                    <div>
-                        <h1 class="text-3xl font-bold text-white mb-2">Contatos</h1>
-                        <p class="text-gray-400">Gerencie e organize todos os seus contatos</p>
-                    </div>
-                    <button onclick="openContactModal()" class="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition shadow-lg">
-                        ➕ Novo Contato
-                    </button>
-                </div>
-
-                <!-- CARDS DE ESTATÍSTICAS -->
-                <div class="grid grid-cols-4 gap-4">
-                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                        <p class="text-gray-400 text-sm">Total de Contatos</p>
-                        <p class="text-3xl font-bold text-white mt-2" id="total-contacts">--</p>
-                    </div>
-                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                        <p class="text-gray-400 text-sm">Contatos Ativos</p>
-                        <p class="text-3xl font-bold text-green-400 mt-2" id="active-contacts">--</p>
-                    </div>
-                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                        <p class="text-gray-400 text-sm">Novos (7 dias)</p>
-                        <p class="text-3xl font-bold text-blue-400 mt-2" id="new-contacts">--</p>
-                    </div>
-                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                        <p class="text-gray-400 text-sm">Com Email</p>
-                        <p class="text-3xl font-bold text-purple-400 mt-2" id="email-contacts">--</p>
-                    </div>
-                </div>
-
-                <!-- FILTROS E BUSCA -->
-                <div class="bg-slate-800 rounded-lg p-4 border border-slate-700 space-y-4">
-                    <div class="flex gap-4 flex-wrap">
-                        <div class="flex-1 min-w-64">
-                            <input 
-                                type="text" 
-                                id="searchInput" 
-                                placeholder="🔍 Buscar por nome, email ou empresa..." 
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
-                                onkeyup="filterContacts()"
-                            >
-                        </div>
-                        <select id="filterStatus" class="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500" onchange="filterContacts()">
-                            <option value="">Todos os Status</option>
-                            <option value="ativo">Ativo</option>
-                            <option value="inativo">Inativo</option>
-                            <option value="prospect">Prospect</option>
-                        </select>
-                        <select id="filterSource" class="bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500" onchange="filterContacts()">
-                            <option value="">Todas as Fontes</option>
-                            <option value="web">Website</option>
-                            <option value="linkedin">LinkedIn</option>
-                            <option value="email">Email</option>
-                            <option value="referral">Referência</option>
-                        </select>
-                        <button onclick="exportContacts()" class="bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 hover:bg-slate-600 transition" title="Exportar CSV">
-                            📥 Exportar
-                        </button>
+                    <!-- Tags -->
+                    <div class="form-group">
+                        <label class="form-label">Tags</label>
+                        <input type="text" id="tags" class="form-input" placeholder="Separe com vírgula">
                     </div>
 
-                    <!-- VISUALIZAÇÃO DE RESULTADOS -->
-                    <div class="flex justify-between items-center">
-                        <p class="text-sm text-gray-400">
-                            Mostrando <span id="results-count">0</span> de <span id="total-count">0</span> contatos
-                        </p>
-                        <div class="flex gap-2">
-                            <button onclick="toggleView('grid')" class="px-3 py-2 bg-blue-600 text-white rounded" title="Visualização em grade">
-                                ◼️ Grade
-                            </button>
-                            <button onclick="toggleView('list')" class="px-3 py-2 bg-slate-700 text-white rounded" title="Visualização em lista">
-                                ☰ Lista
-                            </button>
-                        </div>
+                    <!-- Actions -->
+                    <div style="display: flex; gap: var(--spacing-md); justify-content: flex-end;">
+                        <button type="button" class="btn-action" onclick="closeContactModal()" style="flex: 0 1 auto; padding: var(--spacing-md) var(--spacing-lg);">Cancelar</button>
+                        <button type="submit" class="btn-primary" style="flex: 0 1 auto;">✓ Salvar Contato</button>
                     </div>
-                </div>
-
-                <!-- GRID DE CONTATOS (VIEW PADRÃO) -->
-                <div id="contactsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Contatos serão carregados aqui -->
-                </div>
-
-                <!-- LISTA DE CONTATOS (ALTERNATIVA) -->
-                <div id="contactsList" class="hidden space-y-2">
-                    <!-- Contatos em lista serão carregados aqui -->
-                </div>
-
-                <!-- PAGINAÇÃO -->
-                <div class="flex justify-center gap-2" id="pagination"></div>
-            </main>
-        </div>
-    </div>
-
-    <!-- MODAL DE NOVO CONTATO -->
-    <div id="contactModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4 fade-in">
-        <div class="bg-slate-800 rounded-lg w-full max-w-2xl border border-slate-700 overflow-hidden">
-            <!-- HEADER DO MODAL -->
-            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
-                <h3 class="text-xl font-bold text-white">Novo Contato</h3>
-                <button onclick="closeContactModal()" class="text-gray-300 hover:text-white text-2xl">✕</button>
+                </form>
             </div>
-
-            <!-- BODY DO MODAL -->
-            <form id="contactForm" class="space-y-6 p-6 max-h-96 overflow-y-auto">
-                <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
-                <div>
-                    <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <span>👤</span> Informações Básicas
-                    </h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Nome Completo *</label>
-                            <input 
-                                type="text" 
-                                id="name" 
-                                required 
-                                placeholder="Ex: João Silva"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">E-mail</label>
-                            <input 
-                                type="email" 
-                                id="email" 
-                                placeholder="email@example.com"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Telefone</label>
-                            <input 
-                                type="tel" 
-                                id="phone" 
-                                placeholder="(11) 99999-9999"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
-                            >
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SEÇÃO 2: EMPRESA E CARGO -->
-                <div class="border-t border-slate-700 pt-6">
-                    <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <span>🏢</span> Empresa
-                    </h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Empresa</label>
-                            <input 
-                                type="text" 
-                                id="company" 
-                                placeholder="Nome da empresa"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Cargo</label>
-                            <input 
-                                type="text" 
-                                id="position" 
-                                placeholder="Ex: Gerente"
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
-                            >
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SEÇÃO 3: INFORMAÇÕES ADICIONAIS -->
-                <div class="border-t border-slate-700 pt-6">
-                    <h4 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <span>📋</span> Informações Adicionais
-                    </h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Fonte</label>
-                            <select 
-                                id="source" 
-                                class="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
-                            >
-                                <option value="">Selecione...</option>
-                                <option value="web">Website</option>
-                                <option value="linkedin">LinkedIn</option>
-                                <option value="email">Email</option>
-                                <option value="referral">Referência</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Status</label>
-                            <select 
-                                id="status" 
-                                class="w-full bg-slate-700 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
-                            >
-                                <option value="ativo">Ativo</option>
-                                <option value="inativo">Inativo</option>
-                                <option value="prospect">Prospect</option>
-                            </select>
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Notas</label>
-                            <textarea 
-                                id="notes" 
-                                rows="3"
-                                placeholder="Adicione notas sobre este contato..."
-                                class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition resize-none"
-                            ></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- FOOTER DO MODAL -->
-                <div class="flex justify-end gap-3 pt-6 border-t border-slate-700">
-                    <button 
-                        type="button" 
-                        onclick="closeContactModal()" 
-                        class="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition font-medium"
-                    >
-                        Cancelar
-                    </button>
-                    <button 
-                        type="submit" 
-                        class="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition font-medium"
-                    >
-                        ✓ Salvar Contato
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <script src="/js/api.js"></script>
-    <script src="/js/auth.js"></script>
+    <script src="js/utils.js"></script>
     <script>
-        // DADOS MOCKADOS DE CONTATOS
         const mockContacts = [
-            {
-                id: 1,
-                name: "João Silva",
-                email: "joao@empresa1.com",
-                phone: "(11) 98765-4321",
-                company: "Tech Solutions",
-                position: "Gerente de Vendas",
-                status: "ativo",
-                source: "linkedin",
-                notes: "Cliente potencial com alto interesse",
-                avatar: "JS",
-                color: "bg-blue-600"
-            },
-            {
-                id: 2,
-                name: "Maria Santos",
-                email: "maria@empresa2.com",
-                phone: "(21) 97654-3210",
-                company: "Digital Marketing",
-                position: "Diretora",
-                status: "ativo",
-                source: "web",
-                notes: "Reunião agendada para próxima semana",
-                avatar: "MS",
-                color: "bg-purple-600"
-            },
-            {
-                id: 3,
-                name: "Carlos Mendes",
-                email: "carlos@empresa3.com",
-                phone: "(85) 96543-2109",
-                company: "StartUp XYZ",
-                position: "CEO",
-                status: "prospect",
-                source: "referral",
-                notes: "Indicação do João Silva",
-                avatar: "CM",
-                color: "bg-green-600"
-            },
-            {
-                id: 4,
-                name: "Ana Costa",
-                email: "ana@empresa4.com",
-                phone: "(31) 95432-1098",
-                company: "Consultoria Geral",
-                position: "Consultora",
-                status: "ativo",
-                source: "email",
-                notes: "Preocupada com implementação",
-                avatar: "AC",
-                color: "bg-pink-600"
-            },
-            {
-                id: 5,
-                name: "Pedro Oliveira",
-                email: "pedro@empresa5.com",
-                phone: "(47) 94321-0987",
-                company: "Desenvolvimento",
-                position: "Tech Lead",
-                status: "inativo",
-                source: "linkedin",
-                notes: "Sem atividade recente",
-                avatar: "PO",
-                color: "bg-orange-600"
-            },
-            {
-                id: 6,
-                name: "Lucia Ferreira",
-                email: "lucia@empresa6.com",
-                phone: "(71) 93210-9876",
-                company: "Inovação Labs",
-                position: "Gerente",
-                status: "ativo",
-                source: "web",
-                notes: "Interessada em parceria",
-                avatar: "LF",
-                color: "bg-red-600"
-            }
+            { id: 1, name: "João Silva", email: "joao@empresa1.com", phone: "(11) 98765-4321", company: "Tech Solutions", position: "Gerente", status: "ativo", source: "linkedin", tags: ["vendas", "executive"] },
+            { id: 2, name: "Maria Santos", email: "maria@empresa2.com", phone: "(21) 97654-3210", company: "Digital Marketing", position: "Diretora", status: "ativo", source: "web", tags: ["marketing", "decision-maker"] },
+            { id: 3, name: "Carlos Mendes", email: "carlos@empresa3.com", phone: "(85) 96543-2109", company: "StartUp XYZ", position: "CEO", status: "prospect", source: "referral", tags: ["ceo", "tech"] },
+            { id: 4, name: "Ana Costa", email: "ana@empresa4.com", phone: "(31) 95432-1098", company: "Consultoria", position: "Consultora", status: "ativo", source: "email", tags: ["consultant"] },
+            { id: 5, name: "Pedro Oliveira", email: "pedro@empresa5.com", phone: "(47) 94321-0987", company: "Desenvolvimento", position: "Tech Lead", status: "inativo", source: "linkedin", tags: ["tech", "developer"] },
         ];
 
-        let contacts = [...mockContacts];
+        let contacts = JSON.parse(JSON.stringify(mockContacts));
+        let filteredContacts = contacts;
         let currentView = 'grid';
-        let currentPage = 1;
-        const itemsPerPage = 12;
 
-        // CARREGAR SIDEBAR E HEADER
-        fetch('/components/sidebar.html').then(r => r.text()).then(html => {
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) sidebar.innerHTML = html;
-        }).catch(err => console.log('Sidebar não encontrada'));
+        document.addEventListener('DOMContentLoaded', function() {
+            renderContacts();
+            updateStats();
+            renderTagFilters();
+        });
 
-        fetch('/components/header.html').then(r => r.text()).then(html => {
-            const header = document.getElementById('header');
-            if (header) header.innerHTML = html;
-        }).catch(err => console.log('Header não encontrado'));
-
-        checkAuth();
-
-        // ATUALIZAR ESTATÍSTICAS
-        function updateStats() {
-            document.getElementById('total-contacts').textContent = mockContacts.length;
-            document.getElementById('active-contacts').textContent = mockContacts.filter(c => c.status === 'ativo').length;
-            document.getElementById('new-contacts').textContent = mockContacts.filter(c => c.status === 'ativo').length;
-            document.getElementById('email-contacts').textContent = mockContacts.filter(c => c.email).length;
-        }
-
-        // MODAL FUNCTIONS
-        function openContactModal() {
-            document.getElementById('contactModal').classList.remove('hidden');
-            document.getElementById('contactModal').classList.add('flex');
-            document.getElementById('contactForm').reset();
-        }
-
-        function closeContactModal() {
-            document.getElementById('contactModal').classList.add('hidden');
-            document.getElementById('contactModal').classList.remove('flex');
-        }
-
-        // RENDERIZAR GRID DE CONTATOS
-        function renderContactsGrid(data) {
-            const grid = document.getElementById('contactsGrid');
-            grid.innerHTML = data.map(contact => `
-                <div class="contact-card bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500">
-                    <!-- HEADER DO CARD -->
-                    <div class="bg-gradient-to-r from-slate-700 to-slate-800 p-4 flex justify-between items-start">
-                        <div class="flex items-center gap-3">
-                            <div class="${contact.color} avatar font-bold text-lg">${contact.avatar}</div>
-                            <div>
-                                <h4 class="font-semibold text-white">${contact.name}</h4>
-                                <p class="text-sm text-gray-400">${contact.position || 'N/A'}</p>
-                            </div>
-                        </div>
-                        <div class="badge ${contact.status === 'ativo' ? 'bg-green-900 text-green-200' : contact.status === 'prospect' ? 'bg-blue-900 text-blue-200' : 'bg-gray-700 text-gray-200'}">
-                            ${contact.status}
-                        </div>
-                    </div>
-
-                    <!-- CONTEÚDO DO CARD -->
-                    <div class="p-4 space-y-3">
-                        <div>
-                            <p class="text-xs text-gray-500 mb-1">EMPRESA</p>
-                            <p class="text-sm font-medium text-white">${contact.company}</p>
-                        </div>
-                        
-                        <div class="flex items-center gap-2 text-sm text-gray-400">
-                            <span>📧</span>
-                            <a href="mailto:${contact.email}" class="text-blue-400 hover:underline truncate">${contact.email}</a>
-                        </div>
-
-                        <div class="flex items-center gap-2 text-sm text-gray-400">
-                            <span>☎️</span>
-                            <a href="tel:${contact.phone}" class="text-blue-400 hover:underline">${contact.phone}</a>
-                        </div>
-
-                        ${contact.source ? `
-                            <div class="flex items-center gap-2 text-xs">
-                                <span class="bg-slate-700 text-gray-300 px-2 py-1 rounded">📌 ${contact.source}</span>
-                            </div>
-                        ` : ''}
-
-                        ${contact.notes ? `
-                            <div class="bg-slate-700 rounded p-2 text-xs text-gray-300 italic border-l-2 border-blue-500">
-                                "${contact.notes}"
-                            </div>
-                        ` : ''}
-                    </div>
-
-                    <!-- AÇÕES DO CARD -->
-                    <div class="bg-slate-900 p-3 flex gap-2 border-t border-slate-700">
-                        <button onclick="alert('Editar: ${contact.name}')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition">✎ Editar</button>
-                        <button onclick="alert('Chamar ${contact.name}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition">☎️</button>
-                        <button onclick="alert('Deletar ${contact.name}?')" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // RENDERIZAR LISTA DE CONTATOS
-        function renderContactsList(data) {
-            const list = document.getElementById('contactsList');
-            list.innerHTML = data.map(contact => `
-                <div class="bg-slate-800 rounded-lg border border-slate-700 p-4 flex justify-between items-center hover:border-blue-500 transition">
-                    <div class="flex items-center gap-4 flex-1">
-                        <div class="${contact.color} avatar font-bold text-lg">${contact.avatar}</div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-white">${contact.name}</h4>
-                            <div class="flex gap-4 text-sm text-gray-400 mt-1">
-                                <span>📧 ${contact.email}</span>
-                                <span>☎️ ${contact.phone}</span>
-                                <span>🏢 ${contact.company}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 items-center">
-                        <div class="badge ${contact.status === 'ativo' ? 'bg-green-900 text-green-200' : contact.status === 'prospect' ? 'bg-blue-900 text-blue-200' : 'bg-gray-700 text-gray-200'}">
-                            ${contact.status}
-                        </div>
-                        <button onclick="alert('Editar: ${contact.name}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition">✎</button>
-                        <button onclick="alert('Deletar ${contact.name}?')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // FILTRAR CONTATOS
-        function filterContacts() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const status = document.getElementById('filterStatus').value;
-            const source = document.getElementById('filterSource').value;
-
-            contacts = mockContacts.filter(contact => {
-                const matchSearch = contact.name.toLowerCase().includes(search) ||
-                                  contact.email.toLowerCase().includes(search) ||
-                                  contact.company.toLowerCase().includes(search);
-                const matchStatus = !status || contact.status === status;
-                const matchSource = !source || contact.source === source;
-                return matchSearch && matchStatus && matchSource;
-            });
-
-            document.getElementById('results-count').textContent = contacts.length;
-            document.getElementById('total-count').textContent = mockContacts.length;
-            currentPage = 1;
-            renderPage();
-        }
-
-        // TROCAR VISUALIZAÇÃO
-        function toggleView(view) {
-            currentView = view;
-            document.getElementById('contactsGrid').classList.toggle('hidden', view !== 'grid');
-            document.getElementById('contactsList').classList.toggle('hidden', view !== 'list');
+        function renderContacts() {
+            const container = document.getElementById('contactsContainer');
+            const emptyState = document.getElementById('emptyState');
             
-            const buttons = document.querySelectorAll('[onclick*="toggleView"]');
-            buttons.forEach(btn => btn.classList.remove('bg-blue-600'));
-            buttons.forEach(btn => btn.classList.add('bg-slate-700'));
-            event.target.classList.remove('bg-slate-700');
-            event.target.classList.add('bg-blue-600');
-            
-            renderPage();
-        }
+            container.innerHTML = '';
 
-        // RENDERIZAR PÁGINA COM PAGINAÇÃO
-        function renderPage() {
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const pageData = contacts.slice(start, end);
-
-            if (currentView === 'grid') {
-                renderContactsGrid(pageData);
-            } else {
-                renderContactsList(pageData);
+            if (filteredContacts.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
             }
 
-            renderPagination();
-        }
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
 
-        // RENDERIZAR PAGINAÇÃO
-        function renderPagination() {
-            const totalPages = Math.ceil(contacts.length / itemsPerPage);
-            const pagination = document.getElementById('pagination');
-            
-            let html = '';
-            for (let i = 1; i <= totalPages; i++) {
-                html += `
-                    <button 
-                        onclick="goToPage(${i})" 
-                        class="px-3 py-2 rounded ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-slate-700 text-gray-300 hover:bg-slate-600'} transition"
-                    >
-                        ${i}
-                    </button>
+            filteredContacts.forEach(contact => {
+                const avatar = NexusUtils.getInitials(contact.name);
+                const avatarColor = NexusUtils.getAvatarColor(contact.name);
+                
+                const tagsHTML = contact.tags
+                    .map(tag => `<span class="tag-badge" style="background: var(--accent-color); color: white;">${tag}</span>`)
+                    .join('');
+
+                const card = document.createElement('div');
+                card.className = 'contact-card';
+                card.innerHTML = `
+                    <div class="contact-header">
+                        <div class="contact-avatar" style="background: ${avatarColor};">${avatar}</div>
+                        <div class="contact-info">
+                            <h3>${contact.name}</h3>
+                            <p>${contact.position}</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-details">
+                        ${contact.email ? `<div class="detail-item"><span class="detail-label">📧</span><span class="detail-value">${contact.email}</span></div>` : ''}
+                        ${contact.phone ? `<div class="detail-item"><span class="detail-label">📱</span><span class="detail-value">${contact.phone}</span></div>` : ''}
+                        ${contact.company ? `<div class="detail-item"><span class="detail-label">🏢</span><span class="detail-value">${contact.company}</span></div>` : ''}
+                    </div>
+
+                    ${tagsHTML ? `<div class="contact-tags">${tagsHTML}</div>` : ''}
+
+                    <div class="contact-actions">
+                        <button class="btn-action" onclick="editContact(${contact.id})">✏️ Editar</button>
+                        <button class="btn-action" onclick="deleteContact(${contact.id})">🗑️ Remover</button>
+                    </div>
                 `;
-            }
-            pagination.innerHTML = html || '<p class="text-gray-400">Nenhum contato encontrado</p>';
-        }
-
-        function goToPage(page) {
-            currentPage = page;
-            renderPage();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // EXPORTAR CONTATOS
-        function exportContacts() {
-            let csv = 'Nome,Email,Telefone,Empresa,Cargo,Status,Fonte\n';
-            contacts.forEach(contact => {
-                csv += `"${contact.name}","${contact.email}","${contact.phone}","${contact.company}","${contact.position}","${contact.status}","${contact.source}"\n`;
+                container.appendChild(card);
             });
 
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `contatos-${new Date().toISOString().split('T')[0]}.csv`;
-            link.click();
+            document.getElementById('results-count').textContent = filteredContacts.length;
         }
 
-        // SALVAR NOVO CONTATO
-        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+        function renderTagFilters() {
+            const allTags = new Set();
+            contacts.forEach(c => c.tags?.forEach(t => allTags.add(t)));
+            
+            const container = document.getElementById('tagFilters');
+            container.innerHTML = '';
+
+            allTags.forEach(tag => {
+                const btn = document.createElement('button');
+                btn.className = 'tag-filter';
+                btn.textContent = tag;
+                btn.onclick = () => {
+                    btn.classList.toggle('active');
+                    filterContacts();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function filterContacts() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+            const activeTags = Array.from(document.querySelectorAll('.tag-filter.active')).map(el => el.textContent);
+
+            filteredContacts = contacts.filter(c => {
+                const matchSearch = !search || 
+                    c.name.toLowerCase().includes(search) ||
+                    c.email.toLowerCase().includes(search) ||
+                    c.company.toLowerCase().includes(search);
+                
+                const matchStatus = !status || c.status === status;
+                
+                const matchTags = activeTags.length === 0 || activeTags.some(tag => c.tags.includes(tag));
+
+                return matchSearch && matchStatus && matchTags;
+            });
+
+            renderContacts();
+        }
+
+        function updateStats() {
+            document.getElementById('total-contacts').textContent = contacts.length;
+            document.getElementById('active-contacts').textContent = contacts.filter(c => c.status === 'ativo').length;
+            document.getElementById('prospect-contacts').textContent = contacts.filter(c => c.status === 'prospect').length;
+            document.getElementById('email-contacts').textContent = contacts.filter(c => c.email).length;
+        }
+
+        function toggleView(view) {
+            currentView = view;
+            document.querySelectorAll('.btn-view').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const container = document.getElementById('contactsContainer');
+            if (view === 'grid') {
+                container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+            } else {
+                container.style.gridTemplateColumns = '1fr';
+            }
+        }
+
+        function openContactModal() {
+            document.getElementById('contactModal').classList.add('active');
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.remove('active');
+            document.getElementById('contactForm').reset();
+        }
+
+        function saveContact(e) {
             e.preventDefault();
             
             const newContact = {
-                id: mockContacts.length + 1,
+                id: Math.max(...contacts.map(c => c.id), 0) + 1,
                 name: document.getElementById('name').value,
                 email: document.getElementById('email').value,
                 phone: document.getElementById('phone').value,
@@ -1012,24 +734,62 @@
                 position: document.getElementById('position').value,
                 status: document.getElementById('status').value,
                 source: document.getElementById('source').value,
-                notes: document.getElementById('notes').value,
-                avatar: document.getElementById('name').value.split(' ').map(n => n[0]).join(''),
-                color: ['bg-blue-600', 'bg-purple-600', 'bg-green-600', 'bg-pink-600', 'bg-orange-600', 'bg-red-600'][Math.floor(Math.random() * 6)]
+                tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t)
             };
 
-            mockContacts.push(newContact);
+            contacts.push(newContact);
+            filteredContacts = contacts;
+            updateStats();
+            renderContacts();
+            renderTagFilters();
             closeContactModal();
-            updateStats();
-            filterContacts();
-            
-            alert('✓ Contato adicionado com sucesso!');
-        });
 
-        // INICIALIZAR PÁGINA
-        window.addEventListener('load', () => {
+            NexusUtils.notifySuccess(`✅ Contato "${newContact.name}" salvo com sucesso!`);
+        }
+
+        function editContact(id) {
+            const contact = contacts.find(c => c.id === id);
+            if (!contact) return;
+
+            document.getElementById('name').value = contact.name;
+            document.getElementById('email').value = contact.email;
+            document.getElementById('phone').value = contact.phone;
+            document.getElementById('company').value = contact.company;
+            document.getElementById('position').value = contact.position;
+            document.getElementById('status').value = contact.status;
+            document.getElementById('source').value = contact.source;
+            document.getElementById('tags').value = contact.tags.join(', ');
+
+            openContactModal();
+        }
+
+        function deleteContact(id) {
+            if (!confirm('Confirmar exclusão?')) return;
+            contacts = contacts.filter(c => c.id !== id);
+            filteredContacts = contacts;
             updateStats();
-            renderPage();
-        });
+            renderContacts();
+            renderTagFilters();
+            NexusUtils.notifySuccess('✅ Contato removido');
+        }
+
+        function exportContacts() {
+            const csv = [
+                ['Nome', 'Email', 'Telefone', 'Empresa', 'Cargo', 'Status', 'Tags'].join(','),
+                ...filteredContacts.map(c => 
+                    [c.name, c.email, c.phone, c.company, c.position, c.status, c.tags.join('; ')].join(',')
+                )
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `contatos-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            NexusUtils.notifySuccess('✅ Contatos exportados!');
+        }
     </script>
 </body>
 </html>

@@ -3,577 +3,960 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vexus Dashboard v2.0</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Nexus Service - Dashboard</title>
+    <link rel="stylesheet" href="css/design-system.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; }
-        .notification {
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 64px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--spacing-md);
+            gap: var(--spacing-lg);
+        }
+
+        .sidebar-logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .nav-btn {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--bg-secondary);
+            transform: scale(1.1);
+        }
+
+        .nav-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .sidebar-spacer {
+            flex: 1;
+        }
+
+        .chat-list {
+            width: 320px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .list-header {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .chip {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 999px;
+            white-space: nowrap;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .chip.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .chip:not(.active) {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+
+        .chip:not(.active):hover {
+            background: var(--bg-secondary);
+        }
+
+        .chat-items {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: var(--spacing-md);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .chat-item:hover {
+            background: var(--bg-primary);
+        }
+
+        .chat-item.active {
+            background: var(--bg-primary);
+            border-left-color: var(--accent-color);
+        }
+
+        .chat-item-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .chat-item-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .chat-item-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .badge-channel {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .badge-score {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            background: var(--accent-color);
+            color: white;
+            font-weight: 700;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            overflow: hidden;
+        }
+
+        .main-header {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .avatar-main {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        }
+
+        .header-info h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .header-info p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .whisper-btn {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-color), #1e3a8a);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .whisper-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            padding: 0 var(--spacing-lg);
+        }
+
+        .tab-btn {
+            padding: var(--spacing-md) var(--spacing-md);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+            padding: var(--spacing-lg);
+        }
+
+        .message {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
             animation: slideIn 0.3s ease-out;
         }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 60%;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-lg);
+            line-height: 1.5;
+        }
+
+        .message.sent .message-bubble {
+            background: linear-gradient(135deg, var(--primary-color), #1e3a8a);
+            color: white;
+            border-radius: var(--radius-lg) var(--radius-sm) var(--radius-lg) var(--radius-lg);
+        }
+
+        .message.received .message-bubble {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .message-input-area {
+            display: flex;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .message-input {
+            flex: 1;
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .message-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .send-btn {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .send-btn:active {
+            transform: translateY(0);
+        }
+
+        .intelligence-panel {
+            width: 360px;
+            background: linear-gradient(to-bottom, var(--bg-secondary), var(--bg-primary));
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: var(--spacing-lg);
+        }
+
+        .panel-section {
+            margin-bottom: var(--spacing-xl);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto var(--spacing-md);
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .ai-summary {
+            background: var(--bg-primary);
+            border-left: 3px solid var(--accent-color);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .ai-summary strong {
+            color: var(--text-primary);
+        }
+
+        .ai-summary-highlight {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .quick-action {
+            width: 100%;
+            padding: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .quick-action:last-child {
+            margin-bottom: 0;
+        }
+
+        .quick-action:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .quick-action-alt {
+            background: var(--accent-color);
+        }
+
+        .quick-action-success {
+            background: #10b981;
+        }
+
+        .contact-field {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .contact-label {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-bottom: 4px;
+        }
+
+        .contact-value {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: flex-start;
+        }
+
+        .timeline-icon {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .timeline-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .timeline-text {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .timeline-time {
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+        }
+
+        .notification-container {
+            position: fixed;
+            top: var(--spacing-lg);
+            right: var(--spacing-lg);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .notification {
+            background: var(--accent-color);
+            color: white;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease-out;
+        }
+
         @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 1024px) {
+            .intelligence-panel {
+                display: none;
+            }
+
+            .chat-list {
+                width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 56px;
+            }
+
+            .chat-list {
+                width: 240px;
+            }
+
+            .intelligence-panel {
+                display: none;
+            }
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 to-slate-950 text-gray-100">
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">N</div>
+        <button class="nav-btn" data-nav="inbox" title="Inbox">💬</button>
+        <button class="nav-btn" data-nav="pipeline" title="Pipeline">📊</button>
+        <button class="nav-btn" data-nav="agents" title="Agentes">🤖</button>
+        <button class="nav-btn" data-nav="contacts" title="Contatos">👥</button>
+        <button class="nav-btn" data-nav="analytics" title="Analytics">📈</button>
+        <button class="nav-btn" data-nav="kb" title="Knowledge Base">📚</button>
+        <div class="sidebar-spacer"></div>
+        <button class="nav-btn" data-nav="config" title="Config">⚙️</button>
+    </div>
 
-<div class="flex h-screen overflow-hidden">
-
-    <!-- COLUNA 1: MINI-SIDEBAR -->
-    <nav class="w-16 bg-slate-950 border-r border-slate-700 flex flex-col items-center py-4 space-y-6">
-        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold text-white">V</div>
-        
-        <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-lg bg-purple-600 text-white" data-nav="inbox">💬</button>
-        <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-nav="pipeline">📊</button>
-        <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-nav="agents">🤖</button>
-        <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-nav="contacts">👥</button>
-        <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-nav="analytics">📈</button>
-        <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-nav="kb">📚</button>
-        
-        <div class="flex-1"></div>
-        <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-lg text-gray-400 hover:bg-slate-700" data-nav="config">⚙️</button>
-    </nav>
-
-    <!-- COLUNA 2: LISTA DE CONVERSAS -->
-    <aside class="w-80 bg-slate-800 border-r border-slate-700 flex flex-col">
-        <div class="p-4 border-b border-slate-700">
-            <input type="text" id="searchInput" placeholder="🔍 Buscar..." class="w-full bg-slate-700 text-white placeholder-gray-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+    <div class="chat-list">
+        <div class="list-header">
+            <input type="text" id="searchInput" placeholder="🔍 Buscar..." class="search-input">
         </div>
 
-        <div class="px-4 py-3 border-b border-slate-700 flex gap-2">
-            <button class="filter-btn px-3 py-1 text-xs rounded-full font-semibold bg-purple-600 text-white" data-filter="todos">Todos</button>
-            <button class="filter-btn px-3 py-1 text-xs rounded-full font-semibold bg-slate-700 text-gray-300 hover:bg-slate-600" data-filter="aguard">⏳ Aguard.</button>
-            <button class="filter-btn px-3 py-1 text-xs rounded-full font-semibold bg-slate-700 text-gray-300 hover:bg-slate-600" data-filter="hot">🔥 Quentes</button>
+        <div class="filter-chips">
+            <button class="chip active" data-filter="todos">Todos</button>
+            <button class="chip" data-filter="hot">🔥 Quentes</button>
+            <button class="chip" data-filter="pending">⏳ Pendentes</button>
         </div>
 
-        <div class="flex-1 overflow-y-auto">
-            <div class="chat-item p-3 cursor-pointer border-l-4 border-l-purple-500 bg-slate-700 hover:bg-slate-650" data-chat="joao">
-                <p class="font-semibold text-white text-sm">João Silva</p>
-                <p class="text-xs text-gray-400">Ótimo! Qual é o valor?</p>
-                <div class="flex justify-between mt-2">
-                    <span class="text-xs px-2 py-1 rounded-full bg-slate-600 text-gray-300">WhatsApp</span>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-900 text-emerald-300">85</span>
+        <div class="chat-items">
+            <div class="chat-item active" data-chat="joao">
+                <div class="chat-item-name">João Silva</div>
+                <div class="chat-item-text">Ótimo! Qual é o valor?</div>
+                <div class="chat-item-meta">
+                    <span class="badge-channel">WhatsApp</span>
+                    <span class="badge-score">85</span>
                 </div>
             </div>
 
-            <div class="chat-item p-3 cursor-pointer border-l-4 border-l-transparent hover:bg-slate-750" data-chat="maria">
-                <p class="font-semibold text-white text-sm">Maria Santos</p>
-                <p class="text-xs text-gray-400">Preciso fazer uma cotação...</p>
-                <div class="flex justify-between mt-2">
-                    <span class="text-xs px-2 py-1 rounded-full bg-slate-600 text-gray-300">Instagram</span>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-amber-900 text-amber-300">62</span>
+            <div class="chat-item" data-chat="maria">
+                <div class="chat-item-name">Maria Santos</div>
+                <div class="chat-item-text">Preciso fazer uma cotação...</div>
+                <div class="chat-item-meta">
+                    <span class="badge-channel">Instagram</span>
+                    <span class="badge-score">62</span>
                 </div>
             </div>
 
-            <div class="chat-item p-3 cursor-pointer border-l-4 border-l-transparent hover:bg-slate-750" data-chat="carlos">
-                <p class="font-semibold text-white text-sm">Carlos Mendes</p>
-                <p class="text-xs text-gray-400">Enviaram o orçamento?</p>
-                <div class="flex justify-between mt-2">
-                    <span class="text-xs px-2 py-1 rounded-full bg-slate-600 text-gray-300">Email</span>
-                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-blue-900 text-blue-300">45</span>
+            <div class="chat-item" data-chat="carlos">
+                <div class="chat-item-name">Carlos Mendes</div>
+                <div class="chat-item-text">Enviaram o orçamento?</div>
+                <div class="chat-item-meta">
+                    <span class="badge-channel">Email</span>
+                    <span class="badge-score">45</span>
                 </div>
             </div>
         </div>
-    </aside>
+    </div>
 
-    <!-- COLUNA 3: ÁREA PRINCIPAL -->
-    <main class="flex-1 flex flex-col bg-slate-900">
-        <!-- Header -->
-        <header class="bg-gradient-to-r from-slate-800 to-slate-750 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
-            <div id="chatHeader" class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-emerald-500 to-emerald-600">JS</div>
+    <main>
+        <div class="main-header">
+            <div class="header-profile" id="chatHeader">
+                <div class="avatar-main">JS</div>
+                <div class="header-info">
+                    <h1>João Silva</h1>
+                    <p>WhatsApp • 🟢 Online</p>
+                </div>
+            </div>
+            <button class="whisper-btn" id="whisperToggle">🎙️ Whisper Mode</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="chat">💬 Chat</button>
+            <button class="tab-btn" data-tab="kb">📚 Knowledge Lab</button>
+            <button class="tab-btn" data-tab="proposals">📄 Propostas</button>
+        </div>
+
+        <div id="chatContent" class="main-content">
+            <div class="message sent">
                 <div>
-                    <h1 class="text-lg font-bold text-white">João Silva</h1>
-                    <p class="text-sm text-gray-400">WhatsApp • 🟢 Online</p>
-                </div>
-            </div>
-            <button id="whisperToggle" class="whisper-btn flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-blue-600 text-white">
-                🎙️ Whisper Mode ON
-            </button>
-        </header>
-
-        <!-- Tabs -->
-        <div class="flex border-b border-slate-700 bg-slate-800 px-6">
-            <button class="tab-btn px-4 py-3 font-semibold border-b-2 border-purple-500 text-purple-400" data-tab="chat">💬 Chat</button>
-            <button class="tab-btn px-4 py-3 font-semibold text-gray-400 hover:text-gray-300" data-tab="kb">📚 Knowledge Lab</button>
-            <button class="tab-btn px-4 py-3 font-semibold text-gray-400 hover:text-gray-300" data-tab="proposals">📄 Propostas</button>
-        </div>
-
-        <!-- Chat Content -->
-        <div id="chatContent" class="flex-1 overflow-y-auto flex flex-col gap-4 p-6 bg-slate-800 rounded-lg m-4">
-            <div class="flex justify-end">
-                <div class="max-w-xs p-3 rounded-lg bg-purple-600 text-white rounded-br-none">
-                    <p class="text-sm">Olá! Tudo bem? Estou interessado em consultoria</p>
-                    <p class="text-xs opacity-70 mt-1">14:25</p>
+                    <div class="message-bubble">Olá! Tudo bem? Estou interessado em consultoria</div>
+                    <div class="message-time">14:25</div>
                 </div>
             </div>
 
-            <div class="flex justify-start">
-                <div class="max-w-xs p-3 rounded-lg bg-slate-700 text-gray-100 rounded-bl-none">
-                    <p class="text-sm">Ótimo! Temos 3 planos disponíveis:</p>
-                    <p class="text-sm">• Básico: R$500/mês</p>
-                    <p class="text-sm">• Premium: R$1500/mês</p>
-                    <div class="mt-2 pt-2 border-t border-opacity-30 border-current">
-                        <p class="text-xs opacity-80">📚 Fonte: Tabela de Preços.pdf</p>
-                        <p class="text-xs opacity-70">✓ Confiança: 94%</p>
-                    </div>
+            <div class="message received">
+                <div>
+                    <div class="message-bubble">Ótimo! Temos 3 planos disponíveis:<br><br>• Básico: R$500/mês<br>• Premium: R$1500/mês</div>
+                    <div class="message-time">14:26</div>
                 </div>
             </div>
 
-            <div class="bg-blue-900 border-l-4 border-blue-500 p-4 rounded-lg">
-                <p class="text-sm font-semibold text-blue-300 mb-2">💡 Modo Whisper Ativado</p>
-                <p class="text-sm text-blue-200">Lead urgente! Ele perguntou sobre preço = poder de compra. Ofereça 15% de desconto se fechar HOJE!</p>
+            <div style="background: rgba(124, 58, 237, 0.1); border-left: 3px solid var(--accent-color); padding: var(--spacing-md); border-radius: var(--radius-md); margin: var(--spacing-md) 0;">
+                <p style="color: var(--accent-color); font-weight: 600; margin-bottom: var(--spacing-sm);">💡 Modo Whisper Ativado</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Lead urgente! Él perguntou sobre preço = poder de compra. Ofereça 15% de desconto se fechar HOJE!</p>
             </div>
         </div>
 
-        <!-- KB Content (Hidden) -->
-        <div id="kbContent" class="hidden flex-1 overflow-y-auto flex flex-col gap-4 p-6 bg-slate-800 m-4" style="display: none;">
-            <div class="bg-slate-700 p-4 rounded-lg">
-                <h3 class="text-white font-bold mb-3">📚 Upload de Documentos</h3>
-                <button id="uploadBtn" class="kb-action w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold">
-                    📤 Fazer Upload
-                </button>
+        <div id="kbContent" class="main-content hidden">
+            <div style="background: var(--bg-secondary); padding: var(--spacing-lg); border-radius: var(--radius-lg);">
+                <h3 style="font-weight: 700; color: var(--text-primary); margin-bottom: var(--spacing-md);">📚 Upload de Documentos</h3>
+                <button id="uploadBtn" class="quick-action">📤 Fazer Upload</button>
             </div>
-            <div class="bg-slate-700 p-4 rounded-lg">
-                <h3 class="text-white font-bold mb-3">🔍 Query ao Knowledge Base</h3>
-                <input type="text" id="kbQuery" placeholder="Digite sua pergunta..." class="w-full bg-slate-600 text-white px-3 py-2 rounded-lg mb-2">
-                <button id="queryBtn" class="kb-action w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">
-                    Consultar KB
-                </button>
+
+            <div style="background: var(--bg-secondary); padding: var(--spacing-lg); border-radius: var(--radius-lg);">
+                <h3 style="font-weight: 700; color: var(--text-primary); margin-bottom: var(--spacing-md);">🔍 Query ao Knowledge Base</h3>
+                <input type="text" id="kbQuery" placeholder="Digite sua pergunta..." class="message-input" style="margin-bottom: var(--spacing-md);">
+                <button id="queryBtn" class="quick-action">Consultar KB</button>
             </div>
         </div>
 
-        <!-- Proposals Content (Hidden) -->
-        <div id="proposalsContent" class="hidden flex-1 overflow-y-auto flex flex-col gap-4 p-6 bg-slate-800 m-4" style="display: none;">
-            <div class="bg-slate-700 p-4 rounded-lg">
-                <h3 class="text-white font-bold mb-3">📄 Propostas Geradas</h3>
-                <button id="generateProposal" class="proposal-action w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold mb-3">
-                    ✨ Gerar Nova Proposta
-                </button>
-                <div class="text-sm text-gray-300">Nenhuma proposta ainda. Clique no botão para gerar!</div>
+        <div id="proposalsContent" class="main-content hidden">
+            <div style="background: var(--bg-secondary); padding: var(--spacing-lg); border-radius: var(--radius-lg);">
+                <h3 style="font-weight: 700; color: var(--text-primary); margin-bottom: var(--spacing-md);">📄 Propostas Geradas</h3>
+                <button id="generateProposal" class="quick-action">✨ Gerar Nova Proposta</button>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: var(--spacing-md);">Nenhuma proposta ainda. Clique no botão para gerar!</p>
             </div>
         </div>
 
-        <!-- Input -->
-        <div class="flex gap-2 p-6 bg-slate-800 border-t border-slate-700">
-            <input type="text" id="messageInput" placeholder="Digite sua mensagem ou pergunta..." class="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 text-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
-            <button id="sendBtn" class="send-btn bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg font-semibold">
-                Enviar
-            </button>
+        <div class="message-input-area">
+            <input type="text" id="messageInput" placeholder="Digite sua mensagem ou pergunta..." class="message-input">
+            <button id="sendBtn" class="send-btn">Enviar</button>
         </div>
     </main>
 
-    <!-- COLUNA 4: INTELLIGENCE PANEL -->
-    <aside class="w-96 bg-gradient-to-b from-slate-800 to-slate-850 border-l border-slate-700 flex flex-col overflow-y-auto p-4 space-y-4">
+    <div class="intelligence-panel">
+        <div class="panel-section">
+            <div class="section-title">🎯 Lead Score Inteligente</div>
+            <svg class="score-circle" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="var(--border-color)" stroke-width="8"/>
+                <circle cx="50" cy="50" r="45" fill="none" stroke="var(--accent-color)" stroke-width="8" stroke-dasharray="237.81 282.74" stroke-linecap="round" style="transform: rotate(-90deg); transform-origin: 50% 50%;"/>
+            </svg>
+            <div class="score-value" id="scoreValue">85</div>
+            <div class="score-label">Confiança</div>
+        </div>
+
+        <div class="panel-section">
+            <div class="section-title">🧠 Resumo IA (Últimos 10 min)</div>
+            <div class="ai-summary">
+                <p>💡 <strong id="summaryName">João Silva</strong> demonstrou <span class="ai-summary-highlight">alto interesse</span> em consultoria.</p>
+                <p style="margin-top: var(--spacing-sm);">📌 Perguntou sobre: preço, timeline e detalhes.</p>
+                <p style="margin-top: var(--spacing-sm);">✅ <span class="ai-summary-highlight">Recomendação: Enviar proposta com desconto!</span></p>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <div class="section-title">⚡ Ações Rápidas</div>
+            <button class="quick-action" id="btnProposal">📄 Gerar Proposta</button>
+            <button class="quick-action quick-action-alt" id="btnMeeting">📅 Agendar Reunião</button>
+            <button class="quick-action quick-action-success" id="btnNextStep">✅ Próxima Etapa</button>
+        </div>
+
+        <div class="panel-section">
+            <div class="section-title">📋 Dados do Contato</div>
+            <div class="contact-field">
+                <div class="contact-label">Email</div>
+                <div class="contact-value" id="contactEmail">joao.silva@empresa.com</div>
+            </div>
+            <div class="contact-field">
+                <div class="contact-label">Telefone</div>
+                <div class="contact-value" id="contactPhone">(11) 99999-9999</div>
+            </div>
+            <div class="contact-field">
+                <div class="contact-label">Empresa</div>
+                <div class="contact-value" id="contactCompany">TechFlow Solutions</div>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <div class="section-title">📜 Timeline</div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-icon">✓</div>
+                    <div class="timeline-content">
+                        <div class="timeline-text">Proposta enviada</div>
+                        <div class="timeline-time">14:31</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">→</div>
+                    <div class="timeline-content">
+                        <div class="timeline-text">Conversa iniciada</div>
+                        <div class="timeline-time">14:25</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">●</div>
+                    <div class="timeline-content">
+                        <div class="timeline-text">Lead criado</div>
+                        <div class="timeline-time">13 fev 10:15</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        let currentChat = 'joao';
+        let messageCount = 0;
         
-        <!-- Lead Score -->
-        <div class="border-b border-slate-700 pb-4">
-            <h3 class="text-sm font-bold text-white mb-4">🎯 Lead Score Inteligente</h3>
-            <div class="flex items-center gap-6">
-                <div class="relative w-32 h-32">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="#475569" stroke-width="8" opacity="0.3"/>
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="8" stroke-dasharray="237.81 282.74" stroke-linecap="round"/>
-                    </svg>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span id="scoreValue" class="text-3xl font-bold text-emerald-400">85</span>
-                        <span class="text-xs text-gray-400">Score</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        const chatData = {
+            joao: { name: 'João Silva', score: 85, channel: 'WhatsApp', status: '🟢 Online', email: 'joao.silva@empresa.com', phone: '(11) 99999-9999', company: 'TechFlow Solutions' },
+            maria: { name: 'Maria Santos', score: 62, channel: 'Instagram', status: '🟡 Away', email: 'maria@empresa.com', phone: '(11) 98888-8888', company: 'Inovação Tech' },
+            carlos: { name: 'Carlos Mendes', score: 45, channel: 'Email', status: '🔴 Offline', email: 'carlos@empresa.com', phone: '(11) 97777-7777', company: 'Data Solutions' }
+        };
 
-        <!-- IA Summary -->
-        <div class="border-b border-slate-700 pb-4">
-            <h3 class="text-sm font-bold text-white mb-3">🧠 Resumo IA (Últimos 10 min)</h3>
-            <div id="aiSummary" class="bg-slate-700 rounded-lg p-3 text-sm text-gray-300">
-                <p>💡 <strong id="summaryName">João Silva</strong> demonstrou <span class="text-emerald-400">alto interesse</span> em consultoria.</p>
-                <p class="mt-2">📌 Perguntou sobre: preço, timeline e detalhes.</p>
-                <p class="mt-2 text-emerald-400 font-semibold">✅ Recomendação: Enviar proposta com desconto!</p>
-            </div>
-        </div>
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
 
-        <!-- Quick Actions -->
-        <div class="border-b border-slate-700 pb-4">
-            <h3 class="text-sm font-bold text-white mb-3">⚡ Ações Rápidas</h3>
-            <div class="space-y-2">
-                <button id="btnProposal" class="quick-action w-full flex items-center justify-center gap-2 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold">
-                    <span class="text-lg">📄</span>
-                    Gerar Proposta
-                </button>
-                <button id="btnMeeting" class="quick-action w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold">
-                    <span class="text-lg">📅</span>
-                    Agendar Reunião
-                </button>
-                <button id="btnNextStep" class="quick-action w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">
-                    <span class="text-lg">✅</span>
-                    Próxima Etapa
-                </button>
-            </div>
-        </div>
-
-        <!-- Contact Data -->
-        <div class="border-b border-slate-700 pb-4">
-            <h3 class="text-sm font-bold text-white mb-3">📋 Dados do Contato</h3>
-            <div class="space-y-3 text-sm">
-                <div>
-                    <label class="text-xs text-gray-400">Email</label>
-                    <p id="contactEmail" class="text-gray-200">joao.silva@empresa.com</p>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400">Telefone</label>
-                    <p id="contactPhone" class="text-gray-200">(11) 99999-9999</p>
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400">Empresa</label>
-                    <p id="contactCompany" class="text-gray-200">TechFlow Solutions</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Timeline -->
-        <div>
-            <h3 class="text-sm font-bold text-white mb-3">📜 Timeline</h3>
-            <div class="space-y-2 text-xs">
-                <div class="flex gap-2 items-start">
-                    <span class="text-emerald-400 font-bold text-lg">✓</span>
-                    <div class="flex-1">
-                        <p class="text-gray-300">Proposta enviada</p>
-                        <p class="text-gray-500">14:31</p>
-                    </div>
-                </div>
-                <div class="flex gap-2 items-start">
-                    <span class="text-blue-400 font-bold text-lg">→</span>
-                    <div class="flex-1">
-                        <p class="text-gray-300">Conversa iniciada</p>
-                        <p class="text-gray-500">14:25</p>
-                    </div>
-                </div>
-                <div class="flex gap-2 items-start">
-                    <span class="text-gray-500 font-bold text-lg">○</span>
-                    <div class="flex-1">
-                        <p class="text-gray-300">Lead criado</p>
-                        <p class="text-gray-500">13 fev 10:15</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-</div>
-
-<!-- Notifications Container -->
-<div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
-
-<!-- Debug Console -->
-<div id="debugConsole" class="fixed bottom-4 right-4 bg-slate-900 border border-purple-500 rounded-lg p-3 max-w-xs text-xs text-gray-300 max-h-40 overflow-y-auto z-40 font-mono">
-    <p class="text-purple-400 font-bold mb-2">📊 DEBUG LOG</p>
-    <div id="debugLog"></div>
-</div>
-
-<script>
-    const debugLog = [];
-    const MAX_LOGS = 10;
-
-    function addDebugLog(message) {
-        debugLog.unshift(`[${new Date().toLocaleTimeString()}] ${message}`);
-        if (debugLog.length > MAX_LOGS) debugLog.pop();
-        
-        const logContainer = document.getElementById('debugLog');
-        logContainer.innerHTML = debugLog.map(log => `<p>${log}</p>`).join('');
-    }
-
-    // ===== ESTADO GLOBAL =====
-    let currentChat = 'joao';
-    let messageCount = 0;
-    
-    const chatData = {
-        joao: { name: 'João Silva', score: 85, channel: 'WhatsApp', status: '🟢 Online', email: 'joao.silva@empresa.com', phone: '(11) 99999-9999', company: 'TechFlow Solutions' },
-        maria: { name: 'Maria Santos', score: 62, channel: 'Instagram', status: '🟡 Away', email: 'maria@empresa.com', phone: '(11) 98888-8888', company: 'Inovação Tech' },
-        carlos: { name: 'Carlos Mendes', score: 45, channel: 'Email', status: '🔴 Offline', email: 'carlos@empresa.com', phone: '(11) 97777-7777', company: 'Data Solutions' }
-    };
-
-    // ===== INICIALIZAÇÃO =====
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('✅ Dashboard Carregado!');
-        setupEventListeners();
-        runTests();
-    });
-
-    function setupEventListeners() {
-        addDebugLog('⚙️ Setup listeners...');
-        
-        // Chat Items
-        document.querySelectorAll('.chat-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const chatKey = this.dataset.chat;
-                addDebugLog(`💬 Chat clicked: ${chatKey}`);
-                selectChat(chatKey);
+        function setupEventListeners() {
+            // Chat Items
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    selectChat(this.dataset.chat);
+                });
             });
-        });
 
-        // Tab Buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const tabName = this.dataset.tab;
-                addDebugLog(`📑 Tab clicked: ${tabName}`);
-                switchTab(tabName);
+            // Tab Buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
             });
-        });
 
-        // Filter Buttons
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                addDebugLog(`🔽 Filter: ${this.textContent.trim()}`);
-                notify(`🔽 Filtro: ${this.textContent.trim()}`);
+            // Filter Buttons
+            document.querySelectorAll('.chip').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    notify(`🔍 Filtrando: ${this.textContent.trim()}`);
+                });
             });
-        });
 
-        // Navigation Buttons
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const labels = ['Inbox', 'Pipeline', 'Agentes', 'Contatos', 'Analytics', 'Knowledge Hub', 'Config'];
-                const index = Array.from(document.querySelectorAll('.nav-btn')).indexOf(this);
-                addDebugLog(`🔄 Nav: ${labels[index] || 'Nav'}`);
-                notify(`🔄 ${labels[index] || 'Navegação'}`);
+            // Navigation Buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const labels = ['Inbox', 'Pipeline', 'Agentes', 'Contatos', 'Analytics', 'Knowledge Hub', 'Config'];
+                    const index = Array.from(document.querySelectorAll('.nav-btn')).indexOf(this);
+                    notify(`🔄 ${labels[index] || 'Navegação'}`);
+                });
             });
-        });
 
-        // Send Message
-        document.getElementById('sendBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            addDebugLog('📤 Send clicked');
-            sendMessage();
-        });
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addDebugLog('📤 Enter pressed');
-                sendMessage();
-            }
-        });
+            // Send Message
+            document.getElementById('sendBtn').addEventListener('click', sendMessage);
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
 
-        // Quick Actions
-        document.getElementById('btnProposal').addEventListener('click', function(e) {
-            e.preventDefault();
-            addDebugLog(`📄 Proposal for ${chatData[currentChat].name}`);
-            notify(`📄 Gerando proposta para ${chatData[currentChat].name}...`);
-        });
-        document.getElementById('btnMeeting').addEventListener('click', function(e) {
-            e.preventDefault();
-            addDebugLog(`📅 Meeting with ${chatData[currentChat].name}`);
-            notify(`📅 Agendando reunião com ${chatData[currentChat].name}...`);
-        });
-        document.getElementById('btnNextStep').addEventListener('click', function(e) {
-            e.preventDefault();
-            addDebugLog('✅ Next step');
-            notify(`✅ Movendo para próxima etapa!`);
-        });
+            // Quick Actions
+            document.getElementById('btnProposal').addEventListener('click', function() {
+                notify(`📄 Gerando proposta para ${chatData[currentChat].name}...`);
+            });
+            document.getElementById('btnMeeting').addEventListener('click', function() {
+                notify(`📅 Agendando reunião com ${chatData[currentChat].name}...`);
+            });
+            document.getElementById('btnNextStep').addEventListener('click', function() {
+                notify(`✅ Movendo para próxima etapa!`);
+            });
 
-        // Whisper Mode
-        document.addEventListener('click', function(e) {
-            if (e.target.textContent && e.target.textContent.includes('Whisper')) {
-                addDebugLog('🎙️ Whisper toggled');
+            // KB Actions
+            document.getElementById('uploadBtn').addEventListener('click', function() {
+                notify('📤 Upload simulado: Documento adicionado ao KB!');
+            });
+            document.getElementById('queryBtn').addEventListener('click', function() {
+                const query = document.getElementById('kbQuery').value;
+                if (query.trim()) {
+                    notify(`🔍 Consultando KB: "${query}"`);
+                } else {
+                    notify('⚠️ Digite uma pergunta!');
+                }
+            });
+
+            // Proposal Action
+            document.getElementById('generateProposal').addEventListener('click', function() {
+                notify('✨ Proposta sendo gerada com base no histórico do lead...');
+            });
+
+            // Whisper Mode
+            document.getElementById('whisperToggle').addEventListener('click', function() {
                 notify('🎙️ Whisper Mode Toggled!');
-            }
-        });
+            });
 
-        // KB Actions
-        document.getElementById('uploadBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            addDebugLog('📤 Upload KB');
-            notify('📤 Upload simulado: Documento adicionado ao KB!');
-        });
-        document.getElementById('queryBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-            const query = document.getElementById('kbQuery').value;
-            if (query.trim()) {
-                addDebugLog(`🔍 KB Query: ${query}`);
-                notify(`🔍 Consultando KB: "${query}"`);
-            } else {
-                notify('⚠️ Digite uma pergunta!');
-            }
-        });
+            // Search
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                if (e.target.value.length > 2) {
+                    notify(`🔍 Buscando: ${e.target.value}`);
+                }
+            });
+        }
 
-        // Proposal Action
-        document.getElementById('generateProposal').addEventListener('click', function(e) {
-            e.preventDefault();
-            addDebugLog('✨ Generate proposal');
-            notify('✨ Proposta sendo gerada com base no histórico do lead...');
-        });
+        function selectChat(chatKey) {
+            currentChat = chatKey;
+            const chat = chatData[chatKey];
 
-        // Search
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            if (e.target.value.length > 2) {
-                addDebugLog(`🔍 Search: ${e.target.value}`);
-            }
-        });
-        
-        addDebugLog('✅ Setup completo!');
-    }
+            // Update active state
+            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`[data-chat="${chatKey}"]`).classList.add('active');
 
-    function selectChat(chatKey) {
-        currentChat = chatKey;
-        const chat = chatData[chatKey];
-        console.log('🔄 Selecionando chat:', chatKey, chat);
-
-        // Update header
-        const initials = chat.name.split(' ').map(n => n[0]).join('');
-        document.getElementById('chatHeader').innerHTML = `
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold bg-gradient-to-br from-emerald-500 to-emerald-600">${initials}</div>
-                <div>
-                    <h1 class="text-lg font-bold text-white">${chat.name}</h1>
-                    <p class="text-sm text-gray-400">${chat.channel} • ${chat.status}</p>
+            // Update header
+            const initials = chat.name.split(' ').map(n => n[0]).join('');
+            document.getElementById('chatHeader').innerHTML = `
+                <div class="header-profile" style="display: flex; align-items: center; gap: var(--spacing-md);">
+                    <div class="avatar-main">${initials}</div>
+                    <div class="header-info">
+                        <h1>${chat.name}</h1>
+                        <p>${chat.channel} • ${chat.status}</p>
+                    </div>
                 </div>
-            </div>
-            <button id="whisperToggle" class="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-blue-600 text-white">
-                🎙️ Whisper Mode ON
-            </button>
-        `;
-        document.getElementById('whisperToggle').addEventListener('click', function() {
-            notify('🎙️ Whisper Mode Toggled!');
-        });
+                <button class="whisper-btn" id="whisperToggle">🎙️ Whisper Mode</button>
+            `;
 
-        // Update panel - força reflow visual
-        const scoreEl = document.getElementById('scoreValue');
-        scoreEl.textContent = chat.score;
-        scoreEl.style.color = chat.score > 75 ? '#10b981' : chat.score > 50 ? '#f59e0b' : '#3b82f6';
-        
-        document.getElementById('summaryName').textContent = chat.name;
-        document.getElementById('contactEmail').textContent = chat.email;
-        document.getElementById('contactPhone').textContent = chat.phone;
-        document.getElementById('contactCompany').textContent = chat.company;
+            // Update panel
+            document.getElementById('scoreValue').textContent = chat.score;
+            document.getElementById('scoreValue').style.color = chat.score > 75 ? 'var(--accent-color)' : chat.score > 50 ? '#f59e0b' : '#3b82f6';
+            document.getElementById('summaryName').textContent = chat.name;
+            document.getElementById('contactEmail').textContent = chat.email;
+            document.getElementById('contactPhone').textContent = chat.phone;
+            document.getElementById('contactCompany').textContent = chat.company;
 
-        // Update chat item styling - remove de todos
-        document.querySelectorAll('.chat-item').forEach(item => {
-            item.classList.remove('border-l-purple-500', 'bg-slate-700');
-            item.classList.add('border-l-transparent', 'hover:bg-slate-750');
-            item.style.backgroundColor = 'transparent';
-            item.style.borderLeftColor = 'transparent';
-        });
-        
-        // Add ao selecionado
-        const selectedItem = document.querySelector(`[data-chat="${chatKey}"]`);
-        selectedItem.classList.add('border-l-purple-500', 'bg-slate-700');
-        selectedItem.classList.remove('border-l-transparent');
-        selectedItem.style.backgroundColor = '#3f3f46';
-        selectedItem.style.borderLeftColor = '#a855f7';
+            // Reattach whisper listener
+            document.getElementById('whisperToggle').addEventListener('click', function() {
+                notify('🎙️ Whisper Mode Toggled!');
+            });
 
-        notify(`✅ Chat com ${chat.name} selecionado! (Score: ${chat.score})`);
-        console.log('✅ Chat atualizado visualmente');
-    }
-
-    function switchTab(tabName) {
-        console.log('🔄 Alternando para tab:', tabName);
-        
-        // Hide all
-        const chatContent = document.getElementById('chatContent');
-        const kbContent = document.getElementById('kbContent');
-        const proposalsContent = document.getElementById('proposalsContent');
-        
-        chatContent.style.display = 'none';
-        kbContent.style.display = 'none';
-        proposalsContent.style.display = 'none';
-
-        // Remove active from all tabs
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('border-purple-500', 'text-purple-400');
-            btn.classList.add('text-gray-400');
-            btn.style.borderBottomColor = 'transparent';
-        });
-
-        // Show selected
-        if (tabName === 'chat') {
-            chatContent.style.display = 'flex';
-            document.querySelector('[data-tab="chat"]').classList.add('border-purple-500', 'text-purple-400');
-            document.querySelector('[data-tab="chat"]').style.borderBottomColor = '#a855f7';
-            notify('💬 Chat Tab Ativo');
-            console.log('✅ Chat exibido');
-        } else if (tabName === 'kb') {
-            kbContent.style.display = 'flex';
-            document.querySelector('[data-tab="kb"]').classList.add('border-purple-500', 'text-purple-400');
-            document.querySelector('[data-tab="kb"]').style.borderBottomColor = '#a855f7';
-            notify('📚 Knowledge Lab Ativo');
-            console.log('✅ KB exibido');
-        } else if (tabName === 'proposals') {
-            proposalsContent.style.display = 'flex';
-            document.querySelector('[data-tab="proposals"]').classList.add('border-purple-500', 'text-purple-400');
-            document.querySelector('[data-tab="proposals"]').style.borderBottomColor = '#a855f7';
-            notify('📄 Propostas Tab Ativo');
-            console.log('✅ Propostas exibido');
-        }
-    }
-
-    function sendMessage() {
-        const input = document.getElementById('messageInput');
-        const text = input.value.trim();
-        if (!text) {
-            notify('⚠️ Digite uma mensagem!');
-            return;
+            notify(`✅ Chat com ${chat.name} selecionado! (Score: ${chat.score})`);
         }
 
-        messageCount++;
-        notify(`✅ Mensagem enviada: "${text}"`);
-        input.value = '';
+        function switchTab(tabName) {
+            // Hide all
+            document.querySelectorAll('[id*="Content"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabName + 'Content').classList.remove('hidden');
 
-        setTimeout(() => {
-            notify('🤖 IA respondeu automaticamente!');
-        }, 800);
-    }
+            // Update active tab
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
 
-    function notify(message) {
-        const container = document.getElementById('notificationContainer');
-        const notif = document.createElement('div');
-        notif.className = 'notification bg-purple-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2';
-        notif.textContent = message;
-        container.appendChild(notif);
+            const labels = { chat: '💬 Chat', kb: '📚 Knowledge Lab', proposals: '📄 Propostas' };
+            notify(labels[tabName] || 'Tab ativo');
+        }
 
-        console.log('🔔', message);
-        addDebugLog(message);
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text) {
+                notify('⚠️ Digite uma mensagem!');
+                return;
+            }
 
-        setTimeout(() => {
-            notif.remove();
-        }, 3000);
-    }
+            messageCount++;
+            notify(`✅ Mensagem enviada: "${text}"`);
+            input.value = '';
 
-    // ===== TESTES AUTOMÁTICOS =====
-    function runTests() {
-        console.log('🧪 ===== TESTES AUTOMÁTICOS =====');
-        
-        const tests = [
-            ['✅ Dashboard Carregado', () => true],
-            ['💬 Chat Selection', () => currentChat === 'joao'],
-            ['📑 Tabs Funcionais', () => document.querySelectorAll('.tab-btn').length === 3],
-            ['⚡ Quick Actions', () => document.querySelectorAll('.quick-action').length === 3],
-            ['📚 Knowledge Lab', () => document.getElementById('kbContent') !== null],
-            ['📄 Propostas', () => document.getElementById('proposalsContent') !== null],
-            ['🎙️ Whisper Mode', () => document.getElementById('whisperToggle') !== null],
-            ['📊 Lead Score', () => document.getElementById('scoreValue').textContent === '85'],
-            ['👥 3 Chats Carregados', () => document.querySelectorAll('.chat-item').length === 3],
-            ['🔍 Busca Funcional', () => document.getElementById('searchInput') !== null],
-        ];
-
-        tests.forEach((test, i) => {
             setTimeout(() => {
-                const passed = test[1]();
-                const icon = passed ? '✅' : '❌';
-                console.log(`${icon} ${test[0]}`);
-                notify(`${icon} Teste ${i+1}/10: ${test[0]}`);
-            }, i * 300);
-        });
-    }
-</script>
+                notify('🤖 IA respondeu automaticamente!');
+            }, 800);
+        }
 
+        function notify(message) {
+            const container = document.getElementById('notificationContainer');
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.textContent = message;
+            container.appendChild(notif);
+
+            setTimeout(() => {
+                notif.remove();
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
