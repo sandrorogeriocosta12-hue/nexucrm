@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Teste Grátis - Nexus Service</title>
+    <link rel="stylesheet" href="css/design-system.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0F172A 0%, #1a1f3a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .page-wrapper {
+            width: 100%;
+            max-width: 900px;
+            padding: var(--spacing-lg);
+        }
+
+        .signup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-2xl);
+            align-items: center;
+        }
+
+        .signup-left {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 10px 25px rgba(26, 86, 219, 0.3);
+        }
+
+        .logo-text h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .logo-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .headline {
+            margin-top: var(--spacing-lg);
+        }
+
+        .headline h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: var(--spacing-md);
+            background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .headline p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .features-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .feature-item {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: flex-start;
+        }
+
+        .feature-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            margin-top: 2px;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-text h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .feature-text p {
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Right side - Form */
+        .signup-right {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .signup-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-2xl);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .signup-title {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .signup-title h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .signup-title p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: white;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            background: rgba(30, 20, 50, 0.6);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 3px;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .checkbox-label {
+            flex: 1;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .checkbox-label a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .checkbox-label a:hover {
+            color: var(--primary-color);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: var(--spacing-md);
+            box-shadow: 0 10px 25px rgba(26, 86, 219, 0.3);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(26, 86, 219, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .signin-link {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .signin-link a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .signin-link a:hover {
+            color: var(--primary-color);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--error-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            margin-bottom: var(--spacing-lg);
+            display: none;
+        }
+
+        .error-message.show {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            margin-bottom: var(--spacing-lg);
+            display: none;
+        }
+
+        .success-message.show {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        @media (max-width: 768px) {
+            .signup-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-lg);
+            }
+
+            .headline h1 {
+                font-size: 2rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .signup-card {
+                padding: var(--spacing-lg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="signup-grid">
+            <!-- Left Side - Marketing -->
+            <div class="signup-left">
+                <div class="logo-section">
+                    <div class="logo-icon">N</div>
+                    <div class="logo-text">
+                        <h2>Nexus Service</h2>
+                        <p>Lead Scoring IA</p>
+                    </div>
+                </div>
+
+                <div class="headline">
+                    <h1>Qualifique Leads em Tempo Real</h1>
+                    <p>Use inteligência artificial para identificar seus melhores prospects automaticamente. Aumente sua taxa de conversão em até 3x.</p>
+                </div>
+
+                <div class="features-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">✨</div>
+                        <div class="feature-text">
+                            <h3>Lead Scoring Automático</h3>
+                            <p>IA aprende seus padrões de venda</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-text">
+                            <h3>Tempo Real</h3>
+                            <p>Qualifique leads em segundos</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">📈</div>
+                        <div class="feature-text">
+                            <h3>Aumento de Vendas</h3>
+                            <p>Foque nos leads com mais potencial</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">🔒</div>
+                        <div class="feature-text">
+                            <h3>100% Seguro</h3>
+                            <p>Dados criptografados em produção</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">🎯</div>
+                        <div class="feature-text">
+                            <h3>Fácil de Usar</h3>
+                            <p>Setup em menos de 5 minutos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side - Form -->
+            <div class="signup-right">
+                <div class="signup-card">
+                    <div class="signup-title">
+                        <h2>Comece Grátis</h2>
+                        <p>Teste por 14 dias, sem cartão de crédito</p>
+                    </div>
+
+                    <div id="errorMessage" class="error-message">
+                        <span>❌</span>
+                        <span id="errorText"></span>
+                    </div>
+
+                    <div id="successMessage" class="success-message">
+                        <span>✅</span>
+                        <span id="successText"></span>
+                    </div>
+
+                    <form id="signupForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName" class="form-label">Primeiro Nome</label>
+                                <input
+                                    type="text"
+                                    id="firstName"
+                                    class="form-input"
+                                    placeholder="João"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lastName" class="form-label">Último Nome</label>
+                                <input
+                                    type="text"
+                                    id="lastName"
+                                    class="form-input"
+                                    placeholder="Silva"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">E-mail</label>
+                            <input
+                                type="email"
+                                id="email"
+                                class="form-input"
+                                placeholder="seu@empresa.com"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="company" class="form-label">Empresa</label>
+                            <input
+                                type="text"
+                                id="company"
+                                class="form-input"
+                                placeholder="Sua Empresa Ltda"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">Senha</label>
+                            <input
+                                type="password"
+                                id="password"
+                                class="form-input"
+                                placeholder="Mínimo 6 caracteres"
+                                required
+                            >
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="terms" required>
+                            <label for="terms" class="checkbox-label">
+                                Concordo com os <a href="#" target="_blank">Termos de Serviço</a> e <a href="#" target="_blank">Política de Privacidade</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="submit-btn">
+                            Criar Conta Grátis
+                        </button>
+
+                        <div class="signin-link">
+                            Já tem conta? <a href="/login">Faça login</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        const form = document.getElementById('signupForm');
+        const errorEl = document.getElementById('errorMessage');
+        const successEl = document.getElementById('successMessage');
+        const errorTextEl = document.getElementById('errorText');
+        const successTextEl = document.getElementById('successText');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form values
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const company = document.getElementById('company').value.trim();
+            const password = document.getElementById('password').value;
+            const terms = document.getElementById('terms').checked;
+
+            // Clear messages
+            errorEl.classList.remove('show');
+            successEl.classList.remove('show');
+
+            // Validation
+            if (!firstName || !lastName || !email || !company || !password) {
+                showError('Por favor, preencha todos os campos');
+                return;
+            }
+
+            if (!NexusUtils.isValidEmail(email)) {
+                showError('Email inválido');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Senha deve ter mínimo 6 caracteres');
+                return;
+            }
+
+            if (!terms) {
+                showError('Você precisa aceitar os Termos de Serviço');
+                return;
+            }
+
+            // Submit
+            const btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Criando conta...';
+
+            try {
+                // Call signup API
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        firstName,
+                        lastName,
+                        email,
+                        company,
+                        password
+                    })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.detail || 'Erro ao criar conta');
+                }
+
+                showSuccess('Conta criada com sucesso! Redirecionando...');
+                
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            } catch (error) {
+                showError(error.message || 'Erro ao criar conta. Tente novamente.');
+                btn.disabled = false;
+                btn.textContent = 'Criar Conta Grátis';
+            }
+        });
+
+        function showError(message) {
+            errorTextEl.textContent = message;
+            errorEl.classList.add('show');
+            NexusUtils.toastError(message);
+        }
+
+        function showSuccess(message) {
+            successTextEl.textContent = message;
+            successEl.classList.add('show');
+            NexusUtils.toastSuccess(message);
+        }
+    </script>
+</body>
+</html>

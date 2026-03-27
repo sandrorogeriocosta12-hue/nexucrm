@@ -3,19 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Service - Login</title>
+    <title>Login - Nexus Service</title>
     <link rel="stylesheet" href="css/design-system.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
+            background: linear-gradient(135deg, #0F172A 0%, #1a1f3a 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
 
         .login-container {
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             padding: var(--spacing-lg);
         }
 
@@ -24,20 +32,28 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius-xl);
             padding: var(--spacing-2xl);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
         }
 
         .logo-container {
             display: flex;
             justify-content: center;
-            margin-bottom: var(--spacing-xl);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .logo-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-md);
         }
 
         .logo {
             width: 70px;
             height: 70px;
             background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            border-radius: var(--radius-xl);
+            border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -47,30 +63,37 @@
             box-shadow: 0 10px 25px rgba(26, 86, 219, 0.3);
         }
 
+        .logo-text {
+            text-align: center;
+        }
+
+        .logo-text h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .logo-text p {
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+        }
+
         .login-title {
             text-align: center;
-            margin-bottom: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
         }
 
         .login-title h1 {
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-weight: 700;
             margin-bottom: var(--spacing-sm);
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: white;
         }
 
         .login-title p {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: var(--text-secondary);
-            margin-bottom: 4px;
-        }
-
-        .login-title .subtitle {
-            font-size: 0.85rem;
-            color: var(--text-tertiary);
         }
 
         .form-group {
@@ -81,19 +104,19 @@
             display: block;
             margin-bottom: var(--spacing-sm);
             font-weight: 600;
-            font-size: 0.95rem;
-            color: var(--text-primary);
+            font-size: 0.9rem;
+            color: white;
         }
 
         .form-input {
             width: 100%;
-            padding: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
-            color: var(--text-primary);
+            color: white;
             font-size: 0.95rem;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
         }
 
         .form-input::placeholder {
@@ -103,33 +126,35 @@
         .form-input:focus {
             outline: none;
             border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+            background: rgba(30, 20, 50, 0.6);
         }
 
         .submit-btn {
             width: 100%;
-            padding: var(--spacing-md);
-            background: linear-gradient(135deg, var(--primary-color), #1e3a8a);
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
             color: white;
             border: none;
             border-radius: var(--radius-md);
             font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             margin-bottom: var(--spacing-lg);
+            box-shadow: 0 10px 25px rgba(26, 86, 219, 0.3);
         }
 
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(26, 86, 219, 0.3);
+            box-shadow: 0 15px 35px rgba(26, 86, 219, 0.4);
         }
 
         .submit-btn:active {
             transform: translateY(0);
         }
 
-        .submit-btn.loading {
+        .submit-btn:disabled {
             opacity: 0.7;
             cursor: not-allowed;
         }
@@ -138,15 +163,17 @@
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.3);
             color: var(--error-color);
-            padding: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
             border-radius: var(--radius-md);
             font-size: 0.9rem;
             margin-bottom: var(--spacing-lg);
             display: none;
+            align-items: center;
+            gap: var(--spacing-sm);
         }
 
         .error-message.show {
-            display: block;
+            display: flex;
         }
 
         .footer {
@@ -156,14 +183,14 @@
         }
 
         .footer a {
-            color: var(--primary-color);
+            color: var(--accent-color);
             text-decoration: none;
             font-weight: 600;
             transition: color 0.2s ease;
         }
 
         .footer a:hover {
-            color: var(--accent-color);
+            color: var(--primary-color);
         }
 
         @media (max-width: 480px) {
@@ -176,7 +203,7 @@
             }
 
             .login-title h1 {
-                font-size: 1.75rem;
+                font-size: 1.5rem;
             }
         }
     </style>
@@ -186,18 +213,26 @@
         <div class="login-card">
             <!-- Logo -->
             <div class="logo-container">
-                <div class="logo">N</div>
+                <div class="logo-info">
+                    <div class="logo">N</div>
+                    <div class="logo-text">
+                        <h2>Nexus Service</h2>
+                        <p>Lead Scoring IA</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Title -->
             <div class="login-title">
-                <h1>Nexus Service</h1>
-                <p>Lead Scoring em Tempo Real</p>
-                <p class="subtitle">Qualifique leads automaticamente com IA</p>
+                <h1>Bem-vindo de volta</h1>
+                <p>Acesse sua conta para gerenciar leads</p>
             </div>
 
             <!-- Error Message -->
-            <div id="errorMessage" class="error-message"></div>
+            <div id="errorMessage" class="error-message">
+                <span>❌</span>
+                <span id="errorText"></span>
+            </div>
 
             <!-- Form -->
             <form id="loginForm">
@@ -223,12 +258,12 @@
                     >
                 </div>
 
-                <button type="submit" class="submit-btn">Entrar</button>
+                <button type="submit" class="submit-btn">Entrar na Conta</button>
             </form>
 
             <!-- Footer -->
             <div class="footer">
-                Não tem conta? <a href="/signup">Solicite acesso</a>
+                Não tem conta? <a href="/signup">Solicite acesso grátis</a>
             </div>
         </div>
     </div>
@@ -239,6 +274,7 @@
     <script>
         const form = document.getElementById('loginForm');
         const errorEl = document.getElementById('errorMessage');
+        const errorTextEl = document.getElementById('errorText');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -261,28 +297,29 @@
                 return;
             }
 
-            if (password.length < 4) {
-                showError('Senha deve ter pelo menos 4 caracteres');
+            if (password.length < 6) {
+                showError('Senha deve ter pelo menos 6 caracteres');
                 return;
             }
 
             // Submit
-            btn.classList.add('loading');
             btn.disabled = true;
+            btn.textContent = 'Entrando...';
 
             try {
                 await login(email, password);
                 window.location.href = '/dashboard';
             } catch (err) {
                 showError(err.message || 'Erro ao fazer login. Tente novamente.');
-                btn.classList.remove('loading');
                 btn.disabled = false;
+                btn.textContent = 'Entrar na Conta';
             }
         });
 
         function showError(message) {
-            errorEl.textContent = message;
+            errorTextEl.textContent = message;
             errorEl.classList.add('show');
+            NexusUtils.toastError(message);
         }
     </script>
 </body>
