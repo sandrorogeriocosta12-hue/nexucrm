@@ -9,12 +9,12 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and constraints
-COPY requirements.txt constraints.txt ./
+# Copy requirements
+COPY requirements.txt ./
 
-# Install Python dependencies with constraints
+# Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt -c constraints.txt
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
