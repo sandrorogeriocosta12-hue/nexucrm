@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, HTMLResponse
+from pathlib import Path
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 import logging
@@ -280,26 +281,21 @@ try:
 except Exception as e:
     logger.warning(f"⚠ Main API router not available: {e}")
 
-@app.get("/", response_class=HTMLResponse)
-async def home_page():
-    """Serve home.html com NO-CACHE headers"""
-    home_file = os.path.join(frontend_path, "home.html")
-    
-    if os.path.exists(home_file):
-        logger.info(f"✅ Serving home.html from {home_file}")
-        with open(home_file, "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(
-            content=content,
-            headers={
-                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-                "Pragma": "no-cache",
-                "Expires": "0",
-            }
-        )
-    
-    logger.warning(f"⚠️  home.html not found at {home_file}, serving index.html as fallback")
-    return app_frontend()
+# HOME PAGE ROUTE - PURPOSELY DISABLED TO FIND REAL HANDLER
+# @app.get("/", response_class=HTMLResponse, name="home_landing")
+# async def serve_landing_page(request: Request):
+#     """Serve the professional home.html landing page"""
+#     home_path = Path(frontend_path) / "home.html"
+#     if not home_path.exists():
+#         return HTMLResponse("<h1>Error: home.html not found</h1>", status_code=500)
+#     
+#     content = home_path.read_text(encoding="utf-8")
+#     return HTMLResponse(content, headers={
+#         "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+#         "Pragma": "no-cache",
+#         "Expires": "0",
+#         "X-Custom-Route": "home_landing.py"
+#     })
 
 @app.get("/app", response_class=HTMLResponse)
 async def app_frontend():
@@ -636,21 +632,8 @@ async def dashboard():
     return {"error": "Dashboard not found"}
 
 
-# Rota raiz - Servir página de login
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    """Serve login page"""
-    login_path = os.path.join(frontend_path, "login-nexus.html")
-    if os.path.exists(login_path):
-        with open(login_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    
-    # Fallback to login.html
-    login_path = os.path.join(frontend_path, "login.html")
-    if os.path.exists(login_path):
-        with open(login_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse("<h2>Nexus CRM Login não encontrado</h2>", status_code=404)
+# ⚠️ REMOVED: Duplicate route for "/" - now handled by home_page() above
+# This was causing the new home.html route to be overridden
 
 
 @app.get("/status")
@@ -727,23 +710,9 @@ async def metrics():
     return Response(content=metrics_data, media_type="text/plain")
 
 
-# SPA fallback route - rota cliente, depois das rotas API/health/metrics
-@app.get("/{full_path:path}", response_class=HTMLResponse)
-async def spa_fallback(full_path: str, request: Request):
-    if full_path.startswith("api") or full_path.startswith("health") or full_path.startswith("metrics") or full_path.startswith("docs") or full_path.startswith("openapi") or full_path.startswith("dashboard"):
-        raise HTTPException(status_code=404, detail="Not found")
-
-    index_path = os.path.join(frontend_path, "index.html")
-    if os.path.exists(index_path):
-        with open(index_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-
-    app_html_path = os.path.join(frontend_path, "app.html")
-    if os.path.exists(app_html_path):
-        with open(app_html_path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-
-    raise HTTPException(status_code=404, detail="Frontend not found")
+# SPA fallback route DISABLED - removed to prevent catching "/" path
+# This was causing "/" to serve index.html instead of home.html
+# The root_home() function now handles "/" properly above
 
 
 # 404 Handler
