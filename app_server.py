@@ -280,6 +280,27 @@ try:
 except Exception as e:
     logger.warning(f"⚠ Main API router not available: {e}")
 
+@app.get("/", response_class=HTMLResponse)
+async def home_page():
+    """Serve home.html com NO-CACHE headers"""
+    home_file = os.path.join(frontend_path, "home.html")
+    
+    if os.path.exists(home_file):
+        logger.info(f"✅ Serving home.html from {home_file}")
+        with open(home_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(
+            content=content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    
+    logger.warning(f"⚠️  home.html not found at {home_file}, serving index.html as fallback")
+    return app_frontend()
+
 @app.get("/app", response_class=HTMLResponse)
 async def app_frontend():
     index_path = os.path.join(frontend_path, "index.html")
