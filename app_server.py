@@ -273,6 +273,30 @@ try:
 except Exception as e:
     logger.warning(f"⚠ Agents router not available: {e}")
 
+# HOME PAGE ROUTE - DEFINED FIRST before any routers are included (critical for routing order)
+@app.get("/", response_class=HTMLResponse, name="home_landing")
+async def serve_landing_page(request: Request):
+    """Serve the professional home.html landing page"""
+    logger.info("🏠 HOME_PAGE ROUTE CALLED - serve_landing_page()")
+    
+    home_path = Path(frontend_path) / "home.html"
+    logger.info(f"🏠 Looking for home.html at: {home_path}")
+    logger.info(f"🏠 home.html exists: {home_path.exists()}")
+    
+    if not home_path.exists():
+        logger.error(f"🏠 home.html NOT FOUND at {home_path}")
+        return HTMLResponse("<h1>Error: home.html not found</h1>", status_code=500)
+    
+    content = home_path.read_text(encoding="utf-8")
+    logger.info(f"🏠 Read {len(content)} bytes from home.html")
+    
+    return HTMLResponse(content, headers={
+        "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0",
+        "X-Served-By": "serve_landing_page"
+    })
+
 # Include main API router from app/api_main
 try:
     from app.api_main import app as api_main_app
@@ -280,22 +304,6 @@ try:
     logger.info("✓ Main API router loaded")
 except Exception as e:
     logger.warning(f"⚠ Main API router not available: {e}")
-
-# HOME PAGE ROUTE - PURPOSELY DISABLED TO FIND REAL HANDLER
-# @app.get("/", response_class=HTMLResponse, name="home_landing")
-# async def serve_landing_page(request: Request):
-#     """Serve the professional home.html landing page"""
-#     home_path = Path(frontend_path) / "home.html"
-#     if not home_path.exists():
-#         return HTMLResponse("<h1>Error: home.html not found</h1>", status_code=500)
-#     
-#     content = home_path.read_text(encoding="utf-8")
-#     return HTMLResponse(content, headers={
-#         "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-#         "Pragma": "no-cache",
-#         "Expires": "0",
-#         "X-Custom-Route": "home_landing.py"
-#     })
 
 @app.get("/app", response_class=HTMLResponse)
 async def app_frontend():
