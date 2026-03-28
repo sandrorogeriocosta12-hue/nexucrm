@@ -1,0 +1,190 @@
+🚀 COMO FAZER REDEPLOY MANUAL NO RAILWAY
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Se o auto-deploy não estava funcionando, siga estes passos para fazer o redeploy
+manualmente via dashboard do Railway:
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PASSO 1: ACESSAR RAILWAY DASHBOARD
+─────────────────────────────────────
+
+1. Acesse: https://railway.app
+2. Faça login com sua conta
+3. Você verá a lista de projetos
+4. Clique no projeto "nexucrm" ou "Vexus Service"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PASSO 2: VERIFICAR O REPOSITÓRIO CONECTADO
+────────────────────────────────────────────
+
+1. No dashboard, procure pela seção "Settings" ou "Source"
+2. Você deve ver: "GitHub: sandrorogeriocosta12-hue/nexucrm"
+3. Confirme que está conectado à branch "main"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PASSO 3: TRIGGAR NOVO DEPLOYMENT
+─────────────────────────────────
+
+OPÇÃO A: Via Interface do Railway (Recomendado)
+──────────────────────────────────────────────
+
+1. No dashboard, procure por "Deployments" ou "Deploy Log"
+2. Você verá uma lista de deployments anteriores
+3. Clique no botão "Redeploy" ou "Deploy" (geralmente no canto superior direito)
+4. Selecione:
+   - Branch: "main"
+   - Commit: (selecione o mais recente - 68b58cb ou similar)
+5. Clique "Deploy" e aguarde
+
+OPÇÃO B: Via Webhook Manual
+───────────────────────────
+
+Se a interface não mostrar opção de redeploy, force via webhook:
+
+Abra no navegador ou execute no terminal:
+
+curl -X POST \
+  https://api.railway.app/webhooks/github \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "opened",
+    "pull_request": {
+      "head": {
+        "ref": "main",
+        "sha": "68b58cb"
+      }
+    }
+  }'
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PASSO 4: MONITORAR O BUILD
+──────────────────────────
+
+1. Volte para o dashboard do Railway
+2. Procure a aba "Build Log" ou "Logs"
+3. Você verá mensagens como:
+   
+   ✓ Installing dependencies
+   ✓ Building image
+   ✓ Pushing to registry
+   ✓ Starting service
+   
+4. Aguarde até aparecer: ✓ Deployment successful
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PASSO 5: VERIFICAR SE FUNCIONOU
+────────────────────────────────
+
+Após o build completar, execute este comando:
+
+curl -s "https://api.nexuscrm.tech/signup?v=$(date +%s)" | grep -o "<title>.*</title>"
+
+RESULTADO ESPERADO:
+   <title>Criar Conta - Nexus Service</title>
+
+Se receber:
+   <title>Nexus Service - Cadastro</title>
+
+Significa que ainda está a versão antiga. Se isto acontecer:
+   - Limpe cache do Cloudflare (veja seção abaixo)
+   - Aguarde mais 2-3 minutos
+   - Tente novamente
+
+═══════════════════════════════════════════════════════════════════════════════
+
+LIMPAR CACHE DO CLOUDFLARE
+───────────────────────────
+
+Se mesmo após o redeploy a página antiga continua aparecendo, o problema pode ser
+cache do Cloudflare:
+
+1. Acesse: https://dash.cloudflare.com
+2. Login com sua conta
+3. Procure o domínio "api.nexuscrm.tech"
+4. Clique em "Cache" → "Purge Cache"
+5. Selecione "Purge everything"
+6. Aguarde 5 minutos e tente novamente
+
+═══════════════════════════════════════════════════════════════════════════════
+
+VERIFICAR STATUS DO DEPLOYMENT
+───────────────────────────────
+
+Para ver o status atual do deployment, execute:
+
+# Ver último deployment
+curl -s https://api.railway.app/graphql \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ deployments { id status createdAt } }"}'
+
+Ou simplemente verifique em:
+   https://railway.app → Seu projeto → Deployments
+
+═══════════════════════════════════════════════════════════════════════════════
+
+COMMITS JÁ ENVIADOS
+───────────────────
+
+Os seguintes commits já estão em GitHub prontos para deploy:
+
+✓ 68b58cb - 🚀 Força redeploy no Railway
+✓ 6c974cd - ✨ Atualizar páginas login e signup com novo design
+✓ 9cf9565 - 🔥 CRITICAL FIX: Remove hardcoded HTML routes
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING
+────────────────
+
+PROBLEMA: Build falha com erro
+SOLUÇÃO:
+  1. Verifique o arquivo "Build Log" no Railway
+  2. Procure por linhas com "ERROR" ou "FAILED"
+  3. Geralmente o problema é dependência Python faltando
+  4. Entre em "Settings" → "Environment" e adicione a variável faltante
+
+PROBLEMA: Página antiga continua aparecendo
+SOLUÇÃO:
+  1. Limpe cache do navegador: Ctrl+Shift+Delete
+  2. Force reload: Ctrl+Shift+R
+  3. Limpe cache do Cloudflare (veja instruções acima)
+  4. Aguarde propagação de DNS (até 5 minutos)
+
+PROBLEMA: Endpoint /health retorna 405
+SOLUÇÃO:
+  Isso é normal - use /status em vez disso:
+  curl https://api.nexuscrm.tech/status | jq
+
+═══════════════════════════════════════════════════════════════════════════════
+
+INFORMAÇÕES ÚTEIS
+──────────────────
+
+Repositório GitHub:
+   https://github.com/sandrorogeriocosta12-hue/nexucrm
+
+Dashboard Railway:
+   https://railway.app
+
+Domínio:
+   https://api.nexuscrm.tech/
+
+Endpoints para testar:
+   https://api.nexuscrm.tech/signup
+   https://api.nexuscrm.tech/login
+   https://api.nexuscrm.tech/status
+   https://api.nexuscrm.tech/metrics
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Se depois de 15 minutos ainda não estiver funcionando ou se receber erros,
+verifique o arquivo DEPLOYMENT_INSTRUCTIONS_PT.txt para mais informações.
+
+═══════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,138 @@
+📋 INSTRUÇÕES PARA ATUALIZAR api.nexuscrm.tech
+
+================================
+STATUS ATUAL DO DEPLOYMENT
+================================
+
+✅ Mudanças commitadas e enviadas para GitHub:
+   - Commit: 6c974cd - "🚀 Força redeploy no Railway"
+   - Arquivo: frontend/signup.html e frontend/signup.html atualizados
+   - Branch: main
+
+⏳ Railway está compilando as mudanças:
+   - Você pode monitorar em: https://railway.app
+   - Tempo estimado: 2-5 minutos para conclusão
+
+================================
+O QUE FOI FEITO
+================================
+
+1. ✅ Deletamos 593 linhas de HTML hardcoded de app_server.py
+2. ✅ Agora usando rotas baseadas em arquivo que leem signup.html
+3. ✅ Adicionadas headers de NO-CACHE para evitar cache do Cloudflare
+4. ✅ Atualizadas páginas de login e signup com novo design
+5. ✅ Enviadas mudanças para GitHub
+6. ✅ Triggado novo build no Railway
+
+================================
+PÁGINAS ATUALIZADAS
+================================
+
+📄 /frontend/signup.html
+   - Novo design com layout melhorado
+   - Inclui formulário de cadastro com planos
+   - Responsivo e otimizado para mobile
+   - Usa design-system.css para consistência
+
+📄 /frontend/login.html
+   - Design refinado e profissional
+   - Melhor estilo visual
+   - Headers de NO-CACHE configurados
+
+================================
+COMO ACOMPANHAR
+================================
+
+Opção 1: Dashboard do Railway (Recomendado)
+-----------------------------------------
+1. Acesse: https://railway.app
+2. Faça login com sua conta
+3. Vá para o projeto "nexucrm" ou similar
+4. Clique em "Deployments"
+5. Você verá o novo build em andamento
+6. Aguarde até o status mudar para ✅ "Active"
+
+Opção 2: Verificar diretamente no domínio
+-----------------------------------------
+Execute este comando a cada 30 segundos:
+
+   curl -s "https://api.nexuscrm.tech/signup?v=$(date +%s)" | grep -o "<title>.*</title>"
+
+Resultado esperado quando atualizar:
+   <title>Criar Conta - Nexus Service</title>
+
+OBS: Enquanto estiver compilando, verá:
+   <title>Nexus Service - Cadastro</title>
+
+Opção 3: Usar o script de verificação
+-------------------------------------
+Execute:
+   ./check_api_update.sh
+
+Este script verifica automaticamente até 2x se as mudanças foram aplicadas.
+
+================================
+SE O BUILD FALHAR
+================================
+
+1. Verifique se há erros no Dashboard do Railway
+2. Comandos úteis para debug:
+
+   # Ver últimos commits
+   git log --oneline -10
+
+   # Ver status local
+   git status
+
+   # Ver mudanças no app_server.py
+   git diff HEAD~1 app_server.py | head -50
+
+================================
+PRÓXIMAS ETAPAS
+================================
+
+Assim que o build terminar (marcado com ✅):
+
+1. Abra em seu navegador:
+   https://api.nexuscrm.tech/signup
+
+2. Você verá o novo design de signup com:
+   - Layout profissional
+   - Formulário de cadastro
+   - Planos de preço
+   - Design responsivo
+
+3. Teste também a página de login:
+   https://api.nexuscrm.tech/login
+
+================================
+MUDANÇAS RECENTES (GIT LOG)
+================================
+
+9cf9565 - 🔥 CRITICAL FIX: Remove hardcoded HTML routes blocking file-based signup/login serving
+6c974cd - ✨ Atualizar páginas login e signup com novo design
+f4cf93c - feat: Create professional signup page and refine login UI
+5d5cece - docs: Add final deployment status and visual summary
+1af54ca - test: Add comprehensive test suite and implementation summary
+
+================================
+TEMPO ESTIMADO
+================================
+
+- Build no Railway: 2-5 minutos
+- Propagação do cache: 0-2 minutos
+- Tempo total: 2-7 minutos
+
+Se depois de 10 minutos ainda não estiver atualizado:
+1. Acesse https://railway.app
+2. Procure por erros de build na aba "Logs"
+3. Se houver erro, contacte o suporte ou faça redeploy manual
+
+================================
+CONTATO & SUPORTE
+================================
+
+Repositório: https://github.com/sandrorogeriocosta12-hue/nexucrm
+Domínio: https://api.nexuscrm.tech/
+Dashboard Railway: https://railway.app
+
