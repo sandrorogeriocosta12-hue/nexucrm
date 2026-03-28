@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Teste Grátis - Nexus Service</title>
+    <title>Criar Conta - Nexus Service</title>
     <link rel="stylesheet" href="css/design-system.css">
     <style>
         * {
@@ -12,199 +12,222 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
         body {
-            background: linear-gradient(135deg, #0F172A 0%, #1a1f3a 100%);
-            min-height: 100vh;
+            background: linear-gradient(135deg, #0F172A 0%, #1a1f3a 50%, #0F172A 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Background effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(26, 86, 219, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         .page-wrapper {
+            position: relative;
+            z-index: 1;
             width: 100%;
-            max-width: 900px;
+            max-width: 100%;
             padding: var(--spacing-lg);
-        }
-
-        .signup-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-2xl);
-            align-items: center;
-        }
-
-        .signup-left {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-lg);
-        }
-
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-        }
-
-        .logo-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            border-radius: var(--radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
+        }
+
+        .signup-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            width: 100%;
+            max-width: 1200px;
+            align-items: center;
+        }
+
+        /* LEFT SIDE - Marketing */
+        .signup-left {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .brand-logo {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #1A56DB 0%, #7C3AED 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
             font-weight: 700;
             color: white;
-            box-shadow: 0 10px 25px rgba(26, 86, 219, 0.3);
+            box-shadow: 0 8px 32px rgba(26, 86, 219, 0.4);
         }
 
-        .logo-text h2 {
-            font-size: 1.5rem;
+        .brand-info h2 {
+            font-size: 18px;
             font-weight: 700;
             color: white;
-            margin-bottom: 2px;
         }
 
-        .logo-text p {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+        .brand-info p {
+            font-size: 13px;
+            color: #94A3B8;
         }
 
-        .headline {
-            margin-top: var(--spacing-lg);
+        .hero-headline {
+            margin-bottom: 1rem;
         }
 
-        .headline h1 {
-            font-size: 2.5rem;
+        .hero-headline h1 {
+            font-size: 48px;
             font-weight: 800;
-            line-height: 1.2;
-            margin-bottom: var(--spacing-md);
+            line-height: 1.1;
             background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            margin-bottom: 1rem;
         }
 
-        .headline p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
+        .hero-headline p {
+            font-size: 18px;
             line-height: 1.6;
-            margin-bottom: var(--spacing-lg);
+            color: #CBD5E1;
         }
 
-        .features-list {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-md);
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
         }
 
-        .feature-item {
+        .benefit-item {
             display: flex;
-            gap: var(--spacing-md);
+            gap: 1rem;
             align-items: flex-start;
         }
 
-        .feature-icon {
-            flex-shrink: 0;
-            width: 24px;
-            height: 24px;
-            background: var(--accent-color);
-            border-radius: 50%;
+        .benefit-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(26, 86, 219, 0.15);
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 20px;
+            flex-shrink: 0;
             margin-top: 2px;
         }
 
-        .feature-text {
-            flex: 1;
-        }
-
-        .feature-text h3 {
-            font-size: 0.95rem;
+        .benefit-text h3 {
+            font-size: 15px;
             font-weight: 600;
             color: white;
             margin-bottom: 4px;
         }
 
-        .feature-text p {
-            font-size: 0.85rem;
-            color: var(--text-tertiary);
+        .benefit-text p {
+            font-size: 14px;
+            color: #94A3B8;
+            line-height: 1.5;
         }
 
-        /* Right side - Form */
+        /* RIGHT SIDE - Form */
         .signup-right {
             display: flex;
             flex-direction: column;
-            gap: var(--spacing-lg);
         }
 
-        .signup-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-xl);
-            padding: var(--spacing-2xl);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
+        .form-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .signup-title {
-            margin-bottom: var(--spacing-lg);
+        .form-header {
+            margin-bottom: 2rem;
         }
 
-        .signup-title h2 {
-            font-size: 1.5rem;
+        .form-header h2 {
+            font-size: 28px;
             font-weight: 700;
             color: white;
-            margin-bottom: var(--spacing-xs);
+            margin-bottom: 0.5rem;
         }
 
-        .signup-title p {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
+        .form-header p {
+            font-size: 15px;
+            color: #CBD5E1;
         }
 
         .form-group {
-            margin-bottom: var(--spacing-lg);
+            margin-bottom: 1.25rem;
         }
 
         .form-label {
             display: block;
-            margin-bottom: var(--spacing-sm);
-            font-weight: 600;
-            font-size: 0.9rem;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
             color: white;
         }
 
         .form-input {
             width: 100%;
-            padding: var(--spacing-md) var(--spacing-lg);
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
+            padding: 11px 14px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+            border-radius: 8px;
             color: white;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
+            font-size: 15px;
+            transition: all 0.25s ease;
+            font-family: inherit;
         }
 
         .form-input::placeholder {
-            color: var(--text-tertiary);
+            color: #64748B;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
-            background: rgba(30, 20, 50, 0.6);
+            border-color: #7C3AED;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+            background: rgba(15, 23, 42, 0.95);
         }
 
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-md);
+            gap: 1rem;
         }
 
         .form-row .form-group {
@@ -213,220 +236,210 @@
 
         .checkbox-group {
             display: flex;
+            gap: 0.75rem;
             align-items: flex-start;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-lg);
+            margin-bottom: 1.5rem;
         }
 
         .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             margin-top: 3px;
             cursor: pointer;
-            accent-color: var(--accent-color);
+            accent-color: #7C3AED;
         }
 
         .checkbox-label {
-            flex: 1;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
+            font-size: 13px;
+            color: #CBD5E1;
             line-height: 1.5;
         }
 
         .checkbox-label a {
-            color: var(--accent-color);
+            color: #7C3AED;
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.2s ease;
+            transition: color 0.2s;
         }
 
         .checkbox-label a:hover {
-            color: var(--primary-color);
+            color: #1A56DB;
         }
 
         .submit-btn {
             width: 100%;
-            padding: var(--spacing-md) var(--spacing-lg);
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #1A56DB 0%, #7C3AED 100%);
             color: white;
             border: none;
-            border-radius: var(--radius-md);
-            font-size: 0.95rem;
+            border-radius: 8px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: var(--spacing-md);
-            box-shadow: 0 10px 25px rgba(26, 86, 219, 0.3);
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 24px rgba(26, 86, 219, 0.3);
         }
 
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 35px rgba(26, 86, 219, 0.4);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
+            box-shadow: 0 12px 32px rgba(26, 86, 219, 0.4);
         }
 
         .submit-btn:disabled {
-            opacity: 0.7;
+            opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
 
-        .signin-link {
+        .auth-link {
             text-align: center;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
+            font-size: 14px;
+            color: #CBD5E1;
         }
 
-        .signin-link a {
-            color: var(--accent-color);
+        .auth-link a {
+            color: #7C3AED;
             text-decoration: none;
             font-weight: 600;
-            transition: color 0.2s ease;
+            transition: color 0.2s;
         }
 
-        .signin-link a:hover {
-            color: var(--primary-color);
+        .auth-link a:hover {
+            color: #1A56DB;
         }
 
-        .error-message {
+        .alert-message {
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-message.error {
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.3);
-            color: var(--error-color);
-            padding: var(--spacing-md) var(--spacing-lg);
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
-            margin-bottom: var(--spacing-lg);
-            display: none;
+            color: #FCA5A5;
         }
 
-        .error-message.show {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-        }
-
-        .success-message {
+        .alert-message.success {
             background: rgba(16, 185, 129, 0.1);
             border: 1px solid rgba(16, 185, 129, 0.3);
-            color: var(--success-color);
-            padding: var(--spacing-md) var(--spacing-lg);
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
-            margin-bottom: var(--spacing-lg);
-            display: none;
+            color: #86EFAC;
         }
 
-        .success-message.show {
+        .alert-message.show {
             display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
         }
 
-        @media (max-width: 768px) {
-            .signup-grid {
+        @media (max-width: 1024px) {
+            .signup-container {
                 grid-template-columns: 1fr;
-                gap: var(--spacing-lg);
+                gap: 2rem;
             }
 
-            .headline h1 {
-                font-size: 2rem;
+            .hero-headline h1 {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page-wrapper {
+                padding: 1rem;
+            }
+
+            .form-card {
+                padding: 1.5rem;
             }
 
             .form-row {
                 grid-template-columns: 1fr;
             }
 
-            .signup-card {
-                padding: var(--spacing-lg);
+            .hero-headline h1 {
+                font-size: 28px;
             }
         }
     </style>
 </head>
 <body>
     <div class="page-wrapper">
-        <div class="signup-grid">
-            <!-- Left Side - Marketing -->
+        <div class="signup-container">
+            <!-- LEFT: Marketing -->
             <div class="signup-left">
-                <div class="logo-section">
-                    <div class="logo-icon">N</div>
-                    <div class="logo-text">
+                <div class="brand-header">
+                    <div class="brand-logo">N</div>
+                    <div class="brand-info">
                         <h2>Nexus Service</h2>
                         <p>Lead Scoring IA</p>
                     </div>
                 </div>
 
-                <div class="headline">
+                <div class="hero-headline">
                     <h1>Qualifique Leads em Tempo Real</h1>
-                    <p>Use inteligência artificial para identificar seus melhores prospects automaticamente. Aumente sua taxa de conversão em até 3x.</p>
+                    <p>Use inteligência artificial para identificar os melhores prospects automaticamente. Aumente suas vendas com leads mais qualificados.</p>
                 </div>
 
-                <div class="features-list">
-                    <div class="feature-item">
-                        <div class="feature-icon">✨</div>
-                        <div class="feature-text">
-                            <h3>Lead Scoring Automático</h3>
-                            <p>IA aprende seus padrões de venda</p>
-                        </div>
-                    </div>
-
-                    <div class="feature-item">
-                        <div class="feature-icon">⚡</div>
-                        <div class="feature-text">
+                <div class="benefits-grid">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">⚡</div>
+                        <div class="benefit-text">
                             <h3>Tempo Real</h3>
-                            <p>Qualifique leads em segundos</p>
+                            <p>Qualifique leads em segundos com IA</p>
                         </div>
                     </div>
 
-                    <div class="feature-item">
-                        <div class="feature-icon">📈</div>
-                        <div class="feature-text">
-                            <h3>Aumento de Vendas</h3>
-                            <p>Foque nos leads com mais potencial</p>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">📈</div>
+                        <div class="benefit-text">
+                            <h3>+3x Vendas</h3>
+                            <p>Aumente seu pipeline com leads melhores</p>
                         </div>
                     </div>
 
-                    <div class="feature-item">
-                        <div class="feature-icon">🔒</div>
-                        <div class="feature-text">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🔒</div>
+                        <div class="benefit-text">
                             <h3>100% Seguro</h3>
                             <p>Dados criptografados em produção</p>
                         </div>
                     </div>
 
-                    <div class="feature-item">
-                        <div class="feature-icon">🎯</div>
-                        <div class="feature-text">
-                            <h3>Fácil de Usar</h3>
-                            <p>Setup em menos de 5 minutos</p>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✨</div>
+                        <div class="benefit-text">
+                            <h3>Fácil Setup</h3>
+                            <p>Comece em menos de 5 minutos</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Side - Form -->
+            <!-- RIGHT: Form -->
             <div class="signup-right">
-                <div class="signup-card">
-                    <div class="signup-title">
-                        <h2>Comece Grátis</h2>
+                <div class="form-card">
+                    <div class="form-header">
+                        <h2>Comece Gratuitamente</h2>
                         <p>Teste por 14 dias, sem cartão de crédito</p>
                     </div>
 
-                    <div id="errorMessage" class="error-message">
-                        <span>❌</span>
+                    <div id="errorMessage" class="alert-message error">
+                        <span>✕</span>
                         <span id="errorText"></span>
                     </div>
 
-                    <div id="successMessage" class="success-message">
-                        <span>✅</span>
+                    <div id="successMessage" class="alert-message success">
+                        <span>✓</span>
                         <span id="successText"></span>
                     </div>
 
                     <form id="signupForm">
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="firstName" class="form-label">Primeiro Nome</label>
+                                <label for="firstName" class="form-label">Nome</label>
                                 <input
                                     type="text"
                                     id="firstName"
@@ -435,9 +448,8 @@
                                     required
                                 >
                             </div>
-
                             <div class="form-group">
-                                <label for="lastName" class="form-label">Último Nome</label>
+                                <label for="lastName" class="form-label">Sobrenome</label>
                                 <input
                                     type="text"
                                     id="lastName"
@@ -449,12 +461,12 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="email" class="form-label">E-mail</label>
+                            <label for="email" class="form-label">E-mail Profissional</label>
                             <input
                                 type="email"
                                 id="email"
                                 class="form-input"
-                                placeholder="seu@empresa.com"
+                                placeholder="voce@empresa.com"
                                 required
                             >
                         </div>
@@ -465,7 +477,7 @@
                                 type="text"
                                 id="company"
                                 class="form-input"
-                                placeholder="Sua Empresa Ltda"
+                                placeholder="Nexus Ltda"
                                 required
                             >
                         </div>
@@ -488,12 +500,10 @@
                             </label>
                         </div>
 
-                        <button type="submit" class="submit-btn">
-                            Criar Conta Grátis
-                        </button>
+                        <button type="submit" class="submit-btn">Criar Conta Gratuitamente</button>
 
-                        <div class="signin-link">
-                            Já tem conta? <a href="/login">Faça login</a>
+                        <div class="auth-link">
+                            Já tem uma conta? <a href="/login">Fazer login</a>
                         </div>
                     </form>
                 </div>
