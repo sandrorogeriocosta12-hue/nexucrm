@@ -1,0 +1,10 @@
+BUILD_VERSION: 2026-03-29-final-fix
+TIMESTAMP: 2026-03-29T13:36:00Z
+FIXES_APPLIED:
+- ✅ Fixed FastAPI routing order (serve_landing_page BEFORE api_main router)
+- ✅ Removed conflicting constraints.txt
+- ✅ Fixed Dockerfile.railway to not reference constraints.txt
+- ✅ Updated dependency versions for compatibility
+
+HOME_PAGE_STATUS: Ready for production
+NEW_HOME_PAGE_TITLE: 🏠 NEW HOME PAGE - Nexus Service
