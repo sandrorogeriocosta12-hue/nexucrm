@@ -341,78 +341,81 @@
         /* Plan Selection Styles */
         .plans-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin-top: 0.75rem;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.6rem;
+            margin-top: 0.5rem;
         }
 
         .plan-card {
             position: relative;
-            padding: 1.25rem;
+            padding: 0.75rem;
             border: 2px solid #334155;
-            border-radius: 12px;
+            border-radius: 8px;
             background: #1e293b;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.4rem;
+            text-align: center;
         }
 
         .plan-card:hover {
             border-color: #7C3AED;
             background: #263449;
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         .plan-card.selected,
         .plan-card.recommended {
             border-color: #7C3AED;
-            background: rgba(124, 58, 237, 0.1);
-            box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+            background: rgba(124, 58, 237, 0.15);
+            box-shadow: 0 0 12px rgba(124, 58, 237, 0.15);
         }
 
         .plan-badge {
             position: absolute;
-            top: -12px;
+            top: -10px;
             left: 50%;
             transform: translateX(-50%);
             background: linear-gradient(135deg, #EC4899 0%, #7C3AED 100%);
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 9px;
             font-weight: 600;
             white-space: nowrap;
         }
 
         .plan-header h3 {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
             color: white;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .plan-subtitle {
-            font-size: 12px;
+            font-size: 10px;
             color: #94A3B8;
+            line-height: 1.2;
         }
 
         .plan-price {
             display: flex;
             align-items: baseline;
-            gap: 4px;
-            margin-bottom: 0.5rem;
+            gap: 2px;
+            justify-content: center;
+            margin-bottom: 0.3rem;
         }
 
         .price-amount {
-            font-size: 20px;
+            font-size: 14px;
             font-weight: 700;
             color: #7C3AED;
         }
 
         .price-period {
-            font-size: 12px;
+            font-size: 10px;
             color: #64748B;
         }
 
@@ -420,15 +423,16 @@
             list-style: none;
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            font-size: 12px;
+            gap: 3px;
+            font-size: 9px;
             color: #CBD5E1;
         }
 
         .plan-features li {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 3px;
+            line-height: 1.2;
         }
 
         .hidden-input {
@@ -626,37 +630,29 @@
                                     <input type="radio" name="selected-plan" value="starter" class="hidden-input">
                                     <div class="plan-header">
                                         <h3>🚀 Starter</h3>
-                                        <p class="plan-subtitle">Ideal para pequenas empresas</p>
                                     </div>
                                     <div class="plan-price">
-                                        <span class="price-amount">R$ 1.500</span>
-                                        <span class="price-period">/mês</span>
+                                        <span class="price-amount">R$ 1.5K</span>
                                     </div>
                                     <ul class="plan-features">
-                                        <li>✓ Até 500 contatos</li>
-                                        <li>✓ 2 usuários simultâneos</li>
-                                        <li>✓ Email + WhatsApp</li>
-                                        <li>✓ Funil de vendas básico</li>
+                                        <li>✓ 500 contatos</li>
+                                        <li>✓ 2 usuários</li>
                                     </ul>
                                 </div>
 
                                 <!-- Professional Plan -->
                                 <div class="plan-card recommended" onclick="selectPlanCard('professional', this)">
                                     <input type="radio" name="selected-plan" value="professional" checked class="hidden-input">
-                                    <div class="plan-badge">⭐ Mais Popular</div>
+                                    <div class="plan-badge">⭐ Popular</div>
                                     <div class="plan-header">
-                                        <h3>💼 Professional</h3>
-                                        <p class="plan-subtitle">Mais completo da categoria</p>
+                                        <h3>💼 Prof</h3>
                                     </div>
                                     <div class="plan-price">
-                                        <span class="price-amount">R$ 1.800</span>
-                                        <span class="price-period">/mês</span>
+                                        <span class="price-amount">R$ 1.8K</span>
                                     </div>
                                     <ul class="plan-features">
-                                        <li>✓ Até 5.000 contatos</li>
-                                        <li>✓ 10 usuários simultâneos</li>
-                                        <li>✓ Email + WhatsApp + Instagram</li>
-                                        <li>✓ Automação de seguimento</li>
+                                        <li>✓ 5K contatos</li>
+                                        <li>✓ 10 usuários</li>
                                     </ul>
                                 </div>
 
@@ -665,17 +661,13 @@
                                     <input type="radio" name="selected-plan" value="premium" class="hidden-input">
                                     <div class="plan-header">
                                         <h3>👑 Premium</h3>
-                                        <p class="plan-subtitle">Total e sem limites</p>
                                     </div>
                                     <div class="plan-price">
-                                        <span class="price-amount">R$ 2.000</span>
-                                        <span class="price-period">/mês</span>
+                                        <span class="price-amount">R$ 2K</span>
                                     </div>
                                     <ul class="plan-features">
-                                        <li>✓ Contatos ilimitados</li>
-                                        <li>✓ Usuários ilimitados</li>
-                                        <li>✓ Todos os canais</li>
-                                        <li>✓ Suporte VIP 24/7</li>
+                                        <li>✓ Ilimitado</li>
+                                        <li>✓ Suporte 24/7</li>
                                     </ul>
                                 </div>
                             </div>
