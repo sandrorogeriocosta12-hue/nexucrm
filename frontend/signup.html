@@ -366,6 +366,116 @@
                 font-size: 28px;
             }
         }
+
+        /* MODAL STYLES */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1f3a 0%, #0F172A 100%);
+            margin: 2% auto;
+            padding: 0;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        .modal-body h1,
+        .modal-body h2,
+        .modal-body h3 {
+            color: #f1f5f9;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+        .modal-body h1 { font-size: 28px; }
+        .modal-body h2 { font-size: 24px; }
+        .modal-body h3 { font-size: 20px; }
+
+        .modal-body p {
+            margin-bottom: 16px;
+        }
+
+        .modal-body ul,
+        .modal-body ol {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        .modal-body li {
+            margin-bottom: 8px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .modal-close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-footer {
+            background: #0F172A;
+            padding: 20px 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: right;
+        }
+
+        .modal-footer button {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .modal-footer button:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -499,7 +609,7 @@
                         <div class="checkbox-group">
                             <input type="checkbox" id="terms" required>
                             <label for="terms" class="checkbox-label">
-                                Concordo com os <a href="/terms" target="_blank">Termos de Serviço</a> e <a href="/privacy" target="_blank">Política de Privacidade</a>
+                                Concordo com os <a href="#" onclick="openTermsModal(event)">Termos de Serviço</a> e <a href="#" onclick="openPrivacyModal(event)">Política de Privacidade</a>
                             </label>
                         </div>
 
@@ -629,6 +739,116 @@
                 localStorage.setItem('selected_plan', plan);
             }
         });
+
+        // MODAL FUNCTIONS
+        function openTermsModal(event) {
+            event.preventDefault();
+            document.getElementById('termsModal').style.display = 'block';
+            loadTermsContent();
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+
+        function openPrivacyModal(event) {
+            event.preventDefault();
+            document.getElementById('privacyModal').style.display = 'block';
+            loadPrivacyContent();
+        }
+
+        function closePrivacyModal() {
+            document.getElementById('privacyModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const termsModal = document.getElementById('termsModal');
+            const privacyModal = document.getElementById('privacyModal');
+            if (event.target == termsModal) {
+                closeTermsModal();
+            }
+            if (event.target == privacyModal) {
+                closePrivacyModal();
+            }
+        }
+
+        // Load content from server
+        async function loadTermsContent() {
+            try {
+                const response = await fetch('/terms');
+                if (response.ok) {
+                    const html = await response.text();
+                    // Extract the main content from the HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const content = doc.querySelector('.container') || doc.body;
+                    document.getElementById('termsContent').innerHTML = content.innerHTML;
+                } else {
+                    document.getElementById('termsContent').innerHTML = '<p class="text-red-400">Erro ao carregar os Termos de Serviço.</p>';
+                }
+            } catch (error) {
+                document.getElementById('termsContent').innerHTML = '<p class="text-red-400">Erro ao carregar os Termos de Serviço.</p>';
+            }
+        }
+
+        async function loadPrivacyContent() {
+            try {
+                const response = await fetch('/privacy');
+                if (response.ok) {
+                    const html = await response.text();
+                    // Extract the main content from the HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const content = doc.querySelector('.container') || doc.body;
+                    document.getElementById('privacyContent').innerHTML = content.innerHTML;
+                } else {
+                    document.getElementById('privacyContent').innerHTML = '<p class="text-red-400">Erro ao carregar a Política de Privacidade.</p>';
+                }
+            } catch (error) {
+                document.getElementById('privacyContent').innerHTML = '<p class="text-red-400">Erro ao carregar a Política de Privacidade.</p>';
+            }
+        }
     </script>
+
+    <!-- MODAIS -->
+    <!-- Modal Termos de Serviço -->
+    <div id="termsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-close" onclick="closeTermsModal()">&times;</span>
+                <h2>📋 Termos de Serviço</h2>
+            </div>
+            <div class="modal-body" id="termsContent">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
+                    <p class="mt-4 text-gray-400">Carregando Termos de Serviço...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeTermsModal()">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Política de Privacidade -->
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-close" onclick="closePrivacyModal()">&times;</span>
+                <h2>🔒 Política de Privacidade</h2>
+            </div>
+            <div class="modal-body" id="privacyContent">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
+                    <p class="mt-4 text-gray-400">Carregando Política de Privacidade...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closePrivacyModal()">Entendi</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
