@@ -782,8 +782,16 @@
                     // Extract the main content from the HTML
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-                    const content = doc.querySelector('.container') || doc.body;
-                    document.getElementById('termsContent').innerHTML = content.innerHTML;
+                    
+                    // For terms.html, extract the .terms-content div
+                    const termsContent = doc.querySelector('.terms-content');
+                    if (termsContent) {
+                        document.getElementById('termsContent').innerHTML = termsContent.innerHTML;
+                    } else {
+                        // Fallback to body content
+                        const bodyContent = doc.body.innerHTML;
+                        document.getElementById('termsContent').innerHTML = bodyContent;
+                    }
                 } else {
                     document.getElementById('termsContent').innerHTML = '<p class="text-red-400">Erro ao carregar os Termos de Serviço.</p>';
                 }
@@ -800,8 +808,16 @@
                     // Extract the main content from the HTML
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
-                    const content = doc.querySelector('.container') || doc.body;
-                    document.getElementById('privacyContent').innerHTML = content.innerHTML;
+                    
+                    // For privacy.html, extract the .container div
+                    const container = doc.querySelector('.container');
+                    if (container) {
+                        document.getElementById('privacyContent').innerHTML = container.innerHTML;
+                    } else {
+                        // Fallback to body content
+                        const bodyContent = doc.body.innerHTML;
+                        document.getElementById('privacyContent').innerHTML = bodyContent;
+                    }
                 } else {
                     document.getElementById('privacyContent').innerHTML = '<p class="text-red-400">Erro ao carregar a Política de Privacidade.</p>';
                 }
