@@ -273,6 +273,9 @@ try:
 except Exception as e:
     logger.warning(f"⚠ Agents router not available: {e}")
 
+# Define frontend_path early for all routes to use
+frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
+
 # HOME PAGE ROUTE - DEFINED FIRST before any routers are included (critical for routing order)
 @app.get("/", response_class=HTMLResponse, name="home_landing")
 async def serve_landing_page(request: Request):
@@ -366,8 +369,62 @@ async def signup_page(request: Request, t: str = None):
     return HTMLResponse("<h2>❌ Signup page not found</h2>", status_code=404)
 
 
+@app.get("/plan-selection", response_class=HTMLResponse)
+async def plan_selection_page(request: Request):
+    """🎯 Serve plan-selection.html - Plan selection page"""
+    plan_file = os.path.join(frontend_path, "plan-selection.html")
+    
+    if os.path.exists(plan_file):
+        logger.info(f"✅ Serving plan-selection.html from {plan_file}")
+        with open(plan_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        return HTMLResponse(
+            content=content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    
+    logger.warning(f"❌ plan-selection.html not found at {plan_file}")
+    return HTMLResponse("<h2>❌ Plan selection page not found</h2>", status_code=404)
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_page(request: Request):
+    """🔒 Serve privacy.html - Privacy policy page"""
+    privacy_file = os.path.join(frontend_path, "privacy.html")
+    
+    if os.path.exists(privacy_file):
+        logger.info(f"✅ Serving privacy.html from {privacy_file}")
+        with open(privacy_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        return HTMLResponse(content=content)
+    
+    logger.warning(f"❌ privacy.html not found at {privacy_file}")
+    return HTMLResponse("<h2>❌ Privacy policy not found</h2>", status_code=404)
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms_page(request: Request):
+    """📋 Serve terms.html - Terms of service page"""
+    terms_file = os.path.join(frontend_path, "terms.html")
+    
+    if os.path.exists(terms_file):
+        logger.info(f"✅ Serving terms.html from {terms_file}")
+        with open(terms_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        return HTMLResponse(content=content)
+    
+    logger.warning(f"❌ terms.html not found at {terms_file}")
+    return HTMLResponse("<h2>❌ Terms of service not found</h2>", status_code=404)
+
+
 # Mount static files (frontend)
-frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
 if os.path.exists(frontend_path):
     try:
         app.mount("/frontend", StaticFiles(directory=frontend_path), name="frontend")
@@ -377,6 +434,7 @@ if os.path.exists(frontend_path):
         logger.warning("⚠️  Frontend files may not be accessible from /frontend")
 else:
     logger.warning(f"⚠️  Frontend directory not found at {frontend_path}")
+
 
 
 # ============================================================================

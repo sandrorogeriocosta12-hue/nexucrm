@@ -338,6 +338,127 @@
             display: flex;
         }
 
+        /* Plan Selection Styles */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .plan-card {
+            position: relative;
+            padding: 1.25rem;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            background: #1e293b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .plan-card:hover {
+            border-color: #7C3AED;
+            background: #263449;
+            transform: translateY(-2px);
+        }
+
+        .plan-card.selected,
+        .plan-card.recommended {
+            border-color: #7C3AED;
+            background: rgba(124, 58, 237, 0.1);
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+        }
+
+        .plan-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #EC4899 0%, #7C3AED 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .plan-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .plan-subtitle {
+            font-size: 12px;
+            color: #94A3B8;
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-amount {
+            font-size: 20px;
+            font-weight: 700;
+            color: #7C3AED;
+        }
+
+        .price-period {
+            font-size: 12px;
+            color: #64748B;
+        }
+
+        .plan-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            color: #CBD5E1;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        @media (max-width: 1024px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .plan-card {
+                padding: 1rem;
+            }
+
+            .plan-header h3 {
+                font-size: 14px;
+            }
+
+            .price-amount {
+                font-size: 18px;
+            }
+        }
+
         @media (max-width: 1024px) {
             .signup-container {
                 grid-template-columns: 1fr;
@@ -496,10 +617,74 @@
                             >
                         </div>
 
+                        <!-- Plan Selection -->
+                        <div class="form-group">
+                            <label class="form-label">Escolha seu plano</label>
+                            <div class="plans-grid">
+                                <!-- Starter Plan -->
+                                <div class="plan-card" onclick="selectPlanCard('starter', this)">
+                                    <input type="radio" name="selected-plan" value="starter" class="hidden-input">
+                                    <div class="plan-header">
+                                        <h3>🚀 Starter</h3>
+                                        <p class="plan-subtitle">Ideal para pequenas empresas</p>
+                                    </div>
+                                    <div class="plan-price">
+                                        <span class="price-amount">R$ 1.500</span>
+                                        <span class="price-period">/mês</span>
+                                    </div>
+                                    <ul class="plan-features">
+                                        <li>✓ Até 500 contatos</li>
+                                        <li>✓ 2 usuários simultâneos</li>
+                                        <li>✓ Email + WhatsApp</li>
+                                        <li>✓ Funil de vendas básico</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Professional Plan -->
+                                <div class="plan-card recommended" onclick="selectPlanCard('professional', this)">
+                                    <input type="radio" name="selected-plan" value="professional" checked class="hidden-input">
+                                    <div class="plan-badge">⭐ Mais Popular</div>
+                                    <div class="plan-header">
+                                        <h3>💼 Professional</h3>
+                                        <p class="plan-subtitle">Mais completo da categoria</p>
+                                    </div>
+                                    <div class="plan-price">
+                                        <span class="price-amount">R$ 1.800</span>
+                                        <span class="price-period">/mês</span>
+                                    </div>
+                                    <ul class="plan-features">
+                                        <li>✓ Até 5.000 contatos</li>
+                                        <li>✓ 10 usuários simultâneos</li>
+                                        <li>✓ Email + WhatsApp + Instagram</li>
+                                        <li>✓ Automação de seguimento</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Premium Plan -->
+                                <div class="plan-card" onclick="selectPlanCard('premium', this)">
+                                    <input type="radio" name="selected-plan" value="premium" class="hidden-input">
+                                    <div class="plan-header">
+                                        <h3>👑 Premium</h3>
+                                        <p class="plan-subtitle">Total e sem limites</p>
+                                    </div>
+                                    <div class="plan-price">
+                                        <span class="price-amount">R$ 2.000</span>
+                                        <span class="price-period">/mês</span>
+                                    </div>
+                                    <ul class="plan-features">
+                                        <li>✓ Contatos ilimitados</li>
+                                        <li>✓ Usuários ilimitados</li>
+                                        <li>✓ Todos os canais</li>
+                                        <li>✓ Suporte VIP 24/7</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="checkbox-group">
                             <input type="checkbox" id="terms" required>
                             <label for="terms" class="checkbox-label">
-                                Concordo com os <a href="/terms" target="_blank">Termos de Serviço</a> e <a href="/privacy" target="_blank">Política de Privacidade</a>
+                                Concordo com os <a href="#" target="_blank">Termos de Serviço</a> e <a href="#" target="_blank">Política de Privacidade</a>
                             </label>
                         </div>
 
@@ -518,6 +703,24 @@
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script>
+        // Plan selection function
+        function selectPlanCard(planValue, element) {
+            // Update radio button
+            const radio = element.querySelector(`input[value="${planValue}"]`);
+            if (radio) {
+                radio.checked = true;
+            }
+
+            // Update UI
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card !== element) {
+                    card.classList.remove('recommended');
+                }
+            });
+            element.classList.add('selected');
+        }
+
         const form = document.getElementById('signupForm');
         const errorEl = document.getElementById('errorMessage');
         const successEl = document.getElementById('successMessage');
@@ -534,6 +737,7 @@
             const company = document.getElementById('company').value.trim();
             const password = document.getElementById('password').value;
             const terms = document.getElementById('terms').checked;
+            const selectedPlan = document.querySelector('input[name="selected-plan"]:checked');
 
             // Clear messages
             errorEl.classList.remove('show');
@@ -555,8 +759,13 @@
                 return;
             }
 
+            if (!selectedPlan) {
+                showError('Por favor, escolha um plano');
+                return;
+            }
+
             if (!terms) {
-                showError('Você precisa aceitar os Termos de Serviço e Política de Privacidade');
+                showError('Você precisa aceitar os Termos de Serviço');
                 return;
             }
 
@@ -569,12 +778,6 @@
                 // Combine firstName and lastName into name, as backend expects
                 const fullName = `${firstName} ${lastName}`;
                 
-                // Get selected plan from URL or localStorage, default to professional
-                const urlParams = new URLSearchParams(window.location.search);
-                const planFromUrl = urlParams.get('plan');
-                const planFromStorage = localStorage.getItem('selected_plan');
-                const selectedPlan = planFromUrl || planFromStorage || 'professional';
-                
                 // Call signup API with plan
                 const response = await fetch('/api/auth/signup', {
                     method: 'POST',
@@ -584,7 +787,7 @@
                         email,
                         password,
                         company,
-                        plan: selectedPlan
+                        plan: selectedPlan.value
                     })
                 });
 
@@ -608,27 +811,14 @@
         function showError(message) {
             errorTextEl.textContent = message;
             errorEl.classList.add('show');
-            if (typeof NexusUtils !== 'undefined') {
-                NexusUtils.toastError(message);
-            }
+            NexusUtils.toastError(message);
         }
 
         function showSuccess(message) {
             successTextEl.textContent = message;
             successEl.classList.add('show');
-            if (typeof NexusUtils !== 'undefined') {
-                NexusUtils.toastSuccess(message);
-            }
+            NexusUtils.toastSuccess(message);
         }
-
-        // On page load, if user came from plan selection, store the plan
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const plan = urlParams.get('plan');
-            if (plan) {
-                localStorage.setItem('selected_plan', plan);
-            }
-        });
     </script>
 </body>
 </html>
