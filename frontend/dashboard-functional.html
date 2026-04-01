@@ -187,11 +187,11 @@
                     <div class="grid grid-cols-3 gap-4">
                         <div>
                             <p class="text-sm text-gray-400">Plano</p>
-                            <p class="text-xl font-bold" id="currentPlan">Professional</p>
+                            <p class="text-xl font-bold" id="currentPlan">-</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-400">Valor Mensal</p>
-                            <p class="text-xl font-bold text-green-400" id="currentPrice">R$ 1.500</p>
+                            <p class="text-xl font-bold text-green-400" id="currentPrice">R$ -</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-400">Próxima Renovação</p>
@@ -251,7 +251,7 @@
                     <div class="space-y-3">
                         <div class="flex items-center justify-between p-3 bg-slate-700 rounded">
                             <span>📱 WhatsApp API</span>
-                            <span class="text-green-400 font-bold">✓ Conectado</span>
+                            <span id="whatsappStatus" class="text-red-400 font-bold">✗ Não conectado</span>
                         </div>
                         <div class="flex items-center justify-between p-3 bg-slate-700 rounded">
                             <span>📧 Gmail Integration</span>
@@ -917,8 +917,26 @@ function loadUserSettings() {
     }
 }
 
+// Load plan info from localStorage
+function loadPlanInfo() {
+    const planPrices = {
+        starter: { name: '🚀 Starter', price: 'R$ 1.000' },
+        professional: { name: '💼 Professional', price: 'R$ 1.500' },
+        premium: { name: '🏆 Premium', price: 'R$ 2.000' }
+    };
+    
+    const selectedPlan = localStorage.getItem('selected_plan') || 'professional';
+    const planData = planPrices[selectedPlan] || planPrices['professional'];
+    
+    document.getElementById('currentPlan').textContent = planData.name;
+    document.getElementById('currentPrice').textContent = planData.price;
+}
+
 // Initialize settings on load
-document.addEventListener('DOMContentLoaded', loadUserSettings);
+document.addEventListener('DOMContentLoaded', function() {
+    loadUserSettings();
+    loadPlanInfo();
+});
 </script>
 
 </body>
