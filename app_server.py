@@ -1,7 +1,7 @@
 """
 Vexus CRM - Professional FastAPI Server
 Enterprise-ready with security, monitoring, and production features
-v1.2.0 - Updated with confirm password and BRL pricing
+v1.2.1 - Deployed with Settings, confirm password, and BRL pricing
 """
 
 from fastapi import FastAPI, Request, HTTPException
