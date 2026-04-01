@@ -290,7 +290,7 @@ async def delete_contact(contact_id: str, db: Session = Depends(get_db)):
 # ═══════════════════════════════════════════════════════════════════════════
 
 @router.post("/webhooks/whatsapp")
-async def whatsapp_webhook(request: Request, db: Session = Depends(get_db), background_tasks: BackgroundTasks):
+async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Webhook para receber mensagens do WhatsApp"""
     try:
         body = await request.json()
@@ -400,7 +400,7 @@ async def instagram_webhook(request: Request, db: Session = Depends(get_db)):
 # ═══════════════════════════════════════════════════════════════════════════
 
 @router.post("/send-message")
-async def send_message(message_data: dict, db: Session = Depends(get_db), background_tasks: BackgroundTasks):
+async def send_message(message_data: dict, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Enviar mensagem por qualquer canal"""
     try:
         channel = message_data.get("channel", "whatsapp")
