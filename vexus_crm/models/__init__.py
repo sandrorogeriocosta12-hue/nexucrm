@@ -4,6 +4,6 @@ Database models for contacts, opportunities, and other entities
 """
 
 # Import models here for easy access
-from .base import Base
+from .crm_models import Base, Lead, Campaign, Contact, Message
 
-__all__ = ["Base"]
+__all__ = ["Base", "Lead", "Campaign", "Contact", "Message"]
