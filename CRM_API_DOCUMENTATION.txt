@@ -1,0 +1,400 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              🚀 CRM APIs + MULTI-CHANNEL INTEGRATIONS                         ║
+║                      DOCUMENTAÇÃO COMPLETA v1.3.0                            ║
+║                         api.nexuscrm.tech                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📊 RESUMO DO QUE FOI IMPLEMENTADO
+═════════════════════════════════════════════════════════════════════════════
+
+✅ 1. CRM APIs PRINCIPAIS
+   - GET  /api/leads                    Listar todos os leads
+   - POST /api/leads                    Criar novo lead
+   - PUT  /api/leads/{lead_id}          Atualizar lead
+   - DEL  /api/leads/{lead_id}          Deletar lead
+   
+   - GET  /api/campaigns                Listar campanhas
+   - POST /api/campaigns                Criar campanha
+   - PUT  /api/campaigns/{campaign_id}  Atualizar campanha
+   
+   - GET  /api/contacts                 Listar contatos
+   - POST /api/contacts                 Criar contato
+   - PUT  /api/contacts/{contact_id}    Atualizar contato
+   - DEL  /api/contacts/{contact_id}    Deletar contato
+
+✅ 2. MULTI-CHANNEL INTEGRATIONS
+   - WhatsApp Business API (Meta)
+   - Telegram Bot API
+   - Email (SendGrid)
+   - Instagram (Meta)
+   - Facebook Messenger (Meta)
+
+✅ 3. WEBHOOKS DE ENTRADA
+   - POST /api/webhooks/whatsapp        Receber mensagens WhatsApp
+   - POST /api/webhooks/telegram        Receber mensagens Telegram
+   - POST /api/webhooks/instagram       Receber mensagens Instagram
+
+✅ 4. ENVIO UNIFICADO
+   - POST /api/send-message             Enviar por qualquer canal
+
+✅ 5. MONITORAMENTO
+   - GET  /integrations/status          Status de todos os canais
+   - GET  /api/channels/status          Detalhe de cada canal
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        1. LEADS API
+════════════════════════════════════════════════════════════════════════════════
+
+🔍 LISTAR LEADS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint:    GET /api/leads
+Query Params: user_id (opcional), status (opcional)
+Response:    {"leads": [...], "total": n}
+
+curl -sS 'https://api.nexuscrm.tech/api/leads'
+curl -sS 'https://api.nexuscrm.tech/api/leads?user_id=user123&status=novo'
+
+
+➕ CRIAR NOVO LEAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint: POST /api/leads
+Body:
+{
+  "user_id": "user123",
+  "name": "João Silva",
+  "email": "joao@email.com",
+  "phone": "(11) 99999-9999",
+  "company": "TechCorp",
+  "job_title": "Diretor",
+  "value": 15000.00,
+  "status": "novo",      # novo, contato, proposta, fechado, perdido
+  "source": "whatsapp",  # whatsapp, email, instagram, telefone
+  "notes": "Lead qualificado"
+}
+
+curl -X POST 'https://api.nexuscrm.tech/api/leads' \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"user123","name":"João","email":"joao@test.com","value":5000,"status":"novo"}'
+
+
+✏️ ATUALIZAR LEAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint: PUT /api/leads/{lead_id}
+Body: (qualquer campo para atualizar)
+{
+  "status": "proposta",
+  "value": 20000.00,
+  "notes": "Cliente não respondeu"
+}
+
+curl -X PUT 'https://api.nexuscrm.tech/api/leads/abc123' \
+  -H 'Content-Type: application/json' \
+  -d '{"status":"proposta","value":20000}'
+
+
+🗑️ DELETAR LEAD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint: DELETE /api/leads/{lead_id}
+
+curl -X DELETE 'https://api.nexuscrm.tech/api/leads/abc123'
+
+
+════════════════════════════════════════════════════════════════════════════════
+                      2. CAMPAIGNS API
+════════════════════════════════════════════════════════════════════════════════
+
+🔍 LISTAR CAMPANHAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint:    GET /api/campaigns
+Query Params: user_id (opcional), channel (opcional)  #whatsapp, email, etc
+Response:    {"campaigns": [...], "total": n}
+
+curl -sS 'https://api.nexuscrm.tech/api/campaigns'
+curl -sS 'https://api.nexuscrm.tech/api/campaigns?channel=whatsapp'
+
+
+➕ CRIAR CAMPANHA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint: POST /api/campaigns
+Body:
+{
+  "user_id": "user123",
+  "name": "Black Friday 2026",
+  "description": "Campanha de desconto especial",
+  "channel": "whatsapp",
+  "budget": 5000.00,
+  "target_audience": "Clientes VIP",
+  "status": "planejamento"  # planejamento, ativa, pausada, finalizada
+}
+
+curl -X POST 'https://api.nexuscrm.tech/api/campaigns' \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"user123","name":"Black Friday","channel":"whatsapp","budget":5000}'
+
+
+════════════════════════════════════════════════════════════════════════════════
+                      3. CONTACTS API
+════════════════════════════════════════════════════════════════════════════════
+
+🔍 LISTAR CONTATOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint: GET /api/contacts
+Query:    user_id (opcional)
+
+curl -sS 'https://api.nexuscrm.tech/api/contacts'
+
+
+➕ CRIAR CONTATO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint: POST /api/contacts
+Body:
+{
+  "user_id": "user123",
+  "name": "Carlos Mendes",
+  "email": "carlos@email.com",
+  "phone": "(21) 98888-7777",
+  "whatsapp": "5521988887777",
+  "company": "DataSolutions",
+  "job_title": "Gerente de Vendas",
+  "preferred_channel": "whatsapp",  # whatsapp, email, telegram
+  "tags": ["vip", "tech", "retencao"]  # array
+}
+
+curl -X POST 'https://api.nexuscrm.tech/api/contacts' \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"user123","name":"Carlos","email":"carlos@test.com","preferred_channel":"whatsapp","tags":["vip"]}'
+
+
+════════════════════════════════════════════════════════════════════════════════
+                 4. ENVIAR MENSAGENS (Multi-Canais)
+════════════════════════════════════════════════════════════════════════════════
+
+📤 ENVIAR POR QUALQUER CANAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint: POST /api/send-message
+Body:
+{
+  "channel": "whatsapp",           # whatsapp, telegram, email, instagram, facebook
+  "destination": "5511999999999",  # Número (ZAP), chat_id (TG), email (email), recipient_id (IG/FB)
+  "text": "Olá! Como vai?",
+  "contact_id": "contact123",      # Opcional: para salvar no histórico
+  "subject": "Título"              # Para emails
+}
+
+Exemplos:
+
+🟢 WhatsApp:
+curl -X POST 'https://api.nexuscrm.tech/api/send-message' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "channel": "whatsapp",
+    "destination": "5511999999999",
+    "text": "Olá! Temos uma promoção especial para você!"
+  }'
+
+🤖 Telegram:
+curl -X POST 'https://api.nexuscrm.tech/api/send-message' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "channel": "telegram",
+    "destination": "123456789",
+    "text": "Olá do Nexus CRM!"
+  }'
+
+📧 Email:
+curl -X POST 'https://api.nexuscrm.tech/api/send-message' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "channel": "email",
+    "destination": "usuario@email.com",
+    "text": "Corpo do email em texto",
+    "subject": "Bem-vindo ao Nexus CRM"
+  }'
+
+📸 Instagram:
+curl -X POST 'https://api.nexuscrm.tech/api/send-message' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "channel": "instagram",
+    "destination": "recipient_user_id",
+    "text": "Obrigado por seguir!"
+  }'
+
+
+════════════════════════════════════════════════════════════════════════════════
+              5. VERIFICAR STATUS DAS INTEGRAÇÕES
+════════════════════════════════════════════════════════════════════════════════
+
+📊 STATUS GERAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Endpoint: GET /integrations/status
+
+curl -sS 'https://api.nexuscrm.tech/integrations/status'
+
+Response:
+{
+  "status": "online",
+  "channels": {
+    "whatsapp": {"configured": false},
+    "telegram": {"configured": false},
+    "email": {"configured": false},
+    "meta": {"configured": false}
+  },
+  "endpoints": {...},
+  "documentation": "Use POST /api/send-message para enviar mensagens"
+}
+
+
+════════════════════════════════════════════════════════════════════════════════
+        6. COMO CONFIGURAR OS CANAIS (Variáveis de Ambiente)
+════════════════════════════════════════════════════════════════════════════════
+
+🟢 WHATSAPP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Passos:
+1. Acesse https://developers.facebook.com/
+2. Crie um App do tipo "Business"
+3. Configure WhatsApp → API Setup
+4. Obtenha: PHONE_NUMBER_ID, BUSINESS_ID, ACCESS_TOKEN
+
+Variáveis de Ambiente (Railway):
+WHATSAPP_ACCESS_TOKEN=EAA...seu_token_aqui
+WHATSAPP_PHONE_ID=1234567890
+WHATSAPP_BUSINESS_ID=987654321
+
+
+🤖 TELEGRAM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Passos:
+1. No Telegram, procure por @BotFather
+2. Crie um bot: /newbot
+3. Copie o Token
+
+Variável de Ambiente:
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
+
+
+📧 EMAIL (SendGrid)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Passos:
+1. Acesse https://sendgrid.com/
+2. Crie uma conta gratuita
+3. Obtenha API Key em "Settings → API Keys"
+
+Variáveis de Ambiente:
+SENDGRID_API_KEY=SG.abc123...
+EMAIL_FROM=seu-email@dominio.com
+
+
+📸 INSTAGRAM / 🔵 FACEBOOK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+(Mesmo setup que WhatsApp, usa Meta Business Platform)
+
+Variáveis de Ambiente:
+META_BUSINESS_TOKEN=EAA...
+INSTAGRAM_BUSINESS_ID=1234567890
+
+
+════════════════════════════════════════════════════════════════════════════════
+                   7. WEBHOOKS (Receber Mensagens)
+════════════════════════════════════════════════════════════════════════════════
+
+Quando alguém envia uma mensagem no WhatsApp / Telegram / Instagram, a plataforma
+(Meta/Telegram) chama SEUS webhooks. Você precisa:
+
+1. Publicar HTTPS (produção)
+2. Configurar webhook URL em cada plataforma
+
+Exemplo webhook URLs:
+- WhatsApp:  https://api.nexuscrm.tech/api/webhooks/whatsapp
+- Telegram:  https://api.nexuscrm.tech/api/webhooks/telegram
+- Instagram: https://api.nexuscrm.tech/api/webhooks/instagram
+
+As mensagens recebidas são salvas em Message table com:
+- contact_id (quem enviou)
+- channel (qual plataforma)
+- message_text (conteúdo)
+- direction: "incoming"
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        EXEMPLOS COMPLETOS
+════════════════════════════════════════════════════════════════════════════════
+
+FLUXO 1: CRIAR LEAD + ENVIAR WHATSAPP + REGISTRAR CAMPANHA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Criar lead:
+curl -X POST 'https://api.nexuscrm.tech/api/leads' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "user_id":"minha-empresa",
+    "name":"Ana Silva",
+    "email":"ana@empresa.com",
+    "phone":"5511987654321",
+    "value":25000,
+    "status":"novo",
+    "source":"whatsapp"
+  }'
+
+2. Enviar mensagem WhatsApp:
+curl -X POST 'https://api.nexuscrm.tech/api/send-message' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "channel":"whatsapp",
+    "destination":"5511987654321",
+    "text":"Olá Ana! Vimos seu interesse em nossos serviços. Como posso ajudar?"
+  }'
+
+3. Criar campanha relacionada:
+curl -X POST 'https://api.nexuscrm.tech/api/campaigns' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "user_id":"minha-empresa",
+    "name":"Follow-up Leads Q2",
+    "channel":"whatsapp",
+    "budget":10000,
+    "status":"ativa"
+  }'
+
+
+════════════════════════════════════════════════════════════════════════════════
+                         RESPOSTA HTTP
+════════════════════════════════════════════════════════════════════════════════
+
+✅ SUCCESS (200):
+{
+  "success": true,
+  "lead": {
+    "id": "uuid-aqui",
+    "name": "João",
+    "email": "joao@test.com",
+    "status": "novo",
+    "created_at": "2026-04-01T20:00:00"
+  }
+}
+
+⚠️  ERRO (400/404/500):
+{
+  "detail": "Lead não encontrado"  ou
+  "error": "WhatsApp não configurado"
+}
+
+
+════════════════════════════════════════════════════════════════════════════════
+                      STATUS ATUAL DO SISTEMA
+════════════════════════════════════════════════════════════════════════════════
+
+✅ APIs de CRM: OPERACIONAL
+✅ Endpoints de envio: OPERACIONAL
+✅ Webhooks: PRONTO PARA RECEBER
+⚠️  Canais: SEM CREDENCIAIS (esperar configuração)
+
+Próximos Passos:
+1. Configure suas credenciais (WhatsApp, Telegram, Email, etc)
+2. Configure URLs de webhook em cada plataforma
+3. Teste envio de mensagens
+4. Implemente lógica de IA para responder automaticamente
+
+════════════════════════════════════════════════════════════════════════════════

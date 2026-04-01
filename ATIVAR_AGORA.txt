@@ -1,0 +1,344 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║             🚀 ATIVAR OS TOKENS - PASSO A PASSO (5 MINUTOS)                ║
+║                                                                              ║
+║                   Seu sistema está 100% pronto para usar!                   ║
+║                Falta apenas adicionar os tokens dos canais                  ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+✅ STATUS ATUAL
+═════════════════════════════════════════════════════════════════════════════
+
+Verificado em: 01/04/2026 17:30
+Autenticado como: sandrorogeriocosta12@gmail.com
+
+❌ WHATSAPP         - Não configurado
+❌ TELEGRAM         - Não configurado
+❌ EMAIL            - Não configurado
+❌ INSTAGRAM/FB     - Não configurado
+
+🎯 Objetivo: Adicionar os 4 tokens hoje!
+
+
+════════════════════════════════════════════════════════════════════════════════
+                    OPÇÃO 1: AUTOMÁTICA (RECOMENDADO)
+════════════════════════════════════════════════════════════════════════════════
+
+Se quer adicionar tudo rapidamente:
+
+1. Execute o script de setup:
+
+   bash setup_railway_tokens.sh
+
+2. Ele vai pedir cada token interativamente
+3. Você cola os valores (obtidos no GUIA_OBTER_TOKENS.txt)
+4. Tudo é adicionado automaticamente no Railway
+5. Deploy acontece em segundos!
+
+
+════════════════════════════════════════════════════════════════════════════════
+                    OPÇÃO 2: MANUAL (Web Dashboard)
+════════════════════════════════════════════════════════════════════════════════
+
+Se prefere fazer via interface web:
+
+1. Abra: https://railway.app/
+
+2. Clique em seu projeto "Nexus CRM"
+
+3. Clique na aba "Variables"
+
+4. Clique em "New Variable"
+
+5. Adicione cada token:
+
+   ┌─ Variável #1 ────────────────────────────────────┐
+   │ Name:  WHATSAPP_ACCESS_TOKEN                      │
+   │ Value: (colar o token do WhatsApp)               │
+   └───────────────────────────────────────────────────┘
+
+   ┌─ Variável #2 ────────────────────────────────────┐
+   │ Name:  WHATSAPP_PHONE_ID                         │
+   │ Value: (colar o phone ID)                        │
+   └───────────────────────────────────────────────────┘
+
+   ┌─ Variável #3 ────────────────────────────────────┐
+   │ Name:  TELEGRAM_BOT_TOKEN                        │
+   │ Value: (colar o token do Telegram)               │
+   └───────────────────────────────────────────────────┘
+
+   ┌─ Variável #4 ────────────────────────────────────┐
+   │ Name:  SENDGRID_API_KEY                          │
+   │ Value: (colar a API key do SendGrid)             │
+   └───────────────────────────────────────────────────┘
+
+   ┌─ Variável #5 ────────────────────────────────────┐
+   │ Name:  EMAIL_FROM                                │
+   │ Value: seu-email@dominio.com                     │
+   └───────────────────────────────────────────────────┘
+
+   ┌─ Variável #6 ────────────────────────────────────┐
+   │ Name:  META_BUSINESS_TOKEN                       │
+   │ Value: (colar o token Meta)                      │
+   └───────────────────────────────────────────────────┘
+
+6. Deploy automático acontece em 2-5 minutos
+
+
+════════════════════════════════════════════════════════════════════════════════
+                    OBTER OS TOKENS (ONDE PEGAR)
+════════════════════════════════════════════════════════════════════════════════
+
+Para cada token, leia a seção correspondente em:
+
+    GUIA_OBTER_TOKENS.txt
+
+Ele tem:
+  • Instruções passo-a-passo para cada plataforma
+  • Screenshots de onde clicar
+  • Links diretos
+  • Tempo estimado para cada um
+
+Resumo rápido:
+
+  🟢 WHATSAPP (15 min)
+     → https://developers.facebook.com/
+     → Criar App Business
+     → Setup WhatsApp API
+     → Gerar token
+
+  🤖 TELEGRAM (5 min) ⭐ MAIS FÁCIL
+     → Chat com @BotFather no Telegram
+     → /newbot
+     → Copiar token
+
+  📧 EMAIL (10 min)
+     → https://sendgrid.com/
+     → Criar conta gratuita
+     → Gerar API Key
+
+  📸 INSTAGRAM / 🔵 FACEBOOK (10 min)
+     → Mesmo processo que WhatsApp
+     → Usar Meta Business Platform
+
+
+════════════════════════════════════════════════════════════════════════════════
+                           ORDEM SUGERIDA
+════════════════════════════════════════════════════════════════════════════════
+
+📅 Para não perder muito tempo, faça nesta ordem:
+
+  1️⃣  Telegram (5 min)          ⭐ COMECE POR AQUI - Mais rápido
+  2️⃣  Email/SendGrid (10 min)   - Também rápido
+  3️⃣  WhatsApp (15 min)          - Um pouco mais complexo
+  4️⃣  Instagram/Facebook (10 min) - Mesma plataforma que WhatsApp
+
+  ⏱️  Total: ~40 minutos
+
+
+════════════════════════════════════════════════════════════════════════════════
+                      DEPOIS DE ADICIONAR OS TOKENS
+════════════════════════════════════════════════════════════════════════════════
+
+Após completar:
+
+1. ✅ Todos os tokens estão no Railway
+
+2. ⏳ Aguarde 2-5 minutos para aplicação reiniciar
+   
+3. 🔍 Verifique o status:
+
+   bash check_railway_config.sh
+
+   Você deve ver:
+   
+   ✅ Canais configurados: 4/4
+
+4. 🧪 Teste os canais:
+
+   python3 test_crm_complete.py
+
+   Resultado esperado:
+   ✅ 6/6 testes PASSANDO (era 5/6 antes)
+
+5. 🚀 Use a API:
+
+   curl -X POST https://api.nexuscrm.tech/api/send-message \
+     -H 'Content-Type: application/json' \
+     -d '{
+       "channel": "telegram",
+       "destination": "seu_chat_id",
+       "text": "Olá! Sistema funcionando!" 
+     }'
+
+
+════════════════════════════════════════════════════════════════════════════════
+                    CHECKLIST FINAL (ANTES DE COMEÇAR)
+════════════════════════════════════════════════════════════════════════════════
+
+Antes de executar o script, tenha em mãos:
+
+☐ Telegram:
+  □ Chat aberto com @BotFather
+  □ Bot criado (/newbot)
+  □ Token copiado
+
+☐ Email (SendGrid - FÁCIL):
+  □ Conta criada em https://sendgrid.com/
+  □ Email verificado
+  □ API Key gerada
+
+☐ WhatsApp (OPCIONAL por enquanto):
+  □ Conta Meta developers criada
+  □ App Business criado
+  □ WhatsApp API configurada
+  □ Token gerado
+
+☐ Instagram/Facebook (OPCIONAL por enquanto):
+  □ Mesma conta Meta que WhatsApp
+  □ Business ID obtido
+
+✅ Se apenas Telegram + Email estão prontos, é SUFICIENTE para começar!
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        PASSO A PASSO FINAL
+════════════════════════════════════════════════════════════════════════════════
+
+PASSO 1: Obter os tokens
+─────────────────────────────────────────────────
+Leia: GUIA_OBTER_TOKENS.txt
+(Recomendado: comece por Telegram - mais fácil)
+
+Tempo: 5-40 minutos (depende de quantos canais quer)
+
+
+PASSO 2: Adicionar no Railway
+─────────────────────────────────────────────────
+Escolha UMA opção:
+
+Opção A (Recomendado):
+  bash setup_railway_tokens.sh
+
+  Ele perguntará cada token e adicionará automaticamente
+
+Opção B (Manual):
+  1. https://railway.app/
+  2. Seu projeto → Variables
+  3. New Variable
+  4. Colar cada token
+
+Tempo: 5-10 minutos
+
+
+PASSO 3: Aguardar deploy
+─────────────────────────────────────────────────
+A aplicação reinicia com os novos tokens
+
+Tempo: 2-5 minutos
+
+Verificar status:
+  https://railway.app/ → seu projeto → Deployments
+
+
+PASSO 4: Testar
+─────────────────────────────────────────────────
+Execute:
+  bash check_railway_config.sh
+
+Esperado: Deve mostrar quantos canais estão "✅"
+
+Se quiser teste completo:
+  python3 test_crm_complete.py
+
+
+PASSO 5: Usar!
+─────────────────────────────────────────────────
+Sua API multi-canal está pronta!
+
+Exemplos:
+
+  # Enviar por Telegram
+  curl -X POST https://api.nexuscrm.tech/api/send-message \
+    -H 'Content-Type: application/json' \
+    -d '{"channel":"telegram","destination":"123456","text":"Oi!"}'
+
+  # Criar um lead
+  curl -X POST https://api.nexuscrm.tech/api/leads \
+    -H 'Content-Type: application/json' \
+    -d '{"user_id":"empresa1","name":"João","value":5000}'
+
+  # Listar leads
+  curl https://api.nexuscrm.tech/api/leads
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          DOCUMENTAÇÃO COMPLETA
+════════════════════════════════════════════════════════════════════════════════
+
+Para referência rápida, use:
+
+  📚 GUIA_OBTER_TOKENS.txt
+     ├─ Onde obter cada token
+     ├─ Instruções passo a passo
+     └─ Troubleshooting
+
+  🚀 QUICKSTART_AGORA.txt
+     ├─ Começar em 2 minutos
+     ├─ Todos os endpoints
+     └─ Scripts prontos
+
+  📖 CRM_API_DOCUMENTATION.txt
+     ├─ Documentação técnica completa
+     ├─ Exemplos de curl
+     └─ Fluxos de exemplo
+
+  ✅ test_crm_complete.py
+     ├─ Suite de testes automatizados
+     └─ Executa tudo de uma vez
+
+
+════════════════════════════════════════════════════════════════════════════════
+                      PRÓXIMOS COMANDOS
+════════════════════════════════════════════════════════════════════════════════
+
+Para começar AGORA, copie e execute:
+
+
+1️⃣ VER ESTE ARQUIVO:
+   cat GUIA_OBTER_TOKENS.txt
+
+2️⃣ EXECUTAR SETUP:
+   bash setup_railway_tokens.sh
+
+3️⃣ VERIFICAR:
+   bash check_railway_config.sh
+
+4️⃣ TESTAR:
+   python3 test_crm_complete.py
+
+
+════════════════════════════════════════════════════════════════════════════════
+                        🎉 VAMO COMEÇAR!
+════════════════════════════════════════════════════════════════════════════════
+
+Seu sistema está pronto!
+
+Próximo passo: adicione os tokens usando:
+
+   bash setup_railway_tokens.sh
+
+Em menos de 1 hora você terá um CRM multi-canal 100% funcional!
+
+════════════════════════════════════════════════════════════════════════════════
+
+Dúvidas em qualquer etapa?
+
+Verifique:
+  1. GUIA_OBTER_TOKENS.txt (como obter tokens)
+  2. SISTEMA_PRONTO.txt (troubleshooting)
+  3. https://api.nexuscrm.tech/docs (API interativa)
+
+════════════════════════════════════════════════════════════════════════════════

@@ -252,6 +252,13 @@ except Exception as e:
     logger.warning(f"⚠ CRM router not available: {e}")
 
 try:
+    from vexus_crm.admin.routes import router as admin_router
+    app.include_router(admin_router)
+    logger.info("✅ Admin router loaded - Dashboard, Login, Token Management")
+except Exception as e:
+    logger.warning(f"⚠ Admin router not available: {e}")
+
+try:
     # Simple agents router for testing
     from fastapi import APIRouter
     agents_router = APIRouter(prefix="/api/agents", tags=["Agents"])
@@ -1182,6 +1189,22 @@ async def metrics():
 """
 
     return Response(content=metrics_data, media_type="text/plain")
+
+
+# Public routes for admin portal
+@app.get("/login")
+async def login_page():
+    """Página de Login/Registro"""
+    from vexus_crm.admin.routes import LOGIN_HTML
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(content=LOGIN_HTML)
+
+@app.get("/dashboard")
+async def dashboard_page():
+    """Painel de Controle do Cliente"""
+    from vexus_crm.admin.routes import DASHBOARD_HTML
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(content=DASHBOARD_HTML)
 
 
 # SPA fallback route DISABLED - removed to prevent catching "/" path

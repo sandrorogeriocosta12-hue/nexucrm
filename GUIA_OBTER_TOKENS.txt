@@ -1,0 +1,316 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║            📖 GUIA COMPLETO - ONDE OBTER CADA TOKEN/CREDENCIAL              ║
+║                                                                              ║
+║                 Como configurar todos os 4 canais de comunicação            ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+🟢 WHATSAPP BUSINESS API (Meta)
+═════════════════════════════════════════════════════════════════════════════
+
+Tempo esperado: 15 minutos
+Custo: Gratuito (primeiros 1.000 mensagens/mês)
+Documentação oficial: https://developers.facebook.com/docs/whatsapp
+
+
+PASSO 1: Criar uma conta Meta para Desenvolvadores
+─────────────────────────────────────────────────────────────────────────
+1. Acesse: https://developers.facebook.com/
+2. Click em "Get Started"
+3. Crie uma conta Meta ou use existente
+4. Confirme seu email
+
+
+PASSO 2: Criar um App
+─────────────────────────────────────────────────────────────────────────
+1. Dashboard → "My Apps" → "Create App"
+2. Escolha tipo: "Business"
+3. Nome do app: "Nexus CRM" (ou similar)
+4. Preencha os dados solicitados
+
+
+PASSO 3: Configurar WhatsApp
+─────────────────────────────────────────────────────────────────────────
+1. Na página do seu app → "Add Product"
+2. Procure por "WhatsApp" → Click "Setup"
+3. Selecione sua conta WhatsApp Business Account
+   (Se não tiver, crie em: https://business.facebook.com/)
+
+
+PASSO 4: Obter os Tokens
+─────────────────────────────────────────────────────────────────────────
+1. Vá em: WhatsApp → API Setup
+2. Copie: "Phone Number ID" → WHATSAPP_PHONE_ID
+3. Clique em: "Generate Access Token"
+4. Copie o token → WHATSAPP_ACCESS_TOKEN
+5. (Opcional) Copie "Business Account ID" → WHATSAPP_BUSINESS_ID
+
+
+EXEMPLO:
+  WHATSAPP_ACCESS_TOKEN=EAABssdEjTZB0BOZBjJHnXFG...
+  WHATSAPP_PHONE_ID=123456789
+  WHATSAPP_BUSINESS_ID=987654321
+
+
+🤖 TELEGRAM BOT API
+═════════════════════════════════════════════════════════════════════════════
+
+Tempo esperado: 5 minutos
+Custo: Completamente grátis
+Documentação oficial: https://core.telegram.org/bots
+
+
+PASSO 1: Abra o Telegram
+─────────────────────────────────────────────────────────────────────────
+1. Abra o Telegram (app ou web)
+2. Na barra de busca procure por: @BotFather
+3. Clique no resultado ou use este link: https://t.me/botfather
+
+
+PASSO 2: Criar um Bot
+─────────────────────────────────────────────────────────────────────────
+1. Chat com @BotFather:
+   
+   /newbot
+
+2. O BotFather pedirá:
+   a) "What should your bot be called?" 
+      → Responda: Nexus CRM Bot
+   
+   b) "Give your bot a username. It must end with 'bot'."
+      → Responda: nexus_crm_bot (ou outro nome único)
+
+3. Pronto! Você receberá algo como:
+
+   "Congratulations on your new bot. Here are your bot's details:
+    
+    Telegram token: 1234567890:ABCDEFghijklmnopqrstuvwxyz..."
+
+
+PASSO 3: Copiar o Token
+─────────────────────────────────────────────────────────────────────────
+1. O token aparece na mensagem do BotFather
+2. Copie: 1234567890:ABCDEFghijklmnopqrstuvwxyz...
+3. Este é seu TELEGRAM_BOT_TOKEN
+
+
+OPCIONAL: Configurar Webhook
+─────────────────────────────────────────────────────────────────────────
+Para receber messages em tempo real:
+
+  /setwebhook
+  https://api.nexuscrm.tech/api/webhooks/telegram
+
+
+EXEMPLO:
+  TELEGRAM_BOT_TOKEN=1234567890:ABCDEFghijklmnopqrstuvwxyz
+
+
+📧 EMAIL (SendGrid)
+═════════════════════════════════════════════════════════════════════════════
+
+Tempo esperado: 10 minutos
+Custo: Gratuito até 100 emails/dia
+Documentação oficial: https://sendgrid.com/docs/
+
+
+PASSO 1: Criar Conta SendGrid
+─────────────────────────────────────────────────────────────────────────
+1. Acesse: https://sendgrid.com/
+2. Click em "Sign Up" ou "Get Started"
+3. Preencha formulário (email, senha, etc)
+4. Verifique seu email
+5. Selecione plano "Free Tier" (100 emails/dia)
+
+
+PASSO 2: Obter API Key
+─────────────────────────────────────────────────────────────────────────
+1. Login no SendGrid dashboard
+2. Vá em: Settings → API Keys
+3. Click em "Create API Key"
+4. Nomeie: "Nexus CRM"
+5. Selecione: "Full Access" (ou Custom)
+6. Click "Create & View"
+7. Copie a chave (aparece apenas uma vez!)
+   → Este é seu SENDGRID_API_KEY
+
+
+PASSO 3: Configurar Email de Envio
+─────────────────────────────────────────────────────────────────────────
+1. No SendGrid dashboard → Settings → Sender Authentication
+2. Verificar "Single Sender" com um email seu
+   (ou domínio se tiver configurado)
+3. Copie o email verificado
+   → Este é seu EMAIL_FROM
+
+Exemplo: noreply@seudominio.com ou seu-email@gmail.com
+
+
+EXEMPLO:
+  SENDGRID_API_KEY=SG.sk_live_abcdef123456...
+  EMAIL_FROM=seu-email@seudominio.com
+
+
+📸 INSTAGRAM / 🔵 FACEBOOK (Meta)
+═════════════════════════════════════════════════════════════════════════════
+
+Tempo esperado: 20 minutos
+Custo: Gratuito
+Documentação oficial: https://developers.facebook.com/docs/instagram-api
+
+
+PASSO 1: Setup (Mesmo que WhatsApp)
+─────────────────────────────────────────────────────────────────────────
+1. Acesse: https://developers.facebook.com/
+2. Crie/use app Business
+3. Adicione produto "Instagram"
+
+
+PASSO 2: Configurar Instagram
+─────────────────────────────────────────────────────────────────────────
+1. Na página do app → Instagram → API Setup
+2. Selecione sua conta Instagram
+3. Obtenha: "Instagram Business ID" → INSTAGRAM_BUSINESS_ID
+4. Copie o mesmo Access Token de WhatsApp → META_BUSINESS_TOKEN
+
+
+PASSO 3: Configurar Facebook (Optional)
+─────────────────────────────────────────────────────────────────────────
+Se usar Facebook Messenger:
+
+1. App → Add Product → Facebook
+2. Settings → Basic → App ID e App Secret
+3. Vá em: Messenger → Settings
+4. Copie: "Page Access Token" → FACEBOOK_PAGE_ID (ou use ID da página)
+
+
+EXEMPLO:
+  META_BUSINESS_TOKEN=EAABssdEjTZB0BOZBjJHnXFG... (mesmo de WhatsApp)
+  INSTAGRAM_BUSINESS_ID=123456789
+  FACEBOOK_PAGE_ID=987654321
+
+
+════════════════════════════════════════════════════════════════════════════════
+                    COMO ADICIONAR NO RAILWAY
+════════════════════════════════════════════════════════════════════════════════
+
+MÉTODO 1: Via Web Dashboard (Mais fácil)
+─────────────────────────────────────────────────────────────────────────
+1. Acesse: https://railway.app/
+2. Login com sua conta GitHub
+3. Vá em seu projeto "Nexus CRM"
+4. Click em "Variables"
+5. Click em "New Variable"
+6. Adicione cada token:
+
+   Nome: WHATSAPP_ACCESS_TOKEN
+   Valor: EAABssdEjTZB0BOZBjJHnX...
+   
+7. Repita para cada variável
+8. Deploy automático acontece automaticamente
+
+
+MÉTODO 2: Via CLI (Mais rápido)
+─────────────────────────────────────────────────────────────────────────
+Execute este script (já preparado):
+
+  bash setup_railway_tokens.sh
+
+Ele vai:
+1. Pedir cada token interativamente
+2. Adicionar automaticamente via Railway CLI
+3. Iniciar deploy automático
+4. Você só precisa dos tokens!
+
+
+MÉTODO 3: Manualmente via Terminal
+─────────────────────────────────────────────────────────────────────────
+railway login
+
+railway variables set \
+  WHATSAPP_ACCESS_TOKEN="seu_token_aqui" \
+  WHATSAPP_PHONE_ID="seu_id_aqui" \
+  TELEGRAM_BOT_TOKEN="seu_token_aqui" \
+  SENDGRID_API_KEY="sua_key_aqui" \
+  EMAIL_FROM="seu-email@dominio.com" \
+  META_BUSINESS_TOKEN="seu_token_meta" \
+  INSTAGRAM_BUSINESS_ID="seu_id_insta" \
+  FACEBOOK_PAGE_ID="seu_id_fb"
+
+
+════════════════════════════════════════════════════════════════════════════════
+                           VERIFICAR CONFIGURAÇÃO
+════════════════════════════════════════════════════════════════════════════════
+
+Após adicionar todos os tokens, verifique que tudo está funcionando:
+
+1. Aguarde 2-5 minutos para o deploy completar:
+   https://railway.app/ → seu projeto → Deployments
+
+2. Teste o status dos canais:
+   curl https://api.nexuscrm.tech/integrations/status
+
+   Você deve ver:
+   "configured": true   ← para cada canal com token
+
+3. Teste enviar uma mensagem:
+   curl -X POST https://api.nexuscrm.tech/api/send-message \
+     -H 'Content-Type: application/json' \
+     -d '{
+       "channel": "whatsapp",
+       "destination": "5511999999999",
+       "text": "Teste!"
+     }'
+
+4. Ou execute a suite de testes completa:
+   python3 test_crm_complete.py
+
+
+════════════════════════════════════════════════════════════════════════════════
+                            ORDEM RECOMENDADA
+════════════════════════════════════════════════════════════════════════════════
+
+Se está com pressa, por ordem de facilidade:
+
+1️⃣  Telegram (5 min)        - Mais rápido, só precisa conversar com @BotFather
+2️⃣  Email SendGrid (10 min)  - Rápido, conta gratuita simples
+3️⃣  WhatsApp (15 min)        - Precisa verificar documentos no Facebook
+4️⃣  Instagram/Facebook       - Mesmo processo que WhatsApp
+
+Total: ~40 minutos para configurar tudo!
+
+
+════════════════════════════════════════════════════════════════════════════════
+                      DÚVIDAS E TROUBLESHOOTING
+════════════════════════════════════════════════════════════════════════════════
+
+❓ "Invalid token" quando envio mensagem
+   → Verifique que o token está correto (sem espaços)
+   → Aguarde 2-5 min após adicionar no Railway
+
+❓ WhatsApp não funciona mesmo com token correto
+   → Confirme que a conta WhatsApp Business está ativa
+   → Verifique permissões na conta Meta
+
+❓ Telegram não recebe mensagens do webhook
+   → É só se quiser webhooks (opcional)
+   → Mensagens via /api/send-message funcionam sem webhook
+
+❓ Email não envia
+   → Verifique que o EMAIL_FROM está verificado no SendGrid
+   → Confirme que SENDGRID_API_KEY está correto
+
+❓ Não lembro qual token é qual
+   → Todos aparecem em: https://api.nexuscrm.tech/integrations/status
+   → Mostra qual está "configured": true ou false
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+Após completar esse guia, você terá um CRM multi-canal 100% funcional!
+
+Boa sorte! 🚀
+
+════════════════════════════════════════════════════════════════════════════════
