@@ -1,7 +1,7 @@
 """
 Vexus CRM - Professional FastAPI Server
 Enterprise-ready with security, monitoring, and production features
-v1.2.1 - Deployed with Settings, confirm password, and BRL pricing
+v1.3.0 - CRM APIs + Multi-Channel Integrations (WhatsApp, Telegram, Email, Instagram, Facebook)
 """
 
 from fastapi import FastAPI, Request, HTTPException
@@ -243,6 +243,13 @@ try:
     logger.info("✓ Knowledge Lab router loaded")
 except Exception as e:
     logger.warning(f"⚠ Knowledge Lab router not available: {e}")
+
+try:
+    from vexus_crm.routes.crm import router as crm_router
+    app.include_router(crm_router)
+    logger.info("✅ CRM router loaded - Leads, Campaigns, Contacts, Webhooks, Multi-Channel")
+except Exception as e:
+    logger.warning(f"⚠ CRM router not available: {e}")
 
 try:
     # Simple agents router for testing
@@ -866,6 +873,35 @@ async def metrics():
     }
 
 
+@app.get("/integrations/status", tags=["Integrations"])
+async def integrations_status():
+    """
+    🔗 Status de todas as integrações de canais de comunicação
+    Retorna quais canais estão configurados (WhatsApp, Telegram, Email, Instagram, Facebook)
+    """
+    try:
+        from vexus_crm.integrations.channels import channel_connector
+        return {
+            "status": "online",
+            "channels": channel_connector.get_status(),
+            "endpoints": {
+                "send_message": "POST /api/send-message",
+                "webhook_whatsapp": "POST /api/webhooks/whatsapp",
+                "webhook_telegram": "POST /api/webhooks/telegram",
+                "webhook_instagram": "POST /api/webhooks/instagram",
+                "channels_status": "GET /api/channels/status"
+            },
+            "documentation": "Use POST /api/send-message para enviar mensagens em qualquer canal"
+        }
+    except Exception as e:
+        logger.warning(f"⚠ Erro ao obter status de integrações: {e}")
+        return {
+            "status": "error",
+            "message": "Integrações não disponíveis",
+            "error": str(e)
+        }
+
+
 # ============================================================================
 # 📄 FRONTEND ROUTES
 # ============================================================================
@@ -1059,7 +1095,14 @@ async def dashboard():
         with open(dashboard_path, "r", encoding="utf-8") as f:
             content = f.read()
         from fastapi.responses import HTMLResponse
-        return HTMLResponse(content=content)
+        return HTMLResponse(
+            content=content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
     return {"error": "Dashboard not found"}
 
 
