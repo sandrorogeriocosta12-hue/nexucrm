@@ -577,9 +577,9 @@
                 }
 
                 // Store user info for dashboard
-                const email = document.getElementById('contactEmail').value;
-                sessionStorage.setItem('user_email', email);
-                localStorage.setItem('user_email', email);
+                const userEmail = document.getElementById('contactEmail').value;
+                sessionStorage.setItem('user_email', userEmail);
+                localStorage.setItem('user_email', userEmail);
 
                 showSuccess();
                 setTimeout(() => {
