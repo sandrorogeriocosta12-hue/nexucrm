@@ -424,6 +424,374 @@ async def terms_page(request: Request):
     return HTMLResponse("<h2>❌ Terms of service not found</h2>", status_code=404)
 
 
+@app.get("/payment", response_class=HTMLResponse)
+async def payment_page(request: Request):
+    """💳 Serve payment.html - Payment and plan selection page"""
+    payment_file = os.path.join(frontend_path, "payment.html")
+    
+    if os.path.exists(payment_file):
+        logger.info(f"✅ Serving payment.html from {payment_file}")
+        with open(payment_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        return HTMLResponse(
+            content=content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    
+    logger.warning(f"❌ payment.html not found at {payment_file}")
+    return HTMLResponse("<h2>❌ Payment page not found</h2>", status_code=404)
+
+
+# ============================================================================
+# � AUTHENTICATION API ENDPOINTS
+# ============================================================================
+
+@app.post("/api/auth/signup")
+async def signup(request: Request):
+    """
+    Signup endpoint - Create new user account
+    Expected payload: {
+        "name": "Full Name",
+        "email": "user@email.com",
+        "password": "secure123",
+        "company": "Company Name",
+        "plan": "starter|professional|premium"
+    }
+    """
+    try:
+        data = await request.json()
+        logger.info(f"🚀 Signup request: {data.get('email', 'unknown')}")
+        
+        # Validate required fields
+        name = data.get("name")
+        email = data.get("email")
+        password = data.get("password")
+        company = data.get("company", "")
+        plan = data.get("plan", "professional")
+        
+        if not all([name, email, password]):
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "detail": "Nome, email e senha são obrigatórios"
+                }
+            )
+        
+        # Basic email validation
+        if "@" not in email or "." not in email:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "detail": "Email inválido"
+                }
+            )
+        
+        # Validate plan
+        valid_plans = ["starter", "professional", "premium"]
+        if plan not in valid_plans:
+            plan = "professional"
+        
+        # TODO: Check if user already exists in database
+        # TODO: Hash password and store in database
+        # For now, we'll mock this
+        
+        logger.info(f"✅ Signup successful: {email}, Plan: {plan}")
+        
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": "Conta criada com sucesso! Redirecionando para contato...",
+                "user": {
+                    "email": email,
+                    "name": name,
+                    "plan": plan,
+                    "sobrenome": data.get("sobrenome", "")
+                },
+                "redirect": f"/payment?email={email}&name={name}&plan={plan}"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Signup error: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "detail": "Erro ao criar conta. Tente novamente."
+            }
+        )
+
+
+# ============================================================================
+# �💳 PAYMENT API ENDPOINTS
+# ============================================================================
+
+@app.post("/api/payment/subscribe")
+async def process_payment_subscription(request: Request):
+    """
+    Process payment subscription after plan selection
+    Expected JSON payload:
+    {
+        "plan": "starter|professional|premium",
+        "payment_method": "card|boleto",
+        "cnpj": "optional CNPJ for boleto payments",
+        "card_data": {optional card details for card payments}
+    }
+    """
+    try:
+        data = await request.json()
+        logger.info(f"💳 Processing payment subscription: {data.get('plan', 'unknown')}")
+
+        # Validate required fields
+        plan = data.get("plan")
+        payment_method = data.get("payment_method")
+
+        if not plan or not payment_method:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "error": "Plano e método de pagamento são obrigatórios"
+                }
+            )
+
+        # Validate plan
+        valid_plans = ["starter", "professional", "premium"]
+        if plan not in valid_plans:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "error": f"Plano inválido. Opções: {', '.join(valid_plans)}"
+                }
+            )
+
+        # Validate payment method
+        valid_methods = ["card", "boleto"]
+        if payment_method not in valid_methods:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "error": f"Método de pagamento inválido. Opções: {', '.join(valid_methods)}"
+                }
+            )
+
+        # Validate CNPJ for boleto payments
+        if payment_method == "boleto":
+            cnpj = data.get("cnpj", "").strip()
+            if not cnpj:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "error": "CNPJ é obrigatório para pagamentos via boleto"
+                    }
+                )
+            # Basic CNPJ validation (remove formatting and check length)
+            cnpj_clean = ''.join(filter(str.isdigit, cnpj))
+            if len(cnpj_clean) != 14:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "error": "CNPJ deve ter 14 dígitos"
+                    }
+                )
+
+        # TODO: Integrate with actual payment gateway (Stripe, PagSeguro, etc.)
+        # For now, simulate successful payment processing
+        logger.info(f"✅ Payment processed successfully for plan: {plan}, method: {payment_method}")
+
+        # Mock payment processing delay
+        import asyncio
+        await asyncio.sleep(1)
+
+        # Return success response
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": "Pagamento processado com sucesso!",
+                "subscription": {
+                    "plan": plan,
+                    "payment_method": payment_method,
+                    "status": "active",
+                    "next_billing": "2024-02-01"  # Mock date
+                },
+                "redirect_url": "/dashboard"
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Payment processing error: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": "Erro interno no processamento do pagamento"
+            }
+        )
+
+
+@app.post("/api/payment/process")
+async def process_payment(request: Request):
+    """
+    Complete payment processing with contact info and notification
+    Expected payload:
+    {
+        "plan": "starter|professional|premium",
+        "payment_method": "card|boleto|pix",
+        "email": "user@email.com",
+        "whatsapp": "+55 11 99999-9999",
+        "contact_preference_email": true/false,
+        "contact_preference_whatsapp": true/false,
+        "card_name": "João Silva" (if card),
+        "card_number": "4532..." (if card),
+        "cnpj": "00.000.000/0000-00" (if boleto),
+        "company": "Empresa XYZ" (if boleto)
+    }
+    """
+    try:
+        data = await request.json()
+        logger.info(f"💳 Processing payment with contact info: {data.get('email')}")
+
+        # Validate required fields
+        plan = data.get("plan")
+        payment_method = data.get("payment_method")
+        email = data.get("email", "").strip()
+        whatsapp = data.get("whatsapp", "").strip()
+
+        # Validate plan
+        valid_plans = ["starter", "professional", "premium"]
+        if plan not in valid_plans:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "detail": f"Plano inválido: {plan}"}
+            )
+
+        # Validate payment method
+        valid_methods = ["card", "boleto", "pix"]
+        if payment_method not in valid_methods:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "detail": f"Método inválido: {payment_method}"}
+            )
+
+        # Validate email
+        if not email or "@" not in email:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "detail": "Email válido é obrigatório"}
+            )
+
+        # Validate card if card payment
+        if payment_method == "card":
+            card_name = data.get("card_name", "").strip()
+            card_number = data.get("card_number", "").strip()
+            card_cvv = data.get("card_cvv", "").strip()
+            
+            if not card_name:
+                return JSONResponse(
+                    status_code=400,
+                    content={"success": False, "detail": "Nome do titular é obrigatório"}
+                )
+            if not card_number or len(card_number) < 13:
+                return JSONResponse(
+                    status_code=400,
+                    content={"success": False, "detail": "Número do cartão inválido"}
+                )
+            if not card_cvv or len(card_cvv) < 3:
+                return JSONResponse(
+                    status_code=400,
+                    content={"success": False, "detail": "CVV inválido"}
+                )
+
+        # Validate CNPJ if boleto payment
+        elif payment_method == "boleto":
+            cnpj = data.get("boleto_cnpj") or data.get("cnpj", "")
+            cnpj = cnpj.strip()
+            cnpj_clean = ''.join(filter(str.isdigit, cnpj))
+            
+            if len(cnpj_clean) != 14:
+                return JSONResponse(
+                    status_code=400,
+                    content={"success": False, "detail": "CNPJ deve ter 14 dígitos"}
+                )
+
+        # Store contact preferences
+        contact_by_email = data.get("contact_preference_email", True)
+        contact_by_whatsapp = data.get("contact_preference_whatsapp", False)
+
+        # Log the payment
+        payment_log = {
+            "plan": plan,
+            "payment_method": payment_method,
+            "email": email,
+            "whatsapp": whatsapp if contact_by_whatsapp else None,
+            "contact_by_email": contact_by_email,
+            "contact_by_whatsapp": contact_by_whatsapp,
+            "timestamp": str(datetime.now())
+        }
+
+        logger.info(f"💳 Payment Details: {payment_log}")
+
+        # Simulate payment processing
+        import asyncio
+        await asyncio.sleep(0.5)
+
+        # Send confirmation to customer based on preferences
+        notification_message = f"""
+        ✅ Pagamento Recebido!
+
+        Plano: {plan.upper()}
+        Método: {payment_method.upper()}
+        Email: {email}
+        Status: ATIVO
+
+        Você receberá em breve um email com os dados de acesso à plataforma.
+        """
+
+        logger.info(f"📧 Sending notification to: {email}")
+        if contact_by_whatsapp and whatsapp:
+            logger.info(f"📱 Also sending WhatsApp to: {whatsapp}")
+
+        # Return success
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": "Pagamento processado com sucesso!",
+                "subscription": {
+                    "plan": plan,
+                    "payment_method": payment_method,
+                    "status": "active",
+                    "next_billing": "2024-04-30",
+                    "email": email
+                },
+                "notification": {
+                    "email_sent": contact_by_email,
+                    "whatsapp_sent": contact_by_whatsapp
+                }
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"❌ Payment processing error: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "detail": f"Erro ao processar pagamento: {str(e)}"
+            }
+        )
+
+
 # Mount static files (frontend)
 if os.path.exists(frontend_path):
     try:

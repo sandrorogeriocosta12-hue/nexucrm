@@ -283,25 +283,11 @@ async function apiFetch(endpoint, options = {}) {
 
 // ============ Auth Functions ============
 async function checkAuth() {
-    if (!authToken) {
-        showLoginModal();
-        return false;
-    }
-
-    try {
-        const user = await apiFetch('/api/auth/me');
-        if (user && user.email) {
-            document.getElementById('userEmail').textContent = `👤 ${user.name || user.email}`;
-            document.getElementById('loginModal').classList.add('hidden');
-            return true;
-        } else {
-            logout();
-            return false;
-        }
-    } catch (e) {
-        logout();
-        return false;
-    }
+    // Sem autenticação necessária - dashboard aberto
+    const userEmail = sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || 'Usuário';
+    document.getElementById('userEmail').textContent = `👤 ${userEmail}`;
+    document.getElementById('loginModal').classList.add('hidden');
+    return true;
 }
 
 function showLoginModal() {

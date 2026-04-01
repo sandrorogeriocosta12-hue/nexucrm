@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Processamento de Pagamento - Nexus Service</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0F172A 0%, #1a1f3a 50%, #0F172A 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10B981;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-message h3 {
+            color: #10B981;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .section {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            color: #E2E8F0;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #64748B;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .input-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .payment-method {
+            background: rgba(51, 65, 85, 0.5);
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .payment-method:hover,
+        .payment-method.selected {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .payment-method-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .payment-method-name {
+            color: white;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .visible {
+            display: block;
+        }
+
+        .plan-summary {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-summary-item {
+            display: flex;
+            justify-content: space-between;
+            color: #E2E8F0;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-summary-item strong {
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #8b5cf6;
+            color: #8b5cf6;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #EF4444;
+            color: #FCA5A5;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .section {
+                padding: 1.5rem;
+            }
+
+            .input-row, .input-row-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back link -->
+        <a href="/signup" style="color: #8b5cf6; text-decoration: none; font-weight: 500; margin-bottom: 1rem; display: inline-block;">← Voltar</a>
+
+        <!-- Title -->
+        <h1 style="text-align: center; font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem;">
+            Finalize seu Pagamento
+        </h1>
+        <p style="text-align: center; color: #94A3B8; margin-bottom: 2rem;">
+            Escolha a forma de pagamento e complete seu cadastro
+        </p>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error">
+            <strong>Erro:</strong> <span id="errorText"></span>
+        </div>
+
+        <!-- Success Message -->
+        <div id="successMessage" class="success-message">
+            <h3>✅ Pagamento Processado com Sucesso!</h3>
+            <p id="successText">Redirecionando para o dashboard...</p>
+        </div>
+
+        <!-- Plan Summary -->
+        <div class="section">
+            <div class="section-title">📋 Resumo do seu Pedido</div>
+            <div class="plan-summary">
+                <div class="plan-summary-item">
+                    <span>Plano Selecionado:</span>
+                    <strong id="summaryPlan">Professional</strong>
+                </div>
+                <div class="plan-summary-item">
+                    <span>Valor Mensal:</span>
+                    <strong id="summaryPrice">R$ 1.800</strong>
+                </div>
+                <div class="plan-summary-item">
+                    <span>Forma de Pagamento:</span>
+                    <strong id="summaryMethod">-</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Method Selection -->
+        <div class="section">
+            <div class="section-title">💳 Forma de Pagamento</div>
+            <div class="payment-methods">
+                <div class="payment-method selected" data-method="card" onclick="selectPaymentMethod('card')">
+                    <div class="payment-method-icon">💳</div>
+                    <div class="payment-method-name">Cartão</div>
+                </div>
+                <div class="payment-method" data-method="boleto" onclick="selectPaymentMethod('boleto')">
+                    <div class="payment-method-icon">📄</div>
+                    <div class="payment-method-name">Boleto</div>
+                </div>
+                <div class="payment-method" data-method="pix" onclick="selectPaymentMethod('pix')">
+                    <div class="payment-method-icon">⚡</div>
+                    <div class="payment-method-name">PIX</div>
+                </div>
+            </div>
+
+            <!-- Card Payment Form -->
+            <div id="cardForm">
+                <h3 style="color: white; margin-bottom: 1rem;">Dados do Cartão</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Nome do Titular</label>
+                    <input type="text" id="cardName" class="form-input" placeholder="João da Silva" maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Número do Cartão</label>
+                    <input type="text" id="cardNumber" class="form-input" placeholder="0000 0000 0000 0000" maxlength="19" inputmode="numeric">
+                </div>
+
+                <div class="input-row">
+                    <div class="form-group">
+                        <label class="form-label">Validade (MM/AA)</label>
+                        <input type="text" id="cardExpiry" class="form-input" placeholder="12/25" maxlength="5" inputmode="numeric">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CVV</label>
+                        <input type="text" id="cardCVV" class="form-input" placeholder="123" maxlength="4" inputmode="numeric">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boleto Form -->
+            <div id="boletoForm" class="hidden">
+                <h3 style="color: white; margin-bottom: 1rem;">Dados para Boleto</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">CNPJ da Empresa *</label>
+                    <input type="text" id="boletoFax" class="form-input" placeholder="00.000.000/0000-00" maxlength="18">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nome da Empresa</label>
+                    <input type="text" id="boletoCompany" class="form-input" placeholder="Sua Empresa Ltda">
+                </div>
+            </div>
+
+            <!-- PIX Form -->
+            <div id="pixForm" class="hidden">
+                <h3 style="color: white; margin-bottom: 1rem;">Confirmar PIX</h3>
+                <p style="color: #CBD5E1; margin-bottom: 1rem;">
+                    Você receberá o QR Code do PIX por email após confirmar. O pagamento será processado instantaneamente.
+                </p>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="section">
+            <div class="section-title">📞 Forma de Contato</div>
+            <p style="color: #CBD5E1; margin-bottom: 1.5rem;">Como você deseja receber confirmações e informações importantes sobre sua conta?</p>
+
+            <div class="input-row">
+                <div class="form-group">
+                    <label class="form-label">Email de Contato *</label>
+                    <input type="email" id="contactEmail" class="form-input" placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">WhatsApp (opcional)</label>
+                    <input type="tel" id="contactWhatsapp" class="form-input" placeholder="(11) 99999-9999">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; color: #E2E8F0; font-weight: 500; cursor: pointer;">
+                    <input type="checkbox" id="contactPreference" checked style="width: 20px; height: 20px; cursor: pointer;">
+                    Desejo receber atualizações por email
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; color: #E2E8F0; font-weight: 500; cursor: pointer;">
+                    <input type="checkbox" id="contactWhatsappCheck" style="width: 20px; height: 20px; cursor: pointer;">
+                    Autorizo contato via WhatsApp
+                </label>
+            </div>
+        </div>
+
+        <!-- Terms -->
+        <div class="section">
+            <label style="display: flex; align-items: flex-start; gap: 1rem; color: #E2E8F0; cursor: pointer;">
+                <input type="checkbox" id="termsCheck" style="width: 20px; height: 20px; margin-top: 2px; cursor: pointer;">
+                <span>
+                    Aceito os <a href="/terms" style="color: #8b5cf6; text-decoration: none;">Termos de Serviço</a> e 
+                    <a href="/privacy" style="color: #8b5cf6; text-decoration: none;">Política de Privacidade</a>
+                </span>
+            </label>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="button-group">
+            <button class="btn btn-secondary" onclick="window.location.href='/signup'">Cancelar</button>
+            <button id="submitBtn" class="btn btn-primary" onclick="processPayment()">Confirmar Pagamento</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedPaymentMethod = 'card';
+        let selectedPlan = 'professional';
+
+        const planPrices = {
+            starter: { name: '🚀 Starter', price: 'R$ 1.500' },
+            professional: { name: '💼 Professional', price: 'R$ 1.800' },
+            premium: { name: '🏆 Premium', price: 'R$ 2.000' }
+        };
+
+        // Initialize from localStorage
+        window.addEventListener('load', function() {
+            const plan = localStorage.getItem('selected_plan') || 'professional';
+            selectedPlan = plan;
+            updateSummary();
+        });
+
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+
+            // Update UI
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelector(`[data-method="${method}"]`).classList.add('selected');
+
+            // Hide all forms
+            document.getElementById('cardForm').classList.add('hidden');
+            document.getElementById('boletoForm').classList.add('hidden');
+            document.getElementById('pixForm').classList.add('hidden');
+
+            // Show selected form
+            if (method === 'card') {
+                document.getElementById('cardForm').classList.remove('hidden');
+            } else if (method === 'boleto') {
+                document.getElementById('boletoForm').classList.remove('hidden');
+            } else if (method === 'pix') {
+                document.getElementById('pixForm').classList.remove('hidden');
+            }
+
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const plan = planPrices[selectedPlan] || planPrices['professional'];
+            document.getElementById('summaryPlan').textContent = plan.name;
+            document.getElementById('summaryPrice').textContent = plan.price;
+            
+            let methodName = 'Cartão de Crédito';
+            if (selectedPaymentMethod === 'boleto') methodName = 'Boleto Bancário';
+            if (selectedPaymentMethod === 'pix') methodName = 'PIX';
+            document.getElementById('summaryMethod').textContent = methodName;
+        }
+
+        // Format card number
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '');
+            let formatted = value.replace(/(\d{4})/g, '$1 ').trim();
+            e.target.value = formatted.substring(0, 19);
+        });
+
+        // Format expiry
+        document.getElementById('cardExpiry').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+        });
+
+        // Format CNPJ
+        document.getElementById('boletoFax').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 2) {
+                e.target.value = value;
+            } else if (value.length <= 5) {
+                e.target.value = value.replace(/(\d{2})(\d+)/, '$1.$2');
+            } else if (value.length <= 8) {
+                e.target.value = value.replace(/(\d{2})(\d{3})(\d+)/, '$1.$2.$3');
+            } else {
+                e.target.value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d+)/, '$1.$2.$3/$4-$5');
+            }
+        });
+
+        function showError(message) {
+            document.getElementById('errorMessage').classList.add('show');
+            document.getElementById('errorText').textContent = message;
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        function showSuccess() {
+            document.getElementById('successMessage').classList.add('show');
+        }
+
+        async function processPayment() {
+            hideError();
+
+            // Validate contact info
+            const email = document.getElementById('contactEmail').value.trim();
+            if (!email || !email.includes('@')) {
+                showError('Email válido é obrigatório');
+                return;
+            }
+
+            // Validate terms
+            if (!document.getElementById('termsCheck').checked) {
+                showError('Você precisa aceitar os Termos de Serviço');
+                return;
+            }
+
+            // Validate payment method data
+            if (selectedPaymentMethod === 'card') {
+                if (!document.getElementById('cardName').value.trim()) {
+                    showError('Nome do titular é obrigatório');
+                    return;
+                }
+                if (!document.getElementById('cardNumber').value.trim() || document.getElementById('cardNumber').value.replace(/\s/g, '').length < 13) {
+                    showError('Número do cartão inválido');
+                    return;
+                }
+                if (!document.getElementById('cardExpiry').value.trim()) {
+                    showError('Data de validade é obrigatória');
+                    return;
+                }
+                if (!document.getElementById('cardCVV').value.trim() || document.getElementById('cardCVV').value.length < 3) {
+                    showError('CVV inválido');
+                    return;
+                }
+            } else if (selectedPaymentMethod === 'boleto') {
+                const cnpj = document.getElementById('boletoFax').value.replace(/\D/g, '');
+                if (cnpj.length !== 14) {
+                    showError('CNPJ deve ter 14 dígitos');
+                    return;
+                }
+            }
+
+            // Send payment data to backend
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processando...';
+
+            try {
+                const paymentData = {
+                    plan: selectedPlan,
+                    payment_method: selectedPaymentMethod,
+                    email: email,
+                    whatsapp: document.getElementById('contactWhatsapp').value.trim(),
+                    contact_preference_email: document.getElementById('contactPreference').checked,
+                    contact_preference_whatsapp: document.getElementById('contactWhatsappCheck').checked
+                };
+
+                // Add payment method specific data
+                if (selectedPaymentMethod === 'card') {
+                    paymentData.card_name = document.getElementById('cardName').value;
+                    paymentData.card_number = document.getElementById('cardNumber').value.replace(/\s/g, '');
+                    paymentData.card_expiry = document.getElementById('cardExpiry').value;
+                    paymentData.card_cvv = document.getElementById('cardCVV').value;
+                } else if (selectedPaymentMethod === 'boleto') {
+                    paymentData.cnpj = document.getElementById('boletoFax').value;
+                    paymentData.company = document.getElementById('boletoCompany').value;
+                }
+
+                const response = await fetch('/api/payment/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || data.error || 'Erro ao processar pagamento');
+                }
+
+                showSuccess();
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 3000);
+
+            } catch (error) {
+                showError(error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+    </script>
+</body>
+</html>

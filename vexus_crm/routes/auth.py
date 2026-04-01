@@ -105,6 +105,39 @@ def get_current_user(
     return user
 
 
+@router.post("/signup", response_model=UserOut, status_code=201)
+async def signup(user: UserCreate, db: Session = Depends(get_db)):
+    """
+    Signup endpoint - Frontend sends: name, email, password, company, plan
+    """
+    logger.info(f"🚀 Signup request: {user.email}")
+    
+    # Check if user already exists
+    existing = db.query(UserModel).filter(UserModel.email == user.email).first()
+    if existing:
+        logger.warning(f"❌ Email already registered: {user.email}")
+        raise HTTPException(status_code=400, detail="Email já está cadastrado")
+
+    # Hash password
+    hashed = get_password_hash(user.password)
+    
+    # Create new user with plan
+    db_user = UserModel(
+        email=user.email,
+        password_hash=hashed,
+        name=user.full_name,
+        role="user",
+        plan=user.plan or "professional",  # Default to professional
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+
+    logger.info(f"✅ User created successfully: {user.email}, Plan: {user.plan}")
+    
+    return db_user
+
+
 @router.post("/register", response_model=UserOut, status_code=201)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
     # check terms acceptance (legal requirement)

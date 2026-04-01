@@ -549,6 +549,38 @@
                         <span id="successText"></span>
                     </div>
 
+                    <!-- PLAN SELECTION -->
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label class="form-label">Escolha seu Plano</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                            <!-- Starter Plan -->
+                            <div class="plan-card" data-plan="starter" style="padding: 1rem; border: 2px solid rgba(51, 65, 85, 0.6); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s ease; background: rgba(15, 23, 42, 0.8);">
+                                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🚀</div>
+                                <div style="font-weight: 600; color: white; margin-bottom: 0.25rem;">Starter</div>
+                                <div style="font-size: 18px; font-weight: 700; color: #7C3AED; margin-bottom: 0.5rem;">R$ 1.000<span style="font-size: 12px;">/mês</span></div>
+                                <div style="font-size: 12px; color: #94a3b8;">Perfeito para começar</div>
+                            </div>
+
+                            <!-- Professional Plan -->
+                            <div class="plan-card" data-plan="professional" style="padding: 1rem; border: 2px solid #7C3AED; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s ease; background: rgba(124, 58, 237, 0.1); position: relative;">
+                                <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #1A56DB, #7C3AED); color: white; padding: 2px 12px; border-radius: 12px; font-size: 11px; font-weight: 600;">POPULAR</div>
+                                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⭐</div>
+                                <div style="font-weight: 600; color: white; margin-bottom: 0.25rem;">Professional</div>
+                                <div style="font-size: 18px; font-weight: 700; color: #7C3AED; margin-bottom: 0.5rem;">R$ 1.500<span style="font-size: 12px;">/mês</span></div>
+                                <div style="font-size: 12px; color: #94a3b8;">Mais usado</div>
+                            </div>
+
+                            <!-- Premium Plan -->
+                            <div class="plan-card" data-plan="premium" style="padding: 1rem; border: 2px solid rgba(51, 65, 85, 0.6); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s ease; background: rgba(15, 23, 42, 0.8);">
+                                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">👑</div>
+                                <div style="font-weight: 600; color: white; margin-bottom: 0.25rem;">Premium</div>
+                                <div style="font-size: 18px; font-weight: 700; color: #7C3AED; margin-bottom: 0.5rem;">R$ 2.000<span style="font-size: 12px;">/mês</span></div>
+                                <div style="font-size: 12px; color: #94a3b8;">Para crescer</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedPlan" value="professional">
+                    </div>
+
                     <form id="signupForm">
                         <div class="form-row">
                             <div class="form-group">
@@ -591,19 +623,53 @@
                                 id="company"
                                 class="form-input"
                                 placeholder="Nexus Ltda"
-                                required
                             >
                         </div>
 
                         <div class="form-group">
                             <label for="password" class="form-label">Senha</label>
-                            <input
-                                type="password"
-                                id="password"
-                                class="form-input"
-                                placeholder="Mínimo 6 caracteres"
-                                required
-                            >
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input
+                                    type="password"
+                                    id="password"
+                                    class="form-input"
+                                    placeholder="Mínimo 6 caracteres"
+                                    style="padding-right: 40px;"
+                                    required
+                                >
+                                <button 
+                                    type="button" 
+                                    id="togglePassword" 
+                                    style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 20px; padding: 0; margin: 0; color: #7C3AED;"
+                                    onclick="togglePasswordVisibility('password', 'togglePassword')"
+                                    tabindex="-1"
+                                >
+                                    👁️
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label">Confirmar Senha</label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input
+                                    type="password"
+                                    id="confirmPassword"
+                                    class="form-input"
+                                    placeholder="Confirme sua senha"
+                                    style="padding-right: 40px;"
+                                    required
+                                >
+                                <button 
+                                    type="button" 
+                                    id="toggleConfirmPassword" 
+                                    style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 20px; padding: 0; margin: 0; color: #7C3AED;"
+                                    onclick="togglePasswordVisibility('confirmPassword', 'toggleConfirmPassword')"
+                                    tabindex="-1"
+                                >
+                                    👁️
+                                </button>
+                            </div>
                         </div>
 
                         <div class="checkbox-group">
@@ -643,19 +709,28 @@
             const email = document.getElementById('email').value.trim();
             const company = document.getElementById('company').value.trim();
             const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
             const terms = document.getElementById('terms').checked;
 
             // Clear messages
             errorEl.classList.remove('show');
             successEl.classList.remove('show');
 
-            // Validation
-            if (!firstName || !lastName || !email || !company || !password) {
-                showError('Por favor, preencha todos os campos');
+            // Validation (company is optional)
+            if (!firstName || !lastName || !email || !password || !confirmPassword) {
+                showError('Por favor, preencha: Nome, Sobrenome, Email, Senha e Confirmar Senha');
                 return;
             }
 
-            if (!NexusUtils.isValidEmail(email)) {
+            // Check if passwords match
+            if (password !== confirmPassword) {
+                showError('As senhas não coincidem');
+                return;
+            }
+
+            // Simple email validation (regex instead of NexusUtils)
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
                 showError('Email inválido');
                 return;
             }
@@ -679,11 +754,12 @@
                 // Combine firstName and lastName into name, as backend expects
                 const fullName = `${firstName} ${lastName}`;
                 
-                // Get selected plan from URL or localStorage, default to professional
+                // Get selected plan from form, URL, or localStorage, default to professional
+                const formPlan = document.getElementById('selectedPlan').value;
                 const urlParams = new URLSearchParams(window.location.search);
                 const planFromUrl = urlParams.get('plan');
                 const planFromStorage = localStorage.getItem('selected_plan');
-                const selectedPlan = planFromUrl || planFromStorage || 'professional';
+                const selectedPlan = formPlan || planFromUrl || planFromStorage || 'professional';
                 
                 // Call signup API with plan
                 const response = await fetch('/api/auth/signup', {
@@ -703,10 +779,19 @@
                     throw new Error(data.detail || 'Erro ao criar conta');
                 }
 
-                showSuccess('Conta criada com sucesso! Redirecionando...');
+                const data = await response.json();
+                
+                // Store user info in sessionStorage for dashboard
+                sessionStorage.setItem('user_email', email);
+                sessionStorage.setItem('user_name', fullName);
+                sessionStorage.setItem('user_plan', selectedPlan);
+                localStorage.setItem('user_email', email);
+                localStorage.setItem('user_name', fullName);
+
+                showSuccess('Conta criada com sucesso! Redirecionando para seleção de pagamento...');
                 
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.href = '/payment';
                 }, 2000);
             } catch (error) {
                 showError(error.message || 'Erro ao criar conta. Tente novamente.');
@@ -737,6 +822,34 @@
             const plan = urlParams.get('plan');
             if (plan) {
                 localStorage.setItem('selected_plan', plan);
+            }
+
+            // Add plan card selection listeners
+            const planCards = document.querySelectorAll('.plan-card');
+            planCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove previous selection
+                    planCards.forEach(c => {
+                        c.style.borderColor = 'rgba(51, 65, 85, 0.6)';
+                        c.style.background = 'rgba(15, 23, 42, 0.8)';
+                    });
+                    
+                    // Highlight selected plan
+                    this.style.borderColor = '#7C3AED';
+                    this.style.background = 'rgba(124, 58, 237, 0.15)';
+                    
+                    // Set selected plan value
+                    const selectedPlan = this.getAttribute('data-plan');
+                    document.getElementById('selectedPlan').value = selectedPlan;
+                    localStorage.setItem('selected_plan', selectedPlan);
+                });
+            });
+
+            // Set initial selection to Professional (default)
+            const professionalCard = document.querySelector('[data-plan="professional"]');
+            if (professionalCard) {
+                professionalCard.style.borderColor = '#7C3AED';
+                professionalCard.style.background = 'rgba(124, 58, 237, 0.15)';
             }
         });
 
@@ -823,6 +936,20 @@
                 }
             } catch (error) {
                 document.getElementById('privacyContent').innerHTML = '<p class="text-red-400">Erro ao carregar a Política de Privacidade.</p>';
+            }
+        }
+
+        // Password visibility toggle function
+        function togglePasswordVisibility(fieldId, buttonId) {
+            const field = document.getElementById(fieldId);
+            const button = document.getElementById(buttonId);
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                button.textContent = '🙈';
+            } else {
+                field.type = 'password';
+                button.textContent = '👁️';
             }
         }
     </script>
