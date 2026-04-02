@@ -1,10 +1,6 @@
-"""
-Vexus CRM - Professional FastAPI Server
-Enterprise-ready with security, monitoring, and production features
-v1.3.0 - CRM APIs + Multi-Channel Integrations (WhatsApp, Telegram, Email, Instagram, Facebook)
-# Force rebuild trigger: Admin Dashboard Deployment - $(date)
-# DEBUG: Admin router should be loaded
-"""
+# 🚨 EMERGENCY REBUILD TRIGGER - $(date)
+# This comment forces Railway to rebuild: Admin Dashboard Deployment v2.0
+# 🚨 CRITICAL: Admin router must be loaded for dashboard to work
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
