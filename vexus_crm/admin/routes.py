@@ -17,7 +17,7 @@ from passlib.context import CryptContext
 # SEGURANÇA
 # ═════════════════════════════════════════════════════════════════════════════
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "nexus-crm-secret-key")
 ALGORITHM = "HS256"
 
