@@ -2,6 +2,7 @@
 Vexus CRM - Professional FastAPI Server
 Enterprise-ready with security, monitoring, and production features
 v1.3.0 - CRM APIs + Multi-Channel Integrations (WhatsApp, Telegram, Email, Instagram, Facebook)
+# Force rebuild trigger: Admin Dashboard Deployment - $(date)
 """
 
 from fastapi import FastAPI, Request, HTTPException
