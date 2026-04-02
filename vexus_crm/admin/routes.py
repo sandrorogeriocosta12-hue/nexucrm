@@ -53,9 +53,13 @@ USERS_DB = {}
 TOKENS_DB = {}
 
 def get_password_hash(password):
+    # Truncate password to 72 bytes for bcrypt compatibility
+    password = password[:72] if password else password
     return pwd_context.hash(password)
 
 def verify_password(plain_password, hashed_password):
+    # Truncate password to 72 bytes for bcrypt compatibility
+    plain_password = plain_password[:72] if plain_password else plain_password
     return pwd_context.verify(plain_password, hashed_password)
 
 def create_access_token(email: str, expires_delta: Optional[timedelta] = None):
