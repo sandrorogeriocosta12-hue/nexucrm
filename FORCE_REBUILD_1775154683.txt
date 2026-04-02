@@ -1,0 +1,1 @@
+qui 02 abr 2026 15:31:23 -03 - Force rebuild trigger
