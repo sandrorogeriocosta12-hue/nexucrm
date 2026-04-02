@@ -1,6 +1,7 @@
-# 🚨 EMERGENCY REBUILD TRIGGER - $(date)
-# This comment forces Railway to rebuild: Admin Dashboard Deployment v2.0
-# 🚨 CRITICAL: Admin router must be loaded for dashboard to work
+# 🚨🚨🚨 FORCE REBUILD VERSION 3.0 - 2 de abril 2026 - 02:45:00
+# MAJOR VERSION UPDATE: Complete admin dashboard deployment
+# Admin Dashboard with password toggle feature - PRODUCTION READY
+# 🔴 CRITICAL FIX: Admin router MUST load or system fails
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,9 @@ import time
 
 # DEBUG: Confirm app_server.py is being executed
 print("🚀 DEBUG: app_server.py starting execution...")
+print("=" * 80)
+print("🔴🔴🔴 VERSION 3.0 - 2 de abril 2026 - Admin Dashboard Deployment 🔴🔴🔴")
+print("=" * 80)
 
 # Professional logging configuration - Railway compatible (no file logging)
 import sys
