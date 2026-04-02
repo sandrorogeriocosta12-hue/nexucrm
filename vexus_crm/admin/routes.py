@@ -267,14 +267,17 @@ def refresh_token(token: str = Query(...)):
     email = get_current_user(token)
     new_token = create_access_token(email)
     
+    # Get user data if available, otherwise provide minimal response
+    user_data = USERS_DB.get(email, {})
+    
     return {
         "success": True,
         "message": "Token renovado com sucesso!",
         "token": new_token,
         "user": {
             "email": email,
-            "company_name": USERS_DB[email]["company_name"],
-            "full_name": USERS_DB[email]["full_name"]
+            "company_name": user_data.get("company_name", ""),
+            "full_name": user_data.get("full_name", "")
         }
     }
 
