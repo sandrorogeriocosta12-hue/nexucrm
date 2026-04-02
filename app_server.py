@@ -3,6 +3,7 @@ Vexus CRM - Professional FastAPI Server
 Enterprise-ready with security, monitoring, and production features
 v1.3.0 - CRM APIs + Multi-Channel Integrations (WhatsApp, Telegram, Email, Instagram, Facebook)
 # Force rebuild trigger: Admin Dashboard Deployment - $(date)
+# DEBUG: Admin router should be loaded
 """
 
 from fastapi import FastAPI, Request, HTTPException
@@ -17,6 +18,9 @@ import logging
 from datetime import datetime
 import os
 import time
+
+# DEBUG: Confirm app_server.py is being executed
+print("🚀 DEBUG: app_server.py starting execution...")
 
 # Professional logging configuration - Railway compatible (no file logging)
 import sys
