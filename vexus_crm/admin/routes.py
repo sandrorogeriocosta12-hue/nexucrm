@@ -261,6 +261,34 @@ def get_user_profile(token: str = Query(...)):
         "tokens_configured": len(TOKENS_DB.get(email, {}))
     }
 
+@router.post("/refresh")
+def refresh_token(token: str = Query(...)):
+    """Renovar token JWT"""
+    email = get_current_user(token)
+    new_token = create_access_token(email)
+    
+    return {
+        "success": True,
+        "message": "Token renovado com sucesso!",
+        "token": new_token,
+        "user": {
+            "email": email,
+            "company_name": USERS_DB[email]["company_name"],
+            "full_name": USERS_DB[email]["full_name"]
+        }
+    }
+
+@router.post("/logout")
+def logout(token: str = Query(...)):
+    """Fazer logout"""
+    email = get_current_user(token)
+    
+    return {
+        "success": True,
+        "message": "Logout realizado com sucesso!",
+        "email": email
+    }
+
 # ═════════════════════════════════════════════════════════════════════════════
 # FRONTEND HTML/CSS/JS
 # ═════════════════════════════════════════════════════════════════════════════
