@@ -531,6 +531,10 @@ LOGIN_HTML = """
         label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
         input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .password-container { position: relative; }
+        .password-container input { padding-right: 40px; }
+        .toggle-password { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; color: #666; }
+        .toggle-password:hover { color: #333; }
         button { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
         .link { text-align: center; margin-top: 20px; color: #666; }
         .link a { color: #667eea; text-decoration: none; font-weight: bold; }
@@ -555,7 +559,12 @@ LOGIN_HTML = """
                     </div>
                     <div class="form-group">
                         <label>Senha</label>
-                        <input type="password" id="password" required />
+                        <div class="password-container">
+                            <input type="password" id="password" required />
+                            <button type="button" class="toggle-password" onclick="togglePassword('password')" title="Mostrar senha">
+                                👁️
+                            </button>
+                        </div>
                     </div>
                     <button type="submit">Entrar</button>
                 </form>
@@ -580,7 +589,12 @@ LOGIN_HTML = """
                     </div>
                     <div class="form-group">
                         <label>Senha</label>
-                        <input type="password" id="passwordReg" required />
+                        <div class="password-container">
+                            <input type="password" id="passwordReg" required />
+                            <button type="button" class="toggle-password" onclick="togglePassword('passwordReg')" title="Mostrar senha">
+                                👁️
+                            </button>
+                        </div>
                     </div>
                     <button type="submit">Criar Conta</button>
                 </form>
@@ -593,6 +607,21 @@ LOGIN_HTML = """
     
     <script>
         const API_URL = "/api/admin";
+        
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            
+            if (input.type === "password") {
+                input.type = "text";
+                button.textContent = "🙈";
+                button.title = "Ocultar senha";
+            } else {
+                input.type = "password";
+                button.textContent = "👁️";
+                button.title = "Mostrar senha";
+            }
+        }
         
         function switchMode() {
             document.getElementById("loginForm").style.display = document.getElementById("loginForm").style.display === "none" ? "block" : "none";
