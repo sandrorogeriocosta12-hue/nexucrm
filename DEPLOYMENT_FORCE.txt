@@ -1,0 +1,13 @@
+🚨 FORCE DEPLOYMENT - Admin Dashboard v2.0
+Timestamp: 2 de abril de 2026 02:10:00
+Build Trigger: Complete rebuild required
+Target: Deploy admin dashboard with password toggle feature
+
+Admin Dashboard Status:
+✅ Routes defined and tested
+✅ Password visibility toggle implemented
+✅ Authentication ready
+✅ Login page ready
+✅ Dashboard ready
+
+This file forces Railway to detect repository changes and trigger rebuild.
