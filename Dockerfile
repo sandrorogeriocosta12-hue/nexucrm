@@ -1,7 +1,6 @@
-# Use Python 3.9 slim image for compatibility
+# Railway-specific Dockerfile
 FROM python:3.9-slim
 
-# Set working directory
 WORKDIR /app
 
 # Install system dependencies
@@ -9,23 +8,17 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy and install requirements
 COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
+# Copy app code
 COPY . .
 
-# Expose port
-EXPOSE 8000
-
-# Set environment variables
+# Railway expects the app to listen on $PORT
 ENV PORT=8000
-ENV DEBUG=False
-ENV PYDANTIC_SKIP_VALIDATION=1
+EXPOSE $PORT
 
-# Run the application
-CMD uvicorn app_server:app --host 0.0.0.0 --port 8000
+# Start command
+CMD ["uvicorn", "app_server:app", "--host", "0.0.0.0", "--port", "8000"]
