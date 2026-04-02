@@ -255,8 +255,15 @@ try:
     from vexus_crm.admin.routes import router as admin_router
     app.include_router(admin_router)
     logger.info("✅ Admin router loaded - Dashboard, Login, Token Management")
+    # Debug: Log admin routes
+    admin_routes = [r.path for r in admin_router.routes]
+    logger.info(f"📋 Admin routes registered: {len(admin_routes)} routes - {admin_routes[:3]}...")
 except Exception as e:
-    logger.warning(f"⚠ Admin router not available: {e}")
+    logger.error(f"❌ CRITICAL: Admin router failed to load: {e}")
+    logger.error("This will prevent admin dashboard from working!")
+    # Don't fail the entire app, but log the error prominently
+    import traceback
+    logger.error(f"Full traceback: {traceback.format_exc()}")
 
 try:
     # Simple agents router for testing
