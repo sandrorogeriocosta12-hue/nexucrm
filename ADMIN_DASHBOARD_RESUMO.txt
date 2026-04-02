@@ -164,3 +164,4 @@ Para mais informações, consulte:
   - RAILWAY_INTEGRATION_GUIDE.txt (integração com Railway)
   - http://localhost:8000/api/docs (API interativa)
 ═══════════════════════════════════════════════════════════════════════════════
+# Force deploy update
