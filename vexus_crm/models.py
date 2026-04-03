@@ -378,12 +378,14 @@ class User(Base):
     __tablename__ = "users"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String)
+    name = Column(String)  # full_name
     email = Column(String, unique=True)
     password_hash = Column(String)  # Deve ser hasheado com bcrypt
-    role = Column(String)  # admin, manager, user
+    company_name = Column(String)
+    role = Column(String, default="admin")  # admin, manager, user
     plan = Column(String, default="free")  # free, pro, enterprise
     is_active = Column(Boolean, default=True)
+    tokens = Column(JSON, default=dict)  # Store tokens as JSON
     created_at = Column(DateTime, default=datetime.now)
 
 

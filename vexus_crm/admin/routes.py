@@ -13,6 +13,23 @@ from datetime import datetime, timedelta
 import jwt
 from passlib.context import CryptContext
 
+# Database imports
+from sqlalchemy.orm import Session
+from ..database import SessionLocal, engine
+import importlib.util
+import os
+
+# Import models directly
+models_path = os.path.join(os.path.dirname(__file__), '..', 'models.py')
+spec = importlib.util.spec_from_file_location("models", models_path)
+models = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(models)
+User = models.User
+Base = models.Base
+
+# Create tables if they don't exist
+Base.metadata.create_all(bind=engine)
+
 # ═════════════════════════════════════════════════════════════════════════════
 # SEGURANÇA
 # ═════════════════════════════════════════════════════════════════════════════
@@ -46,11 +63,22 @@ class TokensConfig(BaseModel):
     facebook_id: Optional[str] = None
 
 # ═════════════════════════════════════════════════════════════════════════════
-# DATABASE SIMULADO
+# DATABASE SIMULADO - REMOVIDO PARA PERSISTÊNCIA
 # ═════════════════════════════════════════════════════════════════════════════
 
-USERS_DB = {}
-TOKENS_DB = {}
+# USERS_DB = {}  # Removido - agora usa PostgreSQL
+# TOKENS_DB = {}  # Removido - tokens armazenados no campo JSON do usuário
+
+# Database dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# FastAPI dependency
+from fastapi import Depends
 
 def get_password_hash(password):
     # Truncate password string to reasonable length before encoding for bcrypt
@@ -97,20 +125,24 @@ def get_current_user(token: str):
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 @router.post("/register")
-def register(user: UserRegister):
+def register(user: UserRegister, db: Session = Depends(get_db)):
     """Registrar novo cliente"""
-    if user.email in USERS_DB:
+    # Check if user exists
+    existing_user = db.query(User).filter(User.email == user.email).first()
+    if existing_user:
         raise HTTPException(status_code=400, detail="Email já registrado")
     
     hashed_password = get_password_hash(user.password)
-    USERS_DB[user.email] = {
-        "password_hash": hashed_password,
-        "company_name": user.company_name,
-        "full_name": user.full_name,
-        "created_at": datetime.utcnow().isoformat(),
-        "tokens": {}
-    }
-    TOKENS_DB[user.email] = {}
+    new_user = User(
+        name=user.full_name,
+        email=user.email,
+        password_hash=hashed_password,
+        company_name=user.company_name,
+        tokens={}
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
     
     token = create_access_token(user.email)
     
@@ -126,13 +158,10 @@ def register(user: UserRegister):
     }
 
 @router.post("/login")
-def login(credentials: UserLogin):
+def login(credentials: UserLogin, db: Session = Depends(get_db)):
     """Fazer login"""
-    if credentials.email not in USERS_DB:
-        raise HTTPException(status_code=401, detail="Email ou senha incorretos")
-    
-    user = USERS_DB[credentials.email]
-    if not verify_password(credentials.password, user["password_hash"]):
+    user = db.query(User).filter(User.email == credentials.email).first()
+    if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Email ou senha incorretos")
     
     token = create_access_token(credentials.email)
@@ -142,15 +171,18 @@ def login(credentials: UserLogin):
         "token": token,
         "user": {
             "email": credentials.email,
-            "company_name": user["company_name"],
-            "full_name": user["full_name"]
+            "company_name": user.company_name,
+            "full_name": user.name
         }
     }
 
 @router.post("/tokens")
-def add_tokens(tokens: TokensConfig, token: str = Query(...)):
+def add_tokens(tokens: TokensConfig, token: str = Query(...), db: Session = Depends(get_db)):
     """Adicionar/atualizar tokens do cliente"""
     email = get_current_user(token)
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
     tokens_dict = {}
     if tokens.whatsapp_token:
@@ -170,7 +202,8 @@ def add_tokens(tokens: TokensConfig, token: str = Query(...)):
     if tokens.facebook_id:
         tokens_dict["FACEBOOK_PAGE_ID"] = tokens.facebook_id
     
-    TOKENS_DB[email] = tokens_dict
+    user.tokens = tokens_dict
+    db.commit()
     
     return {
         "success": True,
@@ -179,10 +212,14 @@ def add_tokens(tokens: TokensConfig, token: str = Query(...)):
     }
 
 @router.get("/tokens")
-def get_tokens(token: str = Query(...)):
+def get_tokens(token: str = Query(...), db: Session = Depends(get_db)):
     """Obter tokens do cliente (mascarados)"""
     email = get_current_user(token)
-    tokens = TOKENS_DB.get(email, {})
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    tokens = user.tokens or {}
     
     masked_tokens = {}
     for key, value in tokens.items():
@@ -198,11 +235,14 @@ def get_tokens(token: str = Query(...)):
     }
 
 @router.get("/status")
-def get_status(token: str = Query(...)):
+def get_status(token: str = Query(...), db: Session = Depends(get_db)):
     """Obter status de configuração do cliente"""
     email = get_current_user(token)
-    user = USERS_DB[email]
-    tokens = TOKENS_DB.get(email, {})
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    tokens = user.tokens or {}
     
     channels = {
         "whatsapp": "WHATSAPP_ACCESS_TOKEN" in tokens,
@@ -214,9 +254,9 @@ def get_status(token: str = Query(...)):
     return {
         "user": {
             "email": email,
-            "company": user["company_name"],
-            "name": user["full_name"],
-            "created_at": user["created_at"]
+            "company": user.company_name,
+            "name": user.name,
+            "created_at": user.created_at.isoformat()
         },
         "channels": channels,
         "configured_count": sum(channels.values()),
@@ -229,9 +269,12 @@ def get_status(token: str = Query(...)):
     }
 
 @router.delete("/tokens/{channel}")
-def delete_token(channel: str, token: str = Query(...)):
+def delete_token(channel: str, token: str = Query(...), db: Session = Depends(get_db)):
     """Deletar um token específico"""
     email = get_current_user(token)
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
     channel_key_map = {
         "whatsapp": "WHATSAPP_ACCESS_TOKEN",
@@ -241,24 +284,30 @@ def delete_token(channel: str, token: str = Query(...)):
     }
     
     channel_key = channel_key_map.get(channel)
-    if not channel_key or channel_key not in TOKENS_DB.get(email, {}):
+    tokens = user.tokens or {}
+    if not channel_key or channel_key not in tokens:
         raise HTTPException(status_code=404, detail="Token não encontrado")
     
-    del TOKENS_DB[email][channel_key]
+    del tokens[channel_key]
+    user.tokens = tokens
+    db.commit()
+    
     return {"success": True, "message": f"Token de {channel} deletado"}
 
 @router.get("/user")
-def get_user_profile(token: str = Query(...)):
+def get_user_profile(token: str = Query(...), db: Session = Depends(get_db)):
     """Obter perfil do usuário"""
     email = get_current_user(token)
-    user = USERS_DB[email]
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
     return {
         "email": email,
-        "company_name": user["company_name"],
-        "full_name": user["full_name"],
-        "created_at": user["created_at"],
-        "tokens_configured": len(TOKENS_DB.get(email, {}))
+        "company_name": user.company_name,
+        "full_name": user.name,
+        "created_at": user.created_at.isoformat(),
+        "tokens_configured": len(user.tokens or {})
     }
 
 @router.post("/refresh")
