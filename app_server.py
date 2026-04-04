@@ -80,13 +80,13 @@ app.add_middleware(
 # ═════════════════════════════════════════════════════════════
 
 if WEBHOOK_ROUTER:
-    app.include_router(WEBHOOK_ROUTER, prefix="/webhooks", tags=["webhooks"])
+    app.include_router(WEBHOOK_ROUTER, tags=["webhooks"])
     logger.info("✅ Webhook router incluído")
 else:
     logger.warning("⚠️  Webhook router não disponível")
 
 if INTEGRATION_ROUTER:
-    app.include_router(INTEGRATION_ROUTER, prefix="/integrations", tags=["integrations"])
+    app.include_router(INTEGRATION_ROUTER, tags=["integrations"])
     logger.info("✅ Integration router incluído")
 else:
     logger.warning("⚠️  Integration router não disponível")
