@@ -171,6 +171,38 @@ async def signup_page(t: str = None):
         )
     raise HTTPException(status_code=404, detail="Signup page not found")
 
+@app.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_page():
+    forgot_file = os.path.join(frontend_path, "forgot-password.html")
+    if os.path.exists(forgot_file):
+        content = Path(forgot_file).read_text(encoding="utf-8")
+        return HTMLResponse(
+            content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    raise HTTPException(status_code=404, detail="Forgot password page not found")
+
+@app.get("/reset-password", response_class=HTMLResponse)
+async def reset_password_page(token: str = None):
+    reset_file = os.path.join(frontend_path, "reset-password.html")
+    if os.path.exists(reset_file):
+        content = Path(reset_file).read_text(encoding="utf-8")
+        if token:
+            content = content.replace("</head>", f'<script>window.resetToken="{token}";</script></head>')
+        return HTMLResponse(
+            content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    raise HTTPException(status_code=404, detail="Reset password page not found")
+
 @app.get("/health")
 async def health():
     return {
