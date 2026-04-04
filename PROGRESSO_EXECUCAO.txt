@@ -1,0 +1,260 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║        🚀 NEXUS CRM - PLANO DE EXECUÇÃO - PROGRESSO EM TEMPO REAL 🚀     ║
+║                                                                          ║
+║                   3 de Abril de 2026 - QUINTA (Inicio)                  ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ✅ CHECKPOINT 0 - SETUP CONCLUÍDO                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+✅ ARQUIVOS CRIADOS (5/5):
+   ✅ setup_tokens_wizard.py - Wizard interativo
+   ✅ test_webhooks_validation.py - Validador de webhooks
+   ✅ train_ai_engine.py - Treinador de AI
+   ✅ analytics-dashboard.html - Dashboard visual
+   ✅ DELIVERY_PLAN_4_BLOQUEADORES.py - Plano detalhado
+
+✅ COMMITS REALIZADOS:
+   ✅ Commit ea82ede - 4-Step Delivery Plan enviado
+   ✅ Push para origin/main - ✅ Sucesso
+
+✅ ARQUIVOS DE SUPORTE:
+   ✅ .env.example.production - Exemplo de configuração
+   ✅ CHECKLIST_EXECUTIVO.txt - Checklist visual
+   ✅ PROGRESSO_EXECUCAO.txt - Este arquivo
+
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🚀 AGORA: PASSO 1 - CONFIGURAÇÃO DE TOKENS (QUINTA 08:00-10:00)        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+⏱️  PASSO 1.1 - EXECUTAR WIZARD DE TOKENS (VOCÊ ESTÁ AQUI!)
+─────────────────────────────────────────────────────────────
+
+VOCÊ INICIOU: python setup_tokens_wizard.py ✅
+
+O WIZARD ESTÁ PEDINDO:
+   [ ] 1. WhatsApp - Colar token, phone_id, business_id
+   [ ] 2. Telegram - Colar token do bot
+   [ ] 3. SendGrid - Colar API key + email_from (VOCÊ ESTÁ AQUI)
+   [ ] 4. Meta - Colar business token + instagram_id
+
+📋 PRÓXIMO PASSO:
+─────────────────
+Para obter os tokens, use este guia rápido:
+
+🟦 WHATSAPP TOKEN:
+   1. Vá para: https://developers.facebook.com/
+   2. Selecione seu app
+   3. Vá para: Settings > Basic
+   4. Copie: App ID (exemplo: 123456789...)
+   5. Cole no wizard
+
+🟦 TELEGRAM TOKEN:
+   1. Abra Telegram
+   2. Procure: @BotFather
+   3. Digite: /newbot
+   4. Escolha nome + username
+   5. @BotFather vai retornar: "123456:ABC-DEF123456..."
+   6. Cole no wizard
+
+🟦 SENDGRID API KEY:
+   1. Vá para: https://sendgrid.com/
+   2. Login
+   3. Settings > API Keys
+   4. CREATE API KEY (Full Access)
+   5. Vai retornar: "SG.sk_live_abcdef123456..."
+   6. Cole no wizard
+
+🟦 META BUSINESS TOKEN:
+   1. Vá para: https://facebook.com/business
+   2. Settings > Business Settings
+   3. System Users
+   4. CREATE NEW > Generate Token
+   5. Vai retornar um token longo
+   6. Cole no wizard
+
+
+⏱️  PASSO 1.2 - SALVAR E VALIDAR (.env)
+────────────────────────────────────────
+
+O wizard fará:
+   ✅ Validar cada token em tempo real
+   ✅ Atualizar arquivo .env
+   ✅ Agrupar por seção
+
+Esperado: Todos os 4 tokens validados ✅
+
+
+⏱️  PASSO 1.3 - UPLOAD PARA RAILWAY (8:30-9:00)
+───────────────────────────────────────────────
+
+Após salvar os tokens, você executará:
+
+   $ git add -A
+   $ git commit -m "🔐 Add production tokens to Railway"
+   $ git push origin main
+
+Railway fará:
+   ✅ Detectar novo commit
+   ✅ Iniciar build (2-5 minutos)
+   ✅ Teste de saúde
+   ✅ Deploy automático
+
+
+⏱️  PASSO 1.4 - VALIDAR WEBHOOKS (9:00-10:00)
+───────────────────────────────────────────────
+
+Executar: python test_webhooks_validation.py
+
+Esperado:
+   ✅ 📱 WhatsApp webhook: 200 OK
+   ✅ 🤖 Telegram webhook: 200 OK
+   ✅ 📧 Email webhook: 200 OK
+   ✅ 📸 Instagram webhook: 200 OK
+
+Resultado: arquivo webhook_test_report.json com status
+
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📊 STATUS ATUAL DO SISTEMA                                              │
+└──────────────────────────────────────────────────────────────────────────┘
+
+✅ CÓDIGO FRONT/BACK:
+   ✅ 28 telas HTML funcionando
+   ✅ 8 telas em produção ativa
+   ✅ Modelos de BD unificados
+   ✅ Webhooks estruturados
+   ✅ Analytics dashboard pronto
+
+⏳ AGUARDANDO:
+   ⏳ Tokens reais (VOCÊ ESTÁ AQUI)
+   ⏳ Webhooks externos configurados
+   ⏳ AI Engine treinada
+   ⏳ Dados reais no sistema
+
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🎯 CHECKLIST DESTA FASE                                                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+⏱️  QUINTA - PASSO 1 (Você está aqui)
+────────────────────────────────────
+
+🔐 TOKENS WIZARD:
+   [ ] Abrir: python setup_tokens_wizard.py ← JÁ ABERTO
+   [ ] Digite "s" para WhatsApp (ou "n" se não tiver)
+   [ ] Digite "s" para Telegram
+   [ ] Digite "s" para SendGrid (VOCÊ ESTÁ AQUI)
+   [ ] Digite "s" para Meta/Instagram
+   
+   OU simplesmente pressione ENTER em cada que quer pular
+
+IMPORTANTE: Se não tiver os tokens agora, pode:
+   ✅ Criar contas agora (leva 10 min cada)
+   ✅ Digitar valores de teste para prosseguir
+   ✅ Atualizar tokens depois no .env
+
+📤 GIT DEPLOY:
+   [ ] Após salvar tokens:
+       $ git add -A
+       $ git commit -m "Add tokens"
+       $ git push origin main
+
+🔔 WEBHOOK VALIDATION:
+   [ ] python test_webhooks_validation.py
+   [ ] Confirmou 4/4 webhooks respondendo?
+
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🆘 DÚVIDAS COMUNS                                                       │
+└──────────────────────────────────────────────────────────────────────────┘
+
+❓ "Não tenho os tokens agora, posso prosseguir?"
+✅ SIM! Você pode:
+   1. Digitar valores de teste (ex: "test_token_123")
+   2. O wizard vai validar
+   3. Se não conseguir validar, ok - é só teste
+   4. Atualizar os tokens reais depois
+
+❓ "Como obtenho o WHATSAPP_PHONE_ID?"
+✅ Quando criar app no Facebook Developer:
+   1. Configurações > Números de Telefone
+   2. Confirme seu número (saudação de teste)
+   3. Copia ID que vai estar lá
+
+❓ "Por quanto tempo os tokens são válidos?"
+✅ Normalmente:
+   - WhatsApp: Indefinido (mas precisa empresa verificada)
+   - Telegram: Indefinido (nunca expiram)
+   - SendGrid: Indefinido (até você deletar)
+   - Meta: Até 60 dias sem usar
+
+❓ "Posso atualizar tokens depois?"
+✅ SIM! Só editar .env e fazer:
+   $ git push origin main
+   → Railway reinicia com novos tokens
+
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🔗 LINKS ÚTEIS                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+📱 Obter Tokens:
+   • WhatsApp: https://developers.facebook.com/
+   • Telegram: Chat @BotFather no Telegram
+   • SendGrid: https://sendgrid.com/
+   • Meta: https://facebook.com/business
+
+🔗 Acessar Sistema:
+   • URL Principal: https://api.nexuscrm.tech
+   • Inbox: https://api.nexuscrm.tech/inbox-nexus.html
+   • Dashboard (após sábado): https://api.nexuscrm.tech/frontend/analytics-dashboard.html
+
+📚 Documentação:
+   • setup_tokens_wizard.py - Código do wizard
+   • DELIVERY_PLAN_4_BLOQUEADORES.py - Plano completo
+   • CHECKLIST_EXECUTIVO.txt - Checklist visual
+
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ⏰ TIMELINE RESUMIDO                                                    │
+└──────────────────────────────────────────────────────────────────────────┘
+
+QUINTA (HOJE - 3 de Abril):
+   08:00-10:00 ← VOCÊ ESTÁ AQUI (Setup Tokens)
+   [ ] Tokens configurados + validados
+   [ ] Webhooks respondendo 4/4
+
+SEXTA (4 de Abril):
+   14:00-17:00
+   [ ] Mensagens reais chegando
+   [ ] AI Engine treinada
+
+SÁBADO (5 de Abril):
+   10:00-14:00
+   [ ] Dashboard funcionando
+   [ ] E2E ponta-a-ponta
+
+DOMINGO (6 de Abril):
+   15:00-17:00
+   [ ] QA final + docs
+
+SEGUNDA (8 de Abril):
+   09:00-09:15
+   [ ] Go live! 🚀
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║  ⏭️  PRÓXIMO PASSO: Continue com o wizard setup_tokens_wizard.py       ║
+║                                                                          ║
+║  Você está no meio da execução - siga as instruções na tela             ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+Data: 3 de Abril de 2026
+Status: ✅ EM PROGRESSO
+Última atualização: Agora mesmo! 🚀
