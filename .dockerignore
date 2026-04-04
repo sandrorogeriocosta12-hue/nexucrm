@@ -12,6 +12,7 @@ venv/
 README.md
 *.md
 *.txt
+!requirements*.txt
 *.log
 coverage/
 *.sqlite3
