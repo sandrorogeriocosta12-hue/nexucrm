@@ -436,14 +436,22 @@ async def send_message(message_data: dict, background_tasks: BackgroundTasks, db
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 🔗 STATUS DE INTEGRAÇÕES
-# ═══════════════════════════════════════════════════════════════════════════
-
-@router.get("/channels/status")
-async def get_channels_status():
-    """Retorna status de todos os canais de comunicação"""
-    return channel_connector.get_status()
+@router.get("/messages")
+async def get_messages(limit: int = 50, offset: int = 0, db: Session = Depends(get_db)):
+    """Listar mensagens do sistema"""
+    messages = db.query(Message).order_by(Message.created_at.desc()).offset(offset).limit(limit).all()
+    
+    return [{
+        "id": msg.id,
+        "user_id": msg.user_id,
+        "contact_id": msg.contact_id,
+        "channel": msg.channel,
+        "direction": msg.direction,
+        "message_text": msg.message_text,
+        "status": msg.status,
+        "created_at": msg.created_at.isoformat(),
+        "external_message_id": msg.external_message_id
+    } for msg in messages]
 
 
 logger.info("✅ Rotas de CRM carregadas com sucesso")

@@ -4,12 +4,12 @@ Estrutura de banco de dados com SQLAlchemy 2.0
 """
 
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, JSON, ForeignKey, Enum as SQLEnum
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
-Base = declarative_base()
+# Import Base from database.py to ensure a single metadata
+from vexus_crm.database import Base
 
 
 # ==================== AGENTES ====================
@@ -242,27 +242,32 @@ class Message(Base):
     __tablename__ = "messages"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, default="system")  # ID do usuário/admin que enviou/recebeu
+    contact_id = Column(String)  # ID do contato (telefone, email, etc)
     lead_id = Column(String, ForeignKey("leads.id"))
     channel = Column(String)  # whatsapp, email, instagram, etc
     
     # Conteúdo
+    message_text = Column(String)  # Texto da mensagem
     content = Column(String)
     attachments = Column(JSON)
     
     # Comunicação
     sender = Column(String)
     recipient = Column(String)
-    direction = Column(String)  # inbound, outbound
+    direction = Column(String)  # incoming, outgoing
+    
+    # Status
+    is_read = Column(Boolean, default=False)
+    status = Column(String, default="sent")  # sent, delivered, read, failed
+    error_message = Column(String)
+    external_message_id = Column(String)  # ID da mensagem na plataforma externa
     
     # Processamento de IA
     ai_processed = Column(Boolean, default=False)
     ai_intent = Column(String)  # schedule, pricing, question, info
     ai_sentiment = Column(String)  # positive, negative, neutral
     ai_entities = Column(JSON)  # Entidades extraídas
-    
-    # Status
-    status = Column(String)  # sent, delivered, read, failed
-    error_message = Column(String)
     
     # Tracking
     created_at = Column(DateTime, default=datetime.now)

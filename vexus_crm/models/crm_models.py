@@ -3,12 +3,12 @@
 """
 
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, Enum
-from sqlalchemy.orm import declarative_base
 from datetime import datetime
 import enum
 import uuid
 
-Base = declarative_base()
+# Use Base from database.py instead of creating a new one
+from vexus_crm.database import Base
 
 class Lead(Base):
     """Modelo de Lead (Prospect)"""

@@ -142,11 +142,14 @@ async def startup_db():
                 logger.warning(error)
     
     try:
-        from vexus_crm.database import engine, get_db
+        from vexus_crm.database import engine, get_db, Base
+        # Import all models to register them with Base
         from vexus_crm import models
+        from vexus_crm.models import crm_models
         from sqlalchemy.orm import Session
 
-        models.Base.metadata.create_all(bind=engine)
+        # Create all tables with unified Base
+        Base.metadata.create_all(bind=engine)
         logger.info("✓ Database schema ensured")
         
         # Create test user if it doesn't exist
