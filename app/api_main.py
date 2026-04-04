@@ -102,6 +102,20 @@ class AgentConfig(BaseModel):
     auto_response: bool = True
 
 
+class PaymentRequest(BaseModel):
+    plan: str
+    payment_method: str
+    email: str
+    whatsapp: Optional[str] = None
+    contact_preference_email: bool = True
+    contact_preference_whatsapp: bool = False
+    card_name: Optional[str] = None
+    card_number: Optional[str] = None
+    card_cvv: Optional[str] = None
+    cnpj: Optional[str] = None
+    company: Optional[str] = None
+
+
 # ===== Mock Database =====
 mock_users = {
     "admin@vexus.com": {
@@ -423,6 +437,131 @@ async def get_subscription(current_user: dict = Depends(get_current_user)):
     company_id = user.get("company_id")
     subs = mock_subscriptions.get(company_id)
     return {"subscription": subs}
+
+
+@app.post("/api/payment/process")
+async def process_payment(request: Request):
+    """
+    Complete payment processing with contact info and notification
+    Expected payload:
+    {
+        "plan": "starter|professional|premium",
+        "payment_method": "card|boleto|pix",
+        "email": "user@email.com",
+        "whatsapp": "+55 11 99999-9999",
+        "contact_preference_email": true/false,
+        "contact_preference_whatsapp": true/false,
+        "card_name": "João Silva" (if card),
+        "card_number": "4532..." (if card),
+        "cnpj": "00.000.000/0000-00" (if boleto),
+        "company": "Empresa XYZ" (if boleto)
+    }
+    """
+    try:
+        data = await request.json()
+        print(f"💳 Processing payment with contact info: {data.get('email')}")
+
+        # Validate required fields
+        plan = data.get("plan")
+        payment_method = data.get("payment_method")
+        email = data.get("email", "").strip()
+        whatsapp = data.get("whatsapp", "").strip()
+
+        # Validate plan
+        valid_plans = ["starter", "professional", "premium"]
+        if plan not in valid_plans:
+            raise HTTPException(status_code=400, detail=f"Plano inválido: {plan}")
+
+        # Validate payment method
+        valid_methods = ["card", "boleto", "pix"]
+        if payment_method not in valid_methods:
+            raise HTTPException(status_code=400, detail=f"Método inválido: {payment_method}")
+
+        # Validate email
+        if not email or "@" not in email:
+            raise HTTPException(status_code=400, detail="Email válido é obrigatório")
+
+        # Validate card if card payment
+        if payment_method == "card":
+            card_name = data.get("card_name", "").strip()
+            card_number = data.get("card_number", "").strip()
+            card_cvv = data.get("card_cvv", "").strip()
+
+            if not card_name:
+                raise HTTPException(status_code=400, detail="Nome do titular é obrigatório")
+            if not card_number or len(card_number) < 13:
+                raise HTTPException(status_code=400, detail="Número do cartão inválido")
+            if not card_cvv or len(card_cvv) < 3:
+                raise HTTPException(status_code=400, detail="CVV inválido")
+
+        # Validate CNPJ if boleto payment
+        elif payment_method == "boleto":
+            cnpj = data.get("boleto_cnpj") or data.get("cnpj", "")
+            cnpj = cnpj.strip()
+            cnpj_clean = ''.join(filter(str.isdigit, cnpj))
+
+            if len(cnpj_clean) != 14:
+                raise HTTPException(status_code=400, detail="CNPJ deve ter 14 dígitos")
+
+        # Store contact preferences
+        contact_by_email = data.get("contact_preference_email", True)
+        contact_by_whatsapp = data.get("contact_preference_whatsapp", False)
+
+        # Log the payment
+        payment_log = {
+            "plan": plan,
+            "payment_method": payment_method,
+            "email": email,
+            "whatsapp": whatsapp if contact_by_whatsapp else None,
+            "contact_by_email": contact_by_email,
+            "contact_by_whatsapp": contact_by_whatsapp,
+            "timestamp": str(datetime.now())
+        }
+
+        print(f"💳 Payment Details: {payment_log}")
+
+        # Simulate payment processing
+        import asyncio
+        await asyncio.sleep(0.5)
+
+        # Send confirmation to customer based on preferences
+        notification_message = f"""
+        ✅ Pagamento Recebido!
+
+        Plano: {plan.upper()}
+        Método: {payment_method.upper()}
+        Email: {email}
+        Status: ATIVO
+
+        Você receberá em breve um email com os dados de acesso à plataforma.
+        """
+
+        print(f"📧 Sending notification to: {email}")
+        if contact_by_whatsapp and whatsapp:
+            print(f"📱 Also sending WhatsApp to: {whatsapp}")
+
+        # Return success
+        return {
+            "success": True,
+            "message": "Pagamento processado com sucesso!",
+            "subscription": {
+                "plan": plan,
+                "payment_method": payment_method,
+                "status": "active",
+                "next_billing": "2024-04-30",
+                "email": email
+            },
+            "notification": {
+                "email_sent": contact_by_email,
+                "whatsapp_sent": contact_by_whatsapp
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Payment processing error: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar pagamento: {str(e)}")
 
 
 # ===== Chat Routes =====
