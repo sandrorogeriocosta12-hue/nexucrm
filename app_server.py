@@ -97,7 +97,7 @@ else:
 try:
     from app.api_main import app as api_main_app
     app.include_router(api_main_app.router, prefix="/api")
-    logger.info("✅ API routes included at /api - Payment endpoint available")
+    logger.info("✅ API routes included at /api - Payment endpoint available - Build: 2026-04-04")
 except ImportError as e:
     logger.warning(f"⚠️  API app not available: {e}")
 
