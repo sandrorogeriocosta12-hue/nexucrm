@@ -1,0 +1,31 @@
+# Excluir arquivos e pastas que não são necessários no build do Docker
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+.idea/
+.git/
+.gitignore
+README.md
+*.md
+*.txt
+*.log
+coverage/
+*.sqlite3
+*.db
+
+# Excluir pastas de testes e documentação não necessárias para o deploy
+tests/
+docs/
+
+# Excluir todas as telas do frontend, mantendo apenas a interface de integrações
+frontend/*.html
+!frontend/integrations-oneclick.html
+frontend/css/
+frontend/js/
+frontend/components/
+frontend/utils/
+frontend/test.sh

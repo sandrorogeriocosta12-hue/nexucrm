@@ -14,7 +14,6 @@ print("🚀 STARTING NEXUS CRM SERVER - BUILD: 2026-04-04")
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 import os
@@ -97,11 +96,9 @@ else:
 # SERVIR FRONTEND INTEGRATIONS
 # ═════════════════════════════════════════════════════════════
 
-try:
-    app.mount("/integrations-ui", StaticFiles(directory="frontend"), name="integrations-ui")
-    logger.info("✅ Frontend integrações montado em /integrations-ui")
-except Exception as e:
-    logger.warning(f"⚠️  Não conseguiu montar frontend: {e}")
+@app.get("/integrations-ui")
+async def integrations_ui():
+    return FileResponse("frontend/integrations-oneclick.html")
 
 # ═════════════════════════════════════════════════════════════
 # ROTAS BÁSICAS
