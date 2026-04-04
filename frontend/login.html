@@ -154,6 +154,35 @@
             background: rgba(15, 23, 42, 0.95);
         }
 
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input-wrapper .form-input {
+            padding-right: 45px;
+        }
+
+        .toggle-password-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #94A3B8;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .toggle-password-btn:hover {
+            color: #CBD5E1;
+        }
+
         .submit-btn {
             width: 100%;
             padding: 12px 16px;
@@ -268,13 +297,16 @@
 
                     <div class="form-group">
                         <label for="password" class="form-label">Senha</label>
-                        <input
-                            type="password"
-                            id="password"
-                            class="form-input"
-                            placeholder="••••••"
-                            required
-                        >
+                        <div class="password-input-wrapper">
+                            <input
+                                type="password"
+                                id="password"
+                                class="form-input"
+                                placeholder="••••••"
+                                required
+                            >
+                            <button type="button" id="togglePassword" class="toggle-password-btn" title="Mostrar/Esconder senha">👁️</button>
+                        </div>
                     </div>
 
                     <button type="submit" class="submit-btn">Entrar na Conta</button>
@@ -295,6 +327,23 @@
         const form = document.getElementById('loginForm');
         const errorEl = document.getElementById('errorMessage');
         const errorTextEl = document.getElementById('errorText');
+
+        // Toggle mostrar/esconder senha
+        document.getElementById('togglePassword').addEventListener('click', function(e) {
+            e.preventDefault();
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = this;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+                toggleBtn.title = 'Esconder senha';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+                toggleBtn.title = 'Mostrar senha';
+            }
+        });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
