@@ -10,6 +10,8 @@ Integrações:
 Webhooks + AI Scoring + Auto-responses
 """
 
+print("🚀 STARTING NEXUS CRM SERVER - BUILD:", datetime.now().isoformat())
+
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
