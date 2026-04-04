@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Service - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8));
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            border-color: rgba(168, 85, 247, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.15);
+        }
+        
+        .metric-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 12px 0;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        
+        .metric-change {
+            font-size: 0.875rem;
+            margin-top: 8px;
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 24px;
+        }
+        
+        .pulse {
+            animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .sidebar-mini {
+            width: 80px;
+            background: linear-gradient(180deg, #0f172a, #1e293b);
+            border-right: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: white;
+            margin-bottom: 24px;
+        }
+        
+        .nav-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 20px;
+        }
+        
+        .nav-icon:hover {
+            background-color: rgba(168, 85, 247, 0.2);
+        }
+        
+        .nav-icon.active {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+        }
+        
+        .nav-label {
+            display: none;
+            color: #94a3b8;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 10px;
+        }
+        
+        .nav-icon:hover .nav-label {
+            display: block;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-950 to-black text-gray-100 kpi-page">
+
+<div class="flex h-screen overflow-hidden">
+    
+    <!-- SIDEBAR MINI -->
+    <aside class="sidebar-mini flex flex-col items-center py-8 px-4 space-y-6">
+        <div class="logo">N</div>
+        
+        <nav class="flex flex-col gaps-4 w-full">
+            <a href="kpi-dashboard.html" class="nav-icon active flex flex-col items-center" title="Dashboard">📊<span class="nav-label text-xs mt-1">Dash</span></a>
+            <a href="inbox-nexus.html" class="nav-icon flex flex-col items-center" title="Inbox">💬<span class="nav-label text-xs mt-1">Inbox</span></a>
+            <a href="pipeline-nexus.html" class="nav-icon flex flex-col items-center" title="Pipeline">📈<span class="nav-label text-xs mt-1">Pipeline</span></a>
+            <a href="#" class="nav-icon flex flex-col items-center" title="Contatos">👥<span class="nav-label text-xs mt-1">Contatos</span></a>
+            <a href="#" class="nav-icon flex flex-col items-center" title="Agentes">🤖<span class="nav-label text-xs mt-1">Agentes</span></a>
+            <a href="#" class="nav-icon flex flex-col items-center" title="Automações">⚙️<span class="nav-label text-xs mt-1">Automações</span></a>
+        </nav>
+        
+        <div class="flex-1"></div>
+        
+        <button onclick="logout()" class="nav-icon flex flex-col items-center" title="Sair">🚪<span class="nav-label text-xs mt-1">Sair</span></button>
+        <div class="nav-icon" title="Perfil">👤</div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-auto">
+        <div class="p-8 max-w-7xl mx-auto">
+            
+            <!-- HEADER -->
+            <div class="mb-12">
+                <div class="flex items-center gap-3 mb-2">
+                    <h1 class="text-4xl font-bold">
+                        <span class="gradient-text">Nexus Service</span>
+                    </h1>
+                    <span class="text-sm bg-green-500/20 text-green-400 px-3 py-1 rounded-full font-semibold">🟢 Ativo</span>
+                </div>
+                <p class="text-gray-400 text-sm">Dashboard de performance · Última atualização: agora</p>
+            </div>
+
+            <!-- KEY METRICS GRID -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+                
+                <!-- CARD 1: Leads Processados -->
+                <div class="metric-card">
+                    <div class="metric-label">📊 Leads Processados</div>
+                    <div class="metric-number">450</div>
+                    <div class="metric-change">↑ 45 este mês</div>
+                    <div class="text-xs text-gray-500 mt-2">Média: 15 por dia</div>
+                </div>
+                
+                <!-- CARD 2: Taxa de Conversão -->
+                <div class="metric-card">
+                    <div class="metric-label">🎯 Taxa de Conversão</div>
+                    <div class="metric-number">12%</div>
+                    <div class="metric-change">↑ 4% (era 8%)</div>
+                    <div class="text-xs text-gray-500 mt-2">54 leads convertidos</div>
+                </div>
+                
+                <!-- CARD 3: Potencial Revenue -->
+                <div class="metric-card">
+                    <div class="metric-label">💰 Potencial Revenue</div>
+                    <div class="metric-number">R$ 85k</div>
+                    <div class="metric-change">↑ Potencial este mês</div>
+                    <div class="text-xs text-gray-500 mt-2">Ticket médio: 1.8k</div>
+                </div>
+                
+                <!-- CARD 4: Tempo de Resposta -->
+                <div class="metric-card">
+                    <div class="metric-label">⚡ Tempo Resposta</div>
+                    <div class="metric-number">&lt;3s</div>
+                    <div class="metric-change">24/7 automático</div>
+                    <div class="text-xs text-gray-500 mt-2">Nunca descansa</div>
+                </div>
+                
+                <!-- CARD 5: Acurácia -->
+                <div class="metric-card">
+                    <div class="metric-label">✅ Acurácia ML</div>
+                    <div class="metric-number">87%</div>
+                    <div class="metric-change">↑ Em melhoria</div>
+                    <div class="text-xs text-gray-500 mt-2">Scoring automático</div>
+                </div>
+                
+            </div>
+
+            <!-- BOTTOM ROW: Chart + Quick Stats -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Chart -->
+                <div class="lg:col-span-2 metric-card">
+                    <div class="metric-label mb-6">📈 Trending de Conversão</div>
+                    <div class="chart-container">
+                        <canvas id="conversionChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="space-y-4">
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">🔥 Leads Quentes</div>
+                        <div class="metric-number">23</div>
+                        <div class="text-xs text-gray-500 mt-2">Requerem ação hoje</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">📅 Próxima Ação</div>
+                        <div class="text-sm text-white mt-4 font-semibold">• 3 Follow-ups</div>
+                        <div class="text-sm text-gray-400 mt-2">• 2 Propostas vencendo</div>
+                        <div class="text-sm text-gray-400 mt-2">• 1 Call agendada</div>
+                    </div>
+                    
+                </div>
+                
+            </div>
+
+        </div>
+    </main>
+
+</div>
+
+<!-- Chart Script -->
+<script>
+    const ctx = document.getElementById('conversionChart').getContext('2d');
+    
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(168, 85, 247, 0.3)');
+    gradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Sem.1', 'Sem.2', 'Sem.3', 'Sem.4', 'Há pouco', 'Agora'],
+            datasets: [{
+                label: 'Taxa de Conversão (%)',
+                data: [6, 7, 8.5, 10, 11.5, 12],
+                borderColor: '#a855f7',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#ec4899',
+                pointBorderColor: '#a855f7',
+                pointRadius: 6,
+                pointHoverRadius: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                filler: {
+                    propagate: true,
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 15,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)',
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

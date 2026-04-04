@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <!-- 🔄 CACHE BUSTING v2.5 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Nexus Service - Cadastro</title>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <style>
+        /* Custom styles for modal and form */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #374151;
+            border-radius: 8px;
+            background-color: #1f2937;
+            color: #f9fafb;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            color: #f9fafb;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .terms-modal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background-color: rgba(0, 0, 0, 0.8) !important;
+            z-index: 10000 !important;
+            display: none !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 100vh !important;
+            padding: 1rem !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+
+        .modal-content {
+            background-color: #1f2937 !important;
+            border-radius: 12px !important;
+            max-width: 56rem !important;
+            width: 100% !important;
+            max-height: 90vh !important;
+            overflow: hidden !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .modal-header {
+            padding: 1.5rem !important;
+            border-bottom: 1px solid #374151 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+
+        .modal-body {
+            padding: 1.5rem !important;
+            overflow-y: auto !important;
+            max-height: 70vh !important;
+        }
+
+        .modal-footer {
+            padding: 1.5rem !important;
+            border-top: 1px solid #374151 !important;
+            display: flex !important;
+            justify-content: flex-end !important;
+            gap: 1rem !important;
+        }
+
+        .btn-secondary {
+            background: rgba(71, 85, 105, 0.5) !important;
+            color: #d1d5db !important;
+            padding: 12px 24px !important;
+            border-radius: 8px !important;
+            border: 1px solid #374151 !important;
+            cursor: pointer !important;
+            font-weight: 500 !important;
+            transition: background-color 0.2s ease !important;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(71, 85, 105, 0.7) !important;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+            color: white !important;
+            padding: 12px 24px !important;
+            border-radius: 8px !important;
+            border: none !important;
+            cursor: pointer !important;
+            font-weight: 600 !important;
+            transition: transform 0.2s ease !important;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-1px) !important;
+        }
+
+        .terms-link {
+            color: #8b5cf6 !important;
+            text-decoration: none !important;
+            font-weight: 500 !important;
+        }
+
+        .terms-link:hover {
+            color: #a855f7 !important;
+            text-decoration: underline !important;
+        }
+    </style>
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-secondary:hover {
+            background: rgba(71, 85, 105, 0.7);
+        }
+        body { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .gradient-text {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-box {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-gradient:hover {
+            box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+        input {
+            width: 100%;
+            padding: 10px 16px;
+            background-color: rgb(71, 85, 105);
+            border: 1px solid rgb(71, 85, 105);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        input::placeholder {
+            color: rgb(156, 163, 175);
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            color: rgb(209, 213, 219);
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .error {
+            color: #fca5a5;
+            background-color: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .success {
+            color: #86efac;
+            background-color: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .plan-option {
+            position: relative;
+        }
+        .plan-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+        .plan-option input[type="radio"]:checked + label > div {
+            border-color: rgb(168, 85, 247);
+            background: rgba(168, 85, 247, 0.1);
+        }
+        .btn-secondary {
+            background: rgba(71, 85, 105, 0.5);
+            color: rgb(209, 213, 219);
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid rgb(71, 85, 105);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-secondary:hover {
+            background: rgba(71, 85, 105, 0.7);
+        }
+        /* Additional modal styles */
+        #termsModal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            z-index: 99999 !important;
+            display: none !important;
+        }
+        #termsModal:not(.hidden) {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-950 to-black">
+    <div style="width: 384px; padding: 32px; border-radius: 8px; border: 1px solid rgb(55, 65, 81); background: linear-gradient(135deg, rgb(30, 41, 59), rgb(15, 23, 42)); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);">
+        
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 32px;">
+            <div class="logo-box">N</div>
+        </div>
+        
+        <h1 class="gradient-text" style="font-size: 30px; font-weight: bold; text-align: center; margin-bottom: 8px;">Nexus Service</h1>
+        <p style="text-align: center; color: rgb(156, 163, 175); font-size: 14px; margin-bottom: 4px;">Criar Conta</p>
+        <p style="text-align: center; color: rgb(107, 114, 128); font-size: 12px; margin-bottom: 32px;">Cadastre-se e comece a qualificar leads com IA</p>
+        
+        <div id="errorMessage" class="error" style="display: none;"></div>
+        <div id="successMessage" class="success" style="display: none;"></div>
+        
+        <form id="signupForm">
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" id="fullName" placeholder="Seu nome completo" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Empresa</label>
+                <input type="text" id="company" placeholder="Sua empresa (opcional)">
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Senha</label>
+                <div style="position: relative;">
+                    <input type="password" id="password" placeholder="••••••" required style="padding-right: 40px;">
+                    <button type="button" onclick="togglePassword('password')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgb(156, 163, 175); cursor: pointer; font-size: 18px;">
+                        👁️
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Confirmar Senha</label>
+                <div style="position: relative;">
+                    <input type="password" id="confirmPassword" placeholder="••••••" required style="padding-right: 40px;">
+                    <button type="button" onclick="togglePassword('confirmPassword')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgb(156, 163, 175); cursor: pointer; font-size: 18px;">
+                        👁️
+                    </button>
+                </div>
+            </div>
+
+            <!-- Plan Selection -->
+            <div class="form-group">
+                <label>Plano</label>
+                <div class="space-y-3">
+                    <div class="plan-option" data-plan="free">
+                        <input type="radio" id="plan-free" name="plan" value="free" checked class="mr-3">
+                        <label for="plan-free" class="flex-1 cursor-pointer">
+                            <div class="bg-slate-700 p-3 rounded-lg border border-slate-600 hover:border-purple-500 transition-colors">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="font-semibold text-white">Free</div>
+                                        <div class="text-sm text-gray-400">Até 100 leads/mês</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold text-green-400">R$ 0</div>
+                                        <div class="text-xs text-gray-400">Grátis</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="plan-option" data-plan="pro">
+                        <input type="radio" id="plan-pro" name="plan" value="pro" class="mr-3">
+                        <label for="plan-pro" class="flex-1 cursor-pointer">
+                            <div class="bg-slate-700 p-3 rounded-lg border border-slate-600 hover:border-purple-500 transition-colors">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="font-semibold text-white">Pro</div>
+                                        <div class="text-sm text-gray-400">Até 1.000 leads/mês</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold text-purple-400">R$ 97</div>
+                                        <div class="text-xs text-gray-400">/mês</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="plan-option" data-plan="enterprise">
+                        <input type="radio" id="plan-enterprise" name="plan" value="enterprise" class="mr-3">
+                        <label for="plan-enterprise" class="flex-1 cursor-pointer">
+                            <div class="bg-slate-700 p-3 rounded-lg border border-slate-600 hover:border-purple-500 transition-colors">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <div class="font-semibold text-white">Enterprise</div>
+                                        <div class="text-sm text-gray-400">Leads ilimitados</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold text-pink-400">R$ 297</div>
+                                        <div class="text-xs text-gray-400">/mês</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <input type="checkbox" id="terms" required style="width: auto; margin: 0;">
+                <label for="terms" style="display: inline; margin-left: 8px;">Aceito os <a href="#" onclick="event.preventDefault(); openTermsModal(); return false;" class="terms-link">termos de serviço</a></label>
+            </div>
+
+            <button type="submit" class="btn-gradient">Criar Conta</button>
+        </form>
+
+        <p style="text-align: center; font-size: 14px; color: rgb(156, 163, 175); margin-top: 24px;">
+            Já tem conta? <a href="/" style="color: rgb(168, 85, 247); font-weight: 600; text-decoration: none;">Faça login</a>
+        </p>
+    </div>
+
+    <!-- Terms Modal -->
+    <div id="termsModal" class="terms-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="gradient-text" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Termos de Serviço</h3>
+                <button onclick="closeTermsModal()" style="color: #9ca3af; font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 0;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="color: #d1d5db;">
+                    <h4 style="color: #8b5cf6; font-weight: 600; margin-bottom: 1rem;">1. Aceitação dos Termos</h4>
+                    <p style="margin-bottom: 1rem;">Ao acessar e usar o Nexus Service, você concorda em cumprir e estar vinculado a estes Termos de Serviço. Se você não concordar com estes termos, não use nossos serviços.</p>
+
+                    <h4 style="color: #8b5cf6; font-weight: 600; margin-bottom: 1rem;">2. Descrição do Serviço</h4>
+                    <p style="margin-bottom: 1rem;">O Nexus Service é uma plataforma de CRM alimentada por IA que ajuda empresas a qualificar leads, gerenciar contatos e automatizar processos de vendas.</p>
+
+                    <h4 style="color: #8b5cf6; font-weight: 600; margin-bottom: 1rem;">3. Planos e Preços</h4>
+                    <ul style="margin-bottom: 1rem; margin-left: 1rem;">
+                        <li><strong>Free:</strong> Até 100 leads por mês, recursos básicos - R$ 0</li>
+                        <li><strong>Pro:</strong> Até 1.000 leads por mês, automações avançadas - R$ 97/mês</li>
+                        <li><strong>Enterprise:</strong> Leads ilimitados, suporte prioritário - R$ 297/mês</li>
+                    </ul>
+
+                    <h4 style="color: #8b5cf6; font-weight: 600; margin-bottom: 1rem;">4. Privacidade e Dados</h4>
+                    <p style="margin-bottom: 1rem;">Sua privacidade é importante para nós. Coletamos e processamos dados pessoais de acordo com nossa Política de Privacidade.</p>
+
+                    <h4 style="color: #8b5cf6; font-weight: 600; margin-bottom: 1rem;">5. Limitação de Responsabilidade</h4>
+                    <p style="margin-bottom: 1rem;">O Nexus Service é fornecido "como está". Não garantimos que o serviço estará sempre disponível ou livre de erros.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeTermsModal()" class="btn-secondary">Fechar</button>
+                <button onclick="acceptTerms()" class="btn-gradient">Aceito os Termos</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🔄 FORCE REFRESH - Cache Busting
+        const cacheVersion = '2.5';
+        console.log('✅ Signup page loaded - Terms Modal v' + cacheVersion + ' activated');
+        
+        // Force browser to reload if old cache detected
+        window.addEventListener('load', function() {
+            const lastVersion = sessionStorage.getItem('signupVersion');
+            if (lastVersion !== cacheVersion) {
+                sessionStorage.setItem('signupVersion', cacheVersion);
+                console.log('🔄 New version detected, clearing cache...');
+                // Clear service worker cache if exists
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => caches.delete(name));
+                    });
+                }
+            }
+        });
+
+        // Terms modal functions - defined at global scope
+        window.openTermsModal = function() {
+            console.log('🔓 Opening terms modal - function called');
+            const modal = document.getElementById('termsModal');
+            console.log('📦 Modal element:', modal);
+
+            if (modal) {
+                // Remove hidden class completely
+                modal.classList.remove('hidden');
+                
+                // Force show the modal with inline styles (override CSS)
+                modal.style.display = 'flex !important';
+                modal.style.visibility = 'visible !important';
+                modal.style.opacity = '1 !important';
+                modal.style.zIndex = '99999 !important';
+                modal.style.position = 'fixed !important';
+                modal.style.top = '0 !important';
+                modal.style.left = '0 !important';
+                modal.style.width = '100% !important';
+                modal.style.height = '100% !important';
+                modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7) !important';
+                modal.style.alignItems = 'center !important';
+                modal.style.justifyContent = 'center !important';
+
+                console.log('✅ Modal display set to flex - should be visible now');
+                
+                // Force scroll to top
+                window.scrollTo(0, 0);
+                document.body.style.overflow = 'hidden';
+                
+                // Add a test element to confirm this ran
+                console.log('✅ Modal computed style display:', window.getComputedStyle(modal).display);
+            } else {
+                console.error('❌ Modal element not found!');
+                // Try to find it by class instead
+                const modalByClass = document.querySelector('.terms-modal');
+                if (modalByClass) {
+                    console.log('Found modal by class, opening...');
+                    window.openTermsModal();
+                }
+            }
+        };
+
+        window.closeTermsModal = function() {
+            console.log('🔒 Closing terms modal');
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none !important';
+                modal.style.visibility = 'hidden !important';
+                modal.style.opacity = '0 !important';
+                document.body.style.overflow = 'auto';
+                console.log('✅ Modal display set to none');
+            }
+        };
+
+        window.acceptTerms = function() {
+            document.getElementById('terms').checked = true;
+            window.closeTermsModal();
+        };
+
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM fully loaded');
+
+            // Add click listener to modal for closing when clicking outside
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        window.closeTermsModal();
+                    }
+                });
+                console.log('Event listener added to modal');
+            }
+
+            // Test if functions are available
+            console.log('openTermsModal function:', typeof window.openTermsModal);
+            console.log('closeTermsModal function:', typeof window.closeTermsModal);
+        });
+
+        // Password visibility toggle
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const button = field.nextElementSibling;
+
+            if (field.type === 'password') {
+                field.type = 'text';
+                button.textContent = '🙈';
+            } else {
+                field.type = 'password';
+                button.textContent = '👁️';
+            }
+        }
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('Form submitted');
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const company = document.getElementById('company').value.trim();
+            const plan = document.querySelector('input[name="plan"]:checked').value;
+            const termsAccepted = document.getElementById('terms').checked;
+
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+
+            try {
+                // Validação básica
+                if (!fullName || !email || !password) {
+                    throw new Error('Nome, email e senha são obrigatórios');
+                }
+                if (password !== confirmPassword) {
+                    throw new Error('As senhas não coincidem');
+                }
+                if (password.length < 6) {
+                    throw new Error('A senha deve ter pelo menos 6 caracteres');
+                }
+                if (!termsAccepted) {
+                    throw new Error('Aceite os termos de serviço é obrigatório');
+                }
+
+                console.log('Sending registration request to API');
+
+                // Chamar API
+                const API_BASE = window.location.origin;
+                const response = await fetch(API_BASE + '/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        full_name: fullName,
+                        company: company || null,
+                        plan: plan,
+                        terms: termsAccepted
+                    })
+                });
+
+                    const data = await response.json();
+                console.log('API response:', data);
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Erro ao criar conta');
+                }
+
+                // Sucesso
+                successEl.textContent = '✅ Conta criada com sucesso! Redirecionando para login...';
+                successEl.style.display = 'block';
+                form.style.display = 'none';
+                
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+
+            } catch (err) {
+                console.error('Error:', err);
+                errorEl.textContent = '❌ ' + err.message;
+                errorEl.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
+< Deploy trigger -->
+// Cache buster: 1774439548

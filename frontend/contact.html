@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil do Contato - Vexus CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <div id="sidebar"></div>
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <div id="header"></div>
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center">
+                            <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center text-4xl font-bold text-indigo-600" id="contact-initial">C</div>
+                            <div class="ml-6">
+                                <h2 class="text-3xl font-bold text-gray-800" id="contact-name">Carregando...</h2>
+                                <p class="text-gray-600 text-lg" id="contact-company">—</p>
+                                <p class="text-gray-500 text-sm mt-1" id="contact-email">—</p>
+                            </div>
+                        </div>
+                        <div class="space-x-2">
+                            <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">✉️ E-mail</button>
+                            <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">💬 WhatsApp</button>
+                        </div>
+                    </div>
+
+                    <!-- Abas -->
+                    <div class="border-b mb-6">
+                        <nav class="flex space-x-4">
+                            <button class="tab-active px-4 py-2 text-indigo-600 border-b-2 border-indigo-600 font-medium" data-tab="details">📋 Detalhes</button>
+                            <button class="tab px-4 py-2 text-gray-600 hover:text-indigo-600" data-tab="deals">📊 Negócios</button>
+                            <button class="tab px-4 py-2 text-gray-600 hover:text-indigo-600" data-tab="activities">📝 Atividades</button>
+                            <button class="tab px-4 py-2 text-gray-600 hover:text-indigo-600" data-tab="notes">📌 Notas</button>
+                        </nav>
+                    </div>
+
+                    <!-- Conteúdo das abas -->
+                    <div id="tab-content" class="space-y-4">
+                        <!-- Carregado via JS -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        const contactId = new URLSearchParams(window.location.search).get('id');
+        const contact = {}; // será preenchido via API
+
+        fetch('/components/sidebar.html').then(r => r.text()).then(html => {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.innerHTML = html;
+        });
+        fetch('/components/header.html').then(r => r.text()).then(html => {
+            const header = document.getElementById('header');
+            if (header) header.innerHTML = html;
+            const pageTitle = document.querySelector('.page-title');
+            if (pageTitle) pageTitle.textContent = 'Perfil do Contato';
+        });
+        checkAuth();
+
+        async function loadContact() {
+            try {
+                const data = await apiFetch(`/contacts/${contactId}`);
+                Object.assign(contact, data);
+                document.getElementById('contact-name').textContent = contact.name || 'Contato';
+                document.getElementById('contact-company').textContent = contact.company || '—';
+                document.getElementById('contact-email').textContent = contact.email || '—';
+                document.getElementById('contact-initial').textContent = (contact.name || 'C').charAt(0).toUpperCase();
+
+                loadTab('details');
+            } catch (err) {
+                console.error('Erro ao carregar contato:', err);
+            }
+        }
+
+        function loadTab(tabName) {
+            const contentDiv = document.getElementById('tab-content');
+            if (tabName === 'details') {
+                contentDiv.innerHTML = `
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Informações Básicas</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm text-gray-600">E-mail</p>
+                                    <p class="font-medium">${contact.email || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Telefone</p>
+                                    <p class="font-medium">${contact.phone || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Cargo</p>
+                                    <p class="font-medium">${contact.position || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Origem</p>
+                                    <p class="font-medium">${contact.source || '—'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Endereço</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-sm text-gray-600">Empresa</p>
+                                    <p class="font-medium">${contact.company || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Rua</p>
+                                    <p class="font-medium">${contact.address || '—'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Cidade/Estado</p>
+                                    <p class="font-medium">${contact.city || '—'} / ${contact.state || '—'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (tabName === 'deals') {
+                contentDiv.innerHTML = `<p class="text-gray-500">Carregando negócios associados...</p>`;
+            } else if (tabName === 'activities') {
+                contentDiv.innerHTML = `<p class="text-gray-500">Carregando atividades...</p>`;
+            } else if (tabName === 'notes') {
+                contentDiv.innerHTML = `
+                    <div class="space-y-4">
+                        <textarea class="w-full border rounded-lg px-3 py-2 h-32 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Adicione uma nota sobre este contato..."></textarea>
+                        <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">Salvar nota</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Event listeners para as abas
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab, .tab-active').forEach(el => {
+                    el.classList.remove('tab-active', 'text-indigo-600', 'border-b-2', 'border-indigo-600');
+                    el.classList.add('text-gray-600');
+                });
+                this.classList.add('tab-active', 'text-indigo-600', 'border-b-2', 'border-indigo-600');
+                loadTab(this.dataset.tab);
+            });
+        });
+
+        loadContact();
+    </script>
+</body>
+</html>

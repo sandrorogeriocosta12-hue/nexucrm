@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Contatos - Nexus Service</title>
+    <link rel="stylesheet" href="css/design-system.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .page-title h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .page-title p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-color), #1e3a8a);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .filter-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .filter-controls {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: var(--spacing-md);
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .select-input {
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .select-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .tag-filters {
+            display: flex;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .tag-filter {
+            padding: 6px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .tag-filter.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .tag-filter:hover:not(.active) {
+            border-color: var(--accent-color);
+        }
+
+        .contacts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .contact-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .contact-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-color);
+        }
+
+        .contact-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .contact-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+        }
+
+        .contact-info h3 {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .contact-info p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .contact-details {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 0.9rem;
+        }
+
+        .detail-label {
+            color: var(--text-tertiary);
+            font-size: 0.8rem;
+        }
+
+        .detail-value {
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .contact-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .tag-badge {
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 50;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            padding: var(--spacing-lg);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: var(--spacing-lg);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-close:hover {
+            transform: scale(1.2);
+        }
+
+        .results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .btn-view {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-view.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-3xl);
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+            }
+
+            .filter-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .contacts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="padding: var(--spacing-xl);">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <h1>📇 Contatos</h1>
+                <p>Gerencie e organize todos os seus contatos</p>
+            </div>
+            <button class="btn-primary" onclick="openContactModal()">
+                ➕ Novo Contato
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total de Contatos</div>
+                <div class="stat-value" id="total-contacts">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Contatos Ativos</div>
+                <div class="stat-value" id="active-contacts">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Prospects</div>
+                <div class="stat-value" id="prospect-contacts">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Com Email</div>
+                <div class="stat-value" id="email-contacts">0</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-section">
+            <div class="filter-controls">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="🔍 Buscar por nome, email ou empresa..." 
+                    class="search-input"
+                    onkeyup="filterContacts()"
+                >
+                <select id="filterStatus" class="select-input" onchange="filterContacts()">
+                    <option value="">Status: Todos</option>
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
+                    <option value="prospect">Prospect</option>
+                </select>
+                <button class="btn-primary" onclick="exportContacts()">📥 Exportar</button>
+            </div>
+
+            <!-- Tag Filters -->
+            <div class="tag-filters" id="tagFilters"></div>
+
+            <!-- Results Info -->
+            <div class="results-info">
+                <span>Mostrando <strong id="results-count">0</strong> contatos</span>
+                <div class="view-toggle">
+                    <button class="btn-view active" onclick="toggleView('grid')">⊞ Grade</button>
+                    <button class="btn-view" onclick="toggleView('list')">☰ Lista</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contacts Grid/List -->
+        <div id="contactsContainer" class="contacts-container"></div>
+        <div id="emptyState" class="empty-state hidden">
+            <div class="empty-state-icon">📭</div>
+            <p>Nenhum contato encontrado</p>
+            <p style="font-size: 0.85rem;">Crie um novo contato para começar</p>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>✏️ Novo Contato</span>
+                <button class="btn-close" onclick="closeContactModal()">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="contactForm" onsubmit="saveContact(event)">
+                    <!-- Informações Básicas -->
+                    <div class="form-group">
+                        <label class="form-label">Nome Completo *</label>
+                        <input type="text" id="name" class="form-input" placeholder="Ex: João Silva" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" id="email" class="form-input" placeholder="email@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <input type="tel" id="phone" class="form-input" placeholder="(11) 99999-9999">
+                        </div>
+                    </div>
+
+                    <!-- Empresa -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                        <div class="form-group">
+                            <label class="form-label">Empresa</label>
+                            <input type="text" id="company" class="form-input" placeholder="Nome da empresa">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cargo</label>
+                            <input type="text" id="position" class="form-input" placeholder="Ex: Gerente">
+                        </div>
+                    </div>
+
+                    <!-- Status/Fonte -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                        <div class="form-group">
+                            <label class="form-label">Fonte</label>
+                            <select id="source" class="form-select">
+                                <option value="">Selecione...</option>
+                                <option value="web">Website</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="email">Email</option>
+                                <option value="referral">Referência</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select id="status" class="form-select">
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                                <option value="prospect">Prospect</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="form-group">
+                        <label class="form-label">Tags</label>
+                        <input type="text" id="tags" class="form-input" placeholder="Separe com vírgula">
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="display: flex; gap: var(--spacing-md); justify-content: flex-end;">
+                        <button type="button" class="btn-action" onclick="closeContactModal()" style="flex: 0 1 auto; padding: var(--spacing-md) var(--spacing-lg);">Cancelar</button>
+                        <button type="submit" class="btn-primary" style="flex: 0 1 auto;">✓ Salvar Contato</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script>
+        const mockContacts = [
+            { id: 1, name: "João Silva", email: "joao@empresa1.com", phone: "(11) 98765-4321", company: "Tech Solutions", position: "Gerente", status: "ativo", source: "linkedin", tags: ["vendas", "executive"] },
+            { id: 2, name: "Maria Santos", email: "maria@empresa2.com", phone: "(21) 97654-3210", company: "Digital Marketing", position: "Diretora", status: "ativo", source: "web", tags: ["marketing", "decision-maker"] },
+            { id: 3, name: "Carlos Mendes", email: "carlos@empresa3.com", phone: "(85) 96543-2109", company: "StartUp XYZ", position: "CEO", status: "prospect", source: "referral", tags: ["ceo", "tech"] },
+            { id: 4, name: "Ana Costa", email: "ana@empresa4.com", phone: "(31) 95432-1098", company: "Consultoria", position: "Consultora", status: "ativo", source: "email", tags: ["consultant"] },
+            { id: 5, name: "Pedro Oliveira", email: "pedro@empresa5.com", phone: "(47) 94321-0987", company: "Desenvolvimento", position: "Tech Lead", status: "inativo", source: "linkedin", tags: ["tech", "developer"] },
+        ];
+
+        let contacts = JSON.parse(JSON.stringify(mockContacts));
+        let filteredContacts = contacts;
+        let currentView = 'grid';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderContacts();
+            updateStats();
+            renderTagFilters();
+        });
+
+        function renderContacts() {
+            const container = document.getElementById('contactsContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            container.innerHTML = '';
+
+            if (filteredContacts.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            filteredContacts.forEach(contact => {
+                const avatar = NexusUtils.getInitials(contact.name);
+                const avatarColor = NexusUtils.getAvatarColor(contact.name);
+                
+                const tagsHTML = contact.tags
+                    .map(tag => `<span class="tag-badge" style="background: var(--accent-color); color: white;">${tag}</span>`)
+                    .join('');
+
+                const card = document.createElement('div');
+                card.className = 'contact-card';
+                card.innerHTML = `
+                    <div class="contact-header">
+                        <div class="contact-avatar" style="background: ${avatarColor};">${avatar}</div>
+                        <div class="contact-info">
+                            <h3>${contact.name}</h3>
+                            <p>${contact.position}</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-details">
+                        ${contact.email ? `<div class="detail-item"><span class="detail-label">📧</span><span class="detail-value">${contact.email}</span></div>` : ''}
+                        ${contact.phone ? `<div class="detail-item"><span class="detail-label">📱</span><span class="detail-value">${contact.phone}</span></div>` : ''}
+                        ${contact.company ? `<div class="detail-item"><span class="detail-label">🏢</span><span class="detail-value">${contact.company}</span></div>` : ''}
+                    </div>
+
+                    ${tagsHTML ? `<div class="contact-tags">${tagsHTML}</div>` : ''}
+
+                    <div class="contact-actions">
+                        <button class="btn-action" onclick="editContact(${contact.id})">✏️ Editar</button>
+                        <button class="btn-action" onclick="deleteContact(${contact.id})">🗑️ Remover</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('results-count').textContent = filteredContacts.length;
+        }
+
+        function renderTagFilters() {
+            const allTags = new Set();
+            contacts.forEach(c => c.tags?.forEach(t => allTags.add(t)));
+            
+            const container = document.getElementById('tagFilters');
+            container.innerHTML = '';
+
+            allTags.forEach(tag => {
+                const btn = document.createElement('button');
+                btn.className = 'tag-filter';
+                btn.textContent = tag;
+                btn.onclick = () => {
+                    btn.classList.toggle('active');
+                    filterContacts();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function filterContacts() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+            const activeTags = Array.from(document.querySelectorAll('.tag-filter.active')).map(el => el.textContent);
+
+            filteredContacts = contacts.filter(c => {
+                const matchSearch = !search || 
+                    c.name.toLowerCase().includes(search) ||
+                    c.email.toLowerCase().includes(search) ||
+                    c.company.toLowerCase().includes(search);
+                
+                const matchStatus = !status || c.status === status;
+                
+                const matchTags = activeTags.length === 0 || activeTags.some(tag => c.tags.includes(tag));
+
+                return matchSearch && matchStatus && matchTags;
+            });
+
+            renderContacts();
+        }
+
+        function updateStats() {
+            document.getElementById('total-contacts').textContent = contacts.length;
+            document.getElementById('active-contacts').textContent = contacts.filter(c => c.status === 'ativo').length;
+            document.getElementById('prospect-contacts').textContent = contacts.filter(c => c.status === 'prospect').length;
+            document.getElementById('email-contacts').textContent = contacts.filter(c => c.email).length;
+        }
+
+        function toggleView(view) {
+            currentView = view;
+            document.querySelectorAll('.btn-view').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const container = document.getElementById('contactsContainer');
+            if (view === 'grid') {
+                container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+            } else {
+                container.style.gridTemplateColumns = '1fr';
+            }
+        }
+
+        function openContactModal() {
+            document.getElementById('contactModal').classList.add('active');
+        }
+
+        function closeContactModal() {
+            document.getElementById('contactModal').classList.remove('active');
+            document.getElementById('contactForm').reset();
+        }
+
+        function saveContact(e) {
+            e.preventDefault();
+            
+            const newContact = {
+                id: Math.max(...contacts.map(c => c.id), 0) + 1,
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                company: document.getElementById('company').value,
+                position: document.getElementById('position').value,
+                status: document.getElementById('status').value,
+                source: document.getElementById('source').value,
+                tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t)
+            };
+
+            contacts.push(newContact);
+            filteredContacts = contacts;
+            updateStats();
+            renderContacts();
+            renderTagFilters();
+            closeContactModal();
+
+            NexusUtils.notifySuccess(`✅ Contato "${newContact.name}" salvo com sucesso!`);
+        }
+
+        function editContact(id) {
+            const contact = contacts.find(c => c.id === id);
+            if (!contact) return;
+
+            document.getElementById('name').value = contact.name;
+            document.getElementById('email').value = contact.email;
+            document.getElementById('phone').value = contact.phone;
+            document.getElementById('company').value = contact.company;
+            document.getElementById('position').value = contact.position;
+            document.getElementById('status').value = contact.status;
+            document.getElementById('source').value = contact.source;
+            document.getElementById('tags').value = contact.tags.join(', ');
+
+            openContactModal();
+        }
+
+        function deleteContact(id) {
+            if (!confirm('Confirmar exclusão?')) return;
+            contacts = contacts.filter(c => c.id !== id);
+            filteredContacts = contacts;
+            updateStats();
+            renderContacts();
+            renderTagFilters();
+            NexusUtils.notifySuccess('✅ Contato removido');
+        }
+
+        function exportContacts() {
+            const csv = [
+                ['Nome', 'Email', 'Telefone', 'Empresa', 'Cargo', 'Status', 'Tags'].join(','),
+                ...filteredContacts.map(c => 
+                    [c.name, c.email, c.phone, c.company, c.position, c.status, c.tags.join('; ')].join(',')
+                )
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `contatos-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            NexusUtils.notifySuccess('✅ Contatos exportados!');
+        }
+    </script>
+</body>
+</html>

@@ -22,11 +22,3 @@ coverage/
 tests/
 docs/
 
-# Excluir todas as telas do frontend, mantendo apenas a interface de integrações
-frontend/*.html
-!frontend/integrations-oneclick.html
-frontend/css/
-frontend/js/
-frontend/components/
-frontend/utils/
-frontend/test.sh

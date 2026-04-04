@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Service - Login Seguro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-box {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            transition: all 0.3s;
+        }
+        .btn-gradient:hover {
+            box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            hover: color #cbd5e1;
+            transition: color 0.2s;
+        }
+        .toggle-password:hover {
+            color: #cbd5e1;
+        }
+        #password {
+            padding-right: 45px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 bg-gradient-to-br from-slate-900 via-slate-950 to-black flex items-center justify-center min-h-screen">
+    <div class="w-96 p-8 rounded-lg border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl">
+        
+        <div class="flex items-center justify-center mb-8">
+            <div class="logo-box">N</div>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-center gradient-text mb-2">Nexus Service</h1>
+        <p class="text-center text-gray-400 text-sm mb-1">Lead Scoring em Tempo Real</p>
+        <p class="text-center text-gray-500 text-xs mb-8">Qualifique leads com IA • 87% de acurácia</p>
+        
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-300 text-sm font-semibold mb-2">E-mail</label>
+                <input type="email" id="email" class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder-gray-400" placeholder="seu@email.com" required>
+            </div>
+            <div>
+                <label class="block text-gray-300 text-sm font-semibold mb-2">Senha</label>
+                <div class="password-input-wrapper">
+                    <input type="password" id="password" class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder-gray-400" placeholder="••••••" required>
+                    <button type="button" id="togglePassword" class="toggle-password" title="Mostrar/Esconder senha">👁️</button>
+                </div>
+            </div>
+            <button type="submit" class="w-full btn-gradient text-white py-2.5 px-4 rounded-lg font-semibold">Entrar Agora</button>
+        </form>
+
+        <div id="errorMessage" class="hidden mt-4 p-3 bg-red-900/30 border border-red-700 text-red-300 rounded-lg text-sm"></div>
+
+        <p class="text-center text-sm text-gray-400 mt-6">
+            Não tem conta? <a href="/signup" class="text-purple-400 font-semibold hover:text-purple-300 transition">Solicite acesso</a>
+        </p>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // Toggle de mostrar/esconder senha
+        document.getElementById('togglePassword').addEventListener('click', function(e) {
+            e.preventDefault();
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = this;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+                toggleBtn.title = 'Esconder senha';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+                toggleBtn.title = 'Mostrar senha';
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('errorMessage');
+            
+            try {
+                errorEl.classList.add('hidden');
+                if (!email || !password) throw new Error('Email e senha obrigatórios');
+                await login(email, password);
+                window.location.href = '/dashboard';
+            } catch (err) {
+                errorEl.textContent = err.message || 'Erro ao fazer login. Tente novamente.';
+                errorEl.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

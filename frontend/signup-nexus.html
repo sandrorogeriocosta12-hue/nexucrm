@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 🔄 CACHE BUSTING v2.5 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Nexus Service - Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-box {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            transition: all 0.3s;
+        }
+        .btn-gradient:hover {
+            box-shadow: 0 8px 24px rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-950 to-black flex items-center justify-center min-h-screen">
+    <div class="w-96 p-8 rounded-lg border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 shadow-2xl">
+        
+        <div class="flex items-center justify-center mb-8">
+            <div class="logo-box">N</div>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-center gradient-text mb-2">Nexus Service</h1>
+        <p class="text-center text-gray-400 text-sm mb-1">Criar Conta</p>
+        <p class="text-center text-gray-500 text-xs mb-8">Cadastre-se e comece a qualificar leads com IA</p>
+        
+        <form id="signupForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-300 text-sm font-semibold mb-2">Nome Completo</label>
+                <input type="text" id="fullName" class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder-gray-400" placeholder="Seu nome completo" required>
+            </div>
+            
+            <div>
+                <label class="block text-gray-300 text-sm font-semibold mb-2">Empresa</label>
+                <input type="text" id="company" class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder-gray-400" placeholder="Sua empresa (opcional)" >
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm font-semibold mb-2">E-mail</label>
+                <input type="email" id="email" class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder-gray-400" placeholder="seu@email.com" required>
+            </div>
+            
+            <div>
+                <label class="block text-gray-300 text-sm font-semibold mb-2">Senha</label>
+                <input type="password" id="password" class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder-gray-400" placeholder="••••••" required>
+            </div>
+
+            <div>
+                <label class="block text-gray-300 text-sm font-semibold mb-2">Confirmar Senha</label>
+                <input type="password" id="confirmPassword" class="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition placeholder-gray-400" placeholder="••••••" required>
+            </div>
+
+            <div class="flex items-center">
+                <input type="checkbox" id="terms" class="w-4 h-4 bg-slate-700 border border-slate-600 rounded focus:ring-2 focus:ring-purple-500" required>
+                <label for="terms" class="ml-2 text-sm text-gray-400">Aceito os <a href="#" onclick="event.preventDefault(); openTermsModal(); return false;" class="text-purple-400 hover:text-purple-300">termos de serviço</a></label>
+            </div>
+
+            <button type="submit" class="w-full btn-gradient text-white py-2.5 px-4 rounded-lg font-semibold">Criar Conta</button>
+        </form>
+
+        <div id="errorMessage" class="hidden mt-4 p-3 bg-red-900/30 border border-red-700 text-red-300 rounded-lg text-sm"></div>
+        <div id="successMessage" class="hidden mt-4 p-3 bg-green-900/30 border border-green-700 text-green-300 rounded-lg text-sm"></div>
+
+        <p class="text-center text-sm text-gray-400 mt-6">
+            Já tem conta? <a href="login-nexus.html" class="text-purple-400 font-semibold hover:text-purple-300 transition">Faça login</a>
+        </p>
+    </div>
+
+    <!-- Terms Modal -->
+    <div id="termsModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden" style="z-index: 99999 !important;">
+        <div class="bg-slate-800 border border-slate-700 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden shadow-2xl">
+            <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+                <h3 class="text-xl font-bold gradient-text">Termos de Serviço</h3>
+                <button onclick="closeTermsModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-96 text-gray-300">
+                <h4 class="text-purple-400 font-semibold mb-3">1. Aceitação dos Termos</h4>
+                <p class="mb-4">Ao acessar e usar o Nexus Service, você concorda em cumprir e estar vinculado a estes Termos de Serviço. Se você não concordar com estes termos, não use nossos serviços.</p>
+
+                <h4 class="text-purple-400 font-semibold mb-3">2. Descrição do Serviço</h4>
+                <p class="mb-4">O Nexus Service é uma plataforma de CRM alimentada por IA que ajuda empresas a qualificar leads, gerenciar contatos e automatizar processos de vendas.</p>
+
+                <h4 class="text-purple-400 font-semibold mb-3">3. Privacidade e Dados</h4>
+                <p class="mb-4">Sua privacidade é importante para nós. Coletamos e processamos dados pessoais de acordo com nossa Política de Privacidade.</p>
+
+                <h4 class="text-purple-400 font-semibold mb-3">4. Limitação de Responsabilidade</h4>
+                <p class="mb-4">O Nexus Service é fornecido "como está". Não garantimos que o serviço estará sempre disponível ou livre de erros.</p>
+            </div>
+            <div class="p-6 border-t border-slate-700 flex justify-end gap-3">
+                <button onclick="closeTermsModal()" class="px-4 py-2 bg-slate-600 text-gray-300 rounded hover:bg-slate-500 transition">Fechar</button>
+                <button onclick="acceptTerms()" class="px-4 py-2 btn-gradient text-white rounded font-semibold">Aceito os Termos</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        console.log('Signup page loaded');
+        
+        // Fallback if apiFetch is not available
+        if (typeof apiFetch === 'undefined') {
+            console.warn('apiFetch not available, creating fallback');
+            async function apiFetch(endpoint, options = {}) {
+                const API_BASE = window.location.origin;
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                };
+                const response = await fetch(API_BASE + endpoint, {
+                    ...options,
+                    headers
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Erro na requisição');
+                }
+                return data;
+            }
+        }
+        
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('Signup form submitted');
+            
+            const fullName = document.getElementById('fullName').value;
+            const company = document.getElementById('company').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorEl = document.getElementById('errorMessage');
+            const successEl = document.getElementById('successMessage');
+            
+            try {
+                errorEl.classList.add('hidden');
+                successEl.classList.add('hidden');
+
+                // Validação básica
+                if (!fullName || !email || !password) {
+                    throw new Error('Nome, email e senha são obrigatórios');
+                }
+
+                if (password !== confirmPassword) {
+                    throw new Error('As senhas não coincidem');
+                }
+
+                if (password.length < 6) {
+                    throw new Error('A senha deve ter pelo menos 6 caracteres');
+                }
+
+                // Registrar via API
+                console.log('Calling apiFetch for registration');
+                
+                const result = await apiFetch('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        full_name: fullName,
+                        company: company || null
+                    })
+                });
+
+                console.log('Registration successful:', result);
+                
+                // Sucesso - armazenar dados e redirecionar para login
+                successEl.textContent = '✅ Conta criada com sucesso! Você será redirecionado para login...';
+                successEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    window.location.href = '/login-nexus.html';
+                }, 2000);
+
+            } catch (err) {
+                console.error('Signup error:', err);
+                errorEl.textContent = err.message || 'Erro ao criar conta. Tente novamente.';
+                errorEl.classList.remove('hidden');
+            }
+        });
+
+        // Terms modal functions
+        window.openTermsModal = function() {
+            console.log('Opening terms modal');
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                console.log('Modal opened');
+            }
+        };
+
+        window.closeTermsModal = function() {
+            console.log('Closing terms modal');
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                console.log('Modal closed');
+            }
+        };
+
+        window.acceptTerms = function() {
+            document.getElementById('terms').checked = true;
+            window.closeTermsModal();
+        };
+
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        window.closeTermsModal();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

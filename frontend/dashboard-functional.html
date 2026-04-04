@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus CRM - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 16px 24px; background: #10b981; color: white; border-radius: 8px; z-index: 1000; animation: fadeInOut 3s ease-in-out; }
+        .toast.error { background: #ef4444; }
+        @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
+    </style>
+</head>
+<body class="bg-slate-950 text-white">
+
+<div class="min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-slate-900 border-b border-slate-700 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold">N</div>
+            <h1 class="text-2xl font-bold">Nexus CRM</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="userEmail" class="text-gray-300">Conectando...</span>
+            <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-semibold">Sair</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-6 py-8">
+        
+        <!-- Metrics Row -->
+        <div class="grid grid-cols-4 gap-4 mb-8">
+            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 hover:border-purple-500 transition">
+                <div class="text-gray-400 text-sm mb-2">📊 Leads</div>
+                <div class="text-3xl font-bold" id="leadCount">0</div>
+                <div class="text-xs text-gray-500 mt-2">Novos leads no CRM</div>
+            </div>
+            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 hover:border-green-500 transition">
+                <div class="text-gray-400 text-sm mb-2">📢 Campanhas</div>
+                <div class="text-3xl font-bold" id="campaignCount">0</div>
+                <div class="text-xs text-gray-500 mt-2">Campanhas ativas</div>
+            </div>
+            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 hover:border-blue-500 transition">
+                <div class="text-gray-400 text-sm mb-2">👥 Contatos</div>
+                <div class="text-3xl font-bold" id="contactCount">0</div>
+                <div class="text-xs text-gray-500 mt-2">Total de contatos</div>
+            </div>
+            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 hover:border-green-500 transition">
+                <div class="text-gray-400 text-sm mb-2">🟢 Sistema</div>
+                <div class="text-3xl font-bold" id="systemStatus">🔄</div>
+                <div class="text-xs text-gray-500 mt-2" id="systemHealth">Verificando...</div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="flex gap-0 mb-6 border-b border-slate-700 bg-slate-800/50 rounded-t-lg overflow-hidden">
+            <button onclick="switchTab('leads')" id="leadsTab" class="px-6 py-4 border-b-2 border-purple-500 font-semibold text-white transition">📊 Leads</button>
+            <button onclick="switchTab('campaigns')" id="campaignsTab" class="px-6 py-4 border-b-2 border-transparent text-gray-400 hover:text-white transition">📢 Campanhas</button>
+            <button onclick="switchTab('contacts')" id="contactsTab" class="px-6 py-4 border-b-2 border-transparent text-gray-400 hover:text-white transition">👥 Contatos</button>
+            <button onclick="switchTab('agents')" id="agentsTab" class="px-6 py-4 border-b-2 border-transparent text-gray-400 hover:text-white transition">🤖 Agentes</button>
+            <button onclick="switchTab('settings')" id="settingsTab" class="px-6 py-4 border-b-2 border-transparent text-gray-400 hover:text-white transition">⚙️ Configurações</button>
+        </div>
+
+        <!-- LEADS Section -->
+        <div id="leadsSection" class="bg-slate-800 rounded-b-lg border border-slate-700 border-t-0">
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">Gerenciador de Leads</h2>
+                <button onclick="openLeadModal()" class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded font-semibold transition">+ Novo Lead</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-gray-300">Nome</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Email</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Empresa</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Valor</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Status</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTable" class="divide-y divide-slate-700">
+                        <tr class="hover:bg-slate-700/50">
+                            <td class="px-6 py-4" colspan="6" class="text-center text-gray-500">Carregando leads...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CAMPAIGNS Section -->
+        <div id="campaignsSection" class="hidden bg-slate-800 rounded-b-lg border border-slate-700 border-t-0">
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">Gerenciador de Campanhas</h2>
+                <button onclick="openCampaignModal()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded font-semibold transition">+ Nova Campanha</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-gray-300">Nome</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Descrição</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Orçamento</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="campaignsTable" class="divide-y divide-slate-700">
+                        <tr class="hover:bg-slate-700/50">
+                            <td class="px-6 py-4" colspan="4" class="text-center text-gray-500">Carregando campanhas...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CONTACTS Section -->
+        <div id="contactsSection" class="hidden bg-slate-800 rounded-b-lg border border-slate-700 border-t-0">
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold">Gerenciador de Contatos</h2>
+                <button onclick="openContactModal()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-semibold transition">+ Novo Contato</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-gray-300">Nome</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Email</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Telefone</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Empresa</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Cargo</th>
+                            <th class="px-6 py-3 text-left text-gray-300">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contactsTable" class="divide-y divide-slate-700">
+                        <tr class="hover:bg-slate-700/50">
+                            <td class="px-6 py-4" colspan="6" class="text-center text-gray-500">Carregando contatos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AGENTS Section -->
+        <div id="agentsSection" class="hidden bg-slate-800 rounded-b-lg border border-slate-700 border-t-0">
+            <div class="p-6 border-b border-slate-700">
+                <h2 class="text-xl font-bold mb-4">Configuração de Agentes</h2>
+                <div id="agentsList" class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-700 p-4 rounded">Carregando agentes...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS Section -->
+        <div id="settingsSection" class="hidden bg-slate-800 rounded-b-lg border border-slate-700 border-t-0">
+            <div class="p-6">
+                <h2 class="text-2xl font-bold mb-6">⚙️ Configurações Completas</h2>
+                
+                <!-- Account Info Card -->
+                <div class="mb-6 bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+                    <h3 class="text-lg font-bold mb-4 text-purple-400">👤 Informações da Conta</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Nome</label>
+                            <input type="text" id="settingName" placeholder="Seu Nome" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Email</label>
+                            <input type="email" id="settingEmail" placeholder="seu@email.com" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Empresa</label>
+                            <input type="text" id="settingCompany" placeholder="Sua Empresa" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Telefone</label>
+                            <input type="tel" id="settingPhone" placeholder="(11) 99999-9999" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                    </div>
+                    <button onclick="saveAccountSettings()" class="mt-4 bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded font-semibold transition">✅ Salvar Dados</button>
+                </div>
+
+                <!-- Plan Info Card -->
+                <div class="mb-6 bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+                    <h3 class="text-lg font-bold mb-4 text-blue-400">📦 Plano Atual</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-400">Plano</p>
+                            <p class="text-xl font-bold" id="currentPlan">-</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Valor Mensal</p>
+                            <p class="text-xl font-bold text-green-400" id="currentPrice">R$ -</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Próxima Renovação</p>
+                            <p class="text-xl font-bold" id="renewalDate">01 de maio</p>
+                        </div>
+                    </div>
+                    <button onclick="upgradePlan()" class="mt-4 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-semibold transition">🔄 Mudar Plano</button>
+                </div>
+
+                <!-- Preferences Card -->
+                <div class="mb-6 bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+                    <h3 class="text-lg font-bold mb-4 text-green-400">🎨 Preferências</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label class="text-gray-300">Notificações por Email</label>
+                            <input type="checkbox" id="emailNotif" checked class="w-4 h-4">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="text-gray-300">Notificações por WhatsApp</label>
+                            <input type="checkbox" id="whatsappNotif" checked class="w-4 h-4">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="text-gray-300">Relatórios Semanais</label>
+                            <input type="checkbox" id="weeklyReports" checked class="w-4 h-4">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="text-gray-300">Modo Escuro Ativado</label>
+                            <input type="checkbox" id="darkMode" checked class="w-4 h-4">
+                        </div>
+                    </div>
+                    <button onclick="savePreferences()" class="mt-4 bg-green-600 hover:bg-green-700 px-6 py-2 rounded font-semibold transition">✅ Salvar Preferências</button>
+                </div>
+
+                <!-- Security Card -->
+                <div class="mb-6 bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+                    <h3 class="text-lg font-bold mb-4 text-red-400">🔐 Segurança</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Senha Atual</label>
+                            <input type="password" id="currentPassword" placeholder="••••••••" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Nova Senha</label>
+                            <input type="password" id="newPassword" placeholder="••••••••" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Confirmar Nova Senha</label>
+                            <input type="password" id="confirmPassword" placeholder="••••••••" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-red-500">
+                        </div>
+                    </div>
+                    <button onclick="changePassword()" class="mt-4 bg-red-600 hover:bg-red-700 px-6 py-2 rounded font-semibold transition">🔑 Alterar Senha</button>
+                </div>
+
+                <!-- Integrations Card -->
+                <div class="mb-6 bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+                    <h3 class="text-lg font-bold mb-4 text-yellow-400">🔗 Integrações</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-slate-700 rounded">
+                            <span>📱 WhatsApp API</span>
+                            <span id="whatsappStatus" class="text-red-400 font-bold">✗ Não conectado</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-slate-700 rounded">
+                            <span>📧 Gmail Integration</span>
+                            <button onclick="connectIntegration('gmail')" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-1 rounded text-sm font-semibold">Conectar</button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-slate-700 rounded">
+                            <span>🎯 Zapier Webhooks</span>
+                            <button onclick="connectIntegration('zapier')" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-1 rounded text-sm font-semibold">Conectar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Billing & Usage Card -->
+                <div class="mb-6 bg-slate-700/50 p-6 rounded-lg border border-slate-600">
+                    <h3 class="text-lg font-bold mb-4 text-indigo-400">💳 Faturamento & Uso</h3>
+                    <div class="grid grid-cols-3 gap-4 mb-4">
+                        <div class="bg-slate-700 p-4 rounded text-center">
+                            <p class="text-sm text-gray-400">Leads Usados</p>
+                            <p class="text-2xl font-bold text-blue-400">45 / 100</p>
+                        </div>
+                        <div class="bg-slate-700 p-4 rounded text-center">
+                            <p class="text-sm text-gray-400">Campanhas Ativas</p>
+                            <p class="text-2xl font-bold text-green-400">3 / 5</p>
+                        </div>
+                        <div class="bg-slate-700 p-4 rounded text-center">
+                            <p class="text-sm text-gray-400">Armazenamento</p>
+                            <p class="text-2xl font-bold text-purple-400">2.5 GB / 10 GB</p>
+                        </div>
+                    </div>
+                    <button onclick="viewInvoices()" class="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded font-semibold transition">📄 Ver Faturas</button>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="bg-red-900/20 p-6 rounded-lg border border-red-600/30">
+                    <h3 class="text-lg font-bold mb-4 text-red-400">⚠️ Zona de Perigo</h3>
+                    <p class="text-gray-400 mb-4">Essas ações não podem ser desfeitas.</p>
+                    <div class="space-y-2">
+                        <button onclick="downloadData()" class="block w-full bg-orange-600 hover:bg-orange-700 px-6 py-2 rounded font-semibold transition">📥 Download de Dados</button>
+                        <button onclick="deleteAccountConfirm()" class="block w-full bg-red-600 hover:bg-red-700 px-6 py-2 rounded font-semibold transition">🗑️ Deletar Conta</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lead Modal -->
+<div id="leadModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-800 p-8 rounded-lg max-w-md w-full border border-slate-700">
+        <h2 class="text-2xl font-bold mb-6">Novo Lead</h2>
+        <form onsubmit="saveLead(event)">
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Nome</label>
+                <input type="text" id="leadName" placeholder="João Silva" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Email</label>
+                <input type="email" id="leadEmail" placeholder="joao@email.com" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Empresa</label>
+                <input type="text" id="leadCompany" placeholder="Tech Corp" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Valor (R$)</label>
+                <input type="number" id="leadValue" placeholder="5000" step="100" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm text-gray-400 mb-2">Status</label>
+                <select id="leadStatus" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option>Novo</option>
+                    <option>Contato</option>
+                    <option>Proposta</option>
+                    <option>Fechado</option>
+                </select>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded font-semibold transition">Salvar</button>
+                <button type="button" onclick="closeLeadModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded font-semibold transition">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Campaign Modal -->
+<div id="campaignModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-800 p-8 rounded-lg max-w-md w-full border border-slate-700">
+        <h2 class="text-2xl font-bold mb-6">Nova Campanha</h2>
+        <form onsubmit="saveCampaign(event)">
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Nome</label>
+                <input type="text" id="campaignName" placeholder="Campanha Q1" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Descrição</label>
+                <textarea id="campaignDesc" placeholder="Descrição da campanha..." rows="3" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm text-gray-400 mb-2">Orçamento (R$)</label>
+                <input type="number" id="campaignBudget" placeholder="10000" step="100" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-green-500" required>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-semibold transition">Salvar</button>
+                <button type="button" onclick="closeCampaignModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded font-semibold transition">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div id="contactModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-800 p-8 rounded-lg max-w-md w-full border border-slate-700">
+        <h2 class="text-2xl font-bold mb-6">Novo Contato</h2>
+        <form onsubmit="saveContact(event)">
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Nome</label>
+                <input type="text" id="contactName" placeholder="Maria Santos" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Email</label>
+                <input type="email" id="contactEmail" placeholder="maria@email.com" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Telefone</label>
+                <input type="tel" id="contactPhone" placeholder="(11) 99999-9999" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-400 mb-2">Empresa</label>
+                <input type="text" id="contactCompany" placeholder="Tech Corp" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm text-gray-400 mb-2">Cargo</label>
+                <input type="text" id="contactTitle" placeholder="Diretor" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-semibold transition">Salvar</button>
+                <button type="button" onclick="closeContactModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded font-semibold transition">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const API_BASE = window.location.origin;
+let authToken = localStorage.getItem('nexus_token');
+
+// ============ API Functions ============
+async function apiFetch(endpoint, options = {}) {
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+        ...options.headers
+    };
+
+    try {
+        const response = await fetch(API_BASE + endpoint, {
+            ...options,
+            headers
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('nexus_token');
+            authToken = null;
+            showLoginModal();
+            return null;
+        }
+
+        return response.json();
+    } catch (e) {
+        console.error(`API Error (${endpoint}):`, e);
+        return null;
+    }
+}
+
+// ============ Auth Functions ============
+async function checkAuth() {
+    // Sem autenticação necessária - dashboard aberto
+    const userEmail = sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || 'Usuário';
+    document.getElementById('userEmail').textContent = `👤 ${userEmail}`;
+    document.getElementById('loginModal').classList.add('hidden');
+    return true;
+}
+
+function showLoginModal() {
+    document.getElementById('loginModal').classList.remove('hidden');
+}
+
+async function doLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+        const response = await fetch(API_BASE + '/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+        
+        if (data.access_token) {
+            authToken = data.access_token;
+            localStorage.setItem('nexus_token', authToken);
+            showNotification('✅ Login bem-sucedido!');
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            checkAuth();
+            loadLeads();
+            loadCampaigns();
+            loadContacts();
+            loadAgents();
+        } else {
+            showNotification('❌ Email ou senha incorretos', true);
+        }
+    } catch (e) {
+        showNotification('❌ Erro ao fazer login', true);
+    }
+}
+
+function logout() {
+    localStorage.removeItem('nexus_token');
+    authToken = null;
+    document.getElementById('userEmail').textContent = 'Desconectado';
+    showLoginModal();
+}
+
+// ============ Toast Notifications ============
+function showNotification(message, isError = false) {
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (isError ? ' error' : '');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+// ============ Tab Functions ============
+function switchTab(tab) {
+    const tabs = ['leads', 'campaigns', 'contacts', 'agents', 'settings'];
+    tabs.forEach(t => {
+        document.getElementById(t + 'Section').classList.add('hidden');
+        document.getElementById(t + 'Tab').classList.remove('border-purple-500', 'border-green-500', 'border-blue-500', 'border-orange-500', 'text-white');
+        document.getElementById(t + 'Tab').classList.add('border-transparent', 'text-gray-400');
+    });
+    
+    document.getElementById(tab + 'Section').classList.remove('hidden');
+    document.getElementById(tab + 'Tab').classList.remove('border-transparent', 'text-gray-400');
+    document.getElementById(tab + 'Tab').classList.add('text-white');
+    
+    if (tab === 'leads') document.getElementById(tab + 'Tab').classList.add('border-purple-500');
+    else if (tab === 'campaigns') document.getElementById(tab + 'Tab').classList.add('border-green-500');
+    else if (tab === 'contacts') document.getElementById(tab + 'Tab').classList.add('border-blue-500');
+    else if (tab === 'settings') document.getElementById(tab + 'Tab').classList.add('border-orange-500');
+}
+
+// ============ System Health ============
+async function checkSystemHealth() {
+    const health = await apiFetch('/health');
+    if (health && health.status === 'healthy') {
+        document.getElementById('systemStatus').textContent = '🟢';
+        document.getElementById('systemHealth').textContent = 'Sistema Online';
+    } else {
+        document.getElementById('systemStatus').textContent = '🔴';
+        document.getElementById('systemHealth').textContent = 'Problemas detectados';
+    }
+}
+
+// ============ Leads Functions ============
+async function loadLeads() {
+    const leads = await apiFetch('/api/leads');
+    const table = document.getElementById('leadsTable');
+    
+    if (!leads || leads.length === 0) {
+        table.innerHTML = '<tr class="hover:bg-slate-700/50"><td colspan="6" class="px-6 py-4 text-center text-gray-500">Nenhum lead criado ainda</td></tr>';
+        document.getElementById('leadCount').textContent = '0';
+        return;
+    }
+
+    table.innerHTML = leads.map(lead => `
+        <tr class="hover:bg-slate-700/50 transition">
+            <td class="px-6 py-4 font-semibold">${lead.name || 'N/A'}</td>
+            <td class="px-6 py-4 text-gray-400">${lead.email || 'N/A'}</td>
+            <td class="px-6 py-4 text-gray-400">${lead.company || 'N/A'}</td>
+            <td class="px-6 py-4 font-semibold text-green-400">R$ ${lead.value || 0}</td>
+            <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs font-semibold bg-blue-900 text-blue-200">${lead.status || 'Novo'}</span></td>
+            <td class="px-6 py-4"><button onclick="deleteLead('${lead.id}')" class="text-red-400 hover:text-red-600 font-semibold transition">🗑️ Deletar</button></td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('leadCount').textContent = leads.length;
+}
+
+function openLeadModal() { document.getElementById('leadModal').classList.remove('hidden'); }
+function closeLeadModal() { 
+    document.getElementById('leadModal').classList.add('hidden');
+    ['leadName', 'leadEmail', 'leadCompany', 'leadValue'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function saveLead(e) {
+    e.preventDefault();
+    const lead = {
+        name: document.getElementById('leadName').value,
+        email: document.getElementById('leadEmail').value,
+        company: document.getElementById('leadCompany').value,
+        value: parseFloat(document.getElementById('leadValue').value),
+        status: document.getElementById('leadStatus').value
+    };
+
+    const result = await apiFetch('/api/leads', { method: 'POST', body: JSON.stringify(lead) });
+    if (result) {
+        showNotification('✅ Lead criado com sucesso!');
+        closeLeadModal();
+        loadLeads();
+    } else {
+        showNotification('❌ Erro ao criar lead', true);
+    }
+}
+
+async function deleteLead(id) {
+    if (!confirm('Tem certeza que deseja deletar este lead?')) return;
+    const result = await apiFetch(`/api/leads/${id}`, { method: 'DELETE' });
+    if (result) {
+        showNotification('✅ Lead deletado!');
+        loadLeads();
+    } else {
+        showNotification('❌ Erro ao deletar lead', true);
+    }
+}
+
+// ============ Campaigns Functions ============
+async function loadCampaigns() {
+    const campaigns = await apiFetch('/api/campaigns');
+    const table = document.getElementById('campaignsTable');
+    
+    if (!campaigns || campaigns.length === 0) {
+        table.innerHTML = '<tr class="hover:bg-slate-700/50"><td colspan="4" class="px-6 py-4 text-center text-gray-500">Nenhuma campanha criada ainda</td></tr>';
+        document.getElementById('campaignCount').textContent = '0';
+        return;
+    }
+
+    table.innerHTML = campaigns.map(campaign => `
+        <tr class="hover:bg-slate-700/50 transition">
+            <td class="px-6 py-4 font-semibold">${campaign.name || 'N/A'}</td>
+            <td class="px-6 py-4 text-gray-400">${campaign.description || 'N/A'}</td>
+            <td class="px-6 py-4 font-semibold text-green-400">R$ ${campaign.budget || 0}</td>
+            <td class="px-6 py-4"><button onclick="deleteCampaign('${campaign.id}')" class="text-red-400 hover:text-red-600 font-semibold transition">🗑️ Deletar</button></td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('campaignCount').textContent = campaigns.length;
+}
+
+function openCampaignModal() { document.getElementById('campaignModal').classList.remove('hidden'); }
+function closeCampaignModal() { 
+    document.getElementById('campaignModal').classList.add('hidden');
+    ['campaignName', 'campaignDesc', 'campaignBudget'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function saveCampaign(e) {
+    e.preventDefault();
+    const campaign = {
+        name: document.getElementById('campaignName').value,
+        description: document.getElementById('campaignDesc').value,
+        budget: parseFloat(document.getElementById('campaignBudget').value)
+    };
+
+    const result = await apiFetch('/api/campaigns', { method: 'POST', body: JSON.stringify(campaign) });
+    if (result) {
+        showNotification('✅ Campanha criada com sucesso!');
+        closeCampaignModal();
+        loadCampaigns();
+    } else {
+        showNotification('❌ Erro ao criar campanha', true);
+    }
+}
+
+async function deleteCampaign(id) {
+    if (!confirm('Tem certeza que deseja deletar esta campanha?')) return;
+    const result = await apiFetch(`/api/campaigns/${id}`, { method: 'DELETE' });
+    if (result) {
+        showNotification('✅ Campanha deletada!');
+        loadCampaigns();
+    } else {
+        showNotification('❌ Erro ao deletar campanha', true);
+    }
+}
+
+// ============ Contacts Functions ============
+async function loadContacts() {
+    const contacts = await apiFetch('/api/contacts');
+    const table = document.getElementById('contactsTable');
+    
+    if (!contacts || contacts.length === 0) {
+        table.innerHTML = '<tr class="hover:bg-slate-700/50"><td colspan="6" class="px-6 py-4 text-center text-gray-500">Nenhum contato criado ainda</td></tr>';
+        document.getElementById('contactCount').textContent = '0';
+        return;
+    }
+
+    table.innerHTML = contacts.map(contact => `
+        <tr class="hover:bg-slate-700/50 transition">
+            <td class="px-6 py-4 font-semibold">${contact.name || 'N/A'}</td>
+            <td class="px-6 py-4 text-gray-400">${contact.email || 'N/A'}</td>
+            <td class="px-6 py-4 text-gray-400">${contact.phone || 'N/A'}</td>
+            <td class="px-6 py-4 text-gray-400">${contact.company || 'N/A'}</td>
+            <td class="px-6 py-4 text-gray-400">${contact.title || 'N/A'}</td>
+            <td class="px-6 py-4"><button onclick="deleteContact('${contact.id}')" class="text-red-400 hover:text-red-600 font-semibold transition">🗑️ Deletar</button></td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('contactCount').textContent = contacts.length;
+}
+
+function openContactModal() { document.getElementById('contactModal').classList.remove('hidden'); }
+function closeContactModal() { 
+    document.getElementById('contactModal').classList.add('hidden');
+    ['contactName', 'contactEmail', 'contactPhone', 'contactCompany', 'contactTitle'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function saveContact(e) {
+    e.preventDefault();
+    const contact = {
+        name: document.getElementById('contactName').value,
+        email: document.getElementById('contactEmail').value,
+        phone: document.getElementById('contactPhone').value || null,
+        company: document.getElementById('contactCompany').value,
+        title: document.getElementById('contactTitle').value || null
+    };
+
+    const result = await apiFetch('/api/contacts', { method: 'POST', body: JSON.stringify(contact) });
+    if (result) {
+        showNotification('✅ Contato criado com sucesso!');
+        closeContactModal();
+        loadContacts();
+    } else {
+        showNotification('❌ Erro ao criar contato', true);
+    }
+}
+
+async function deleteContact(id) {
+    if (!confirm('Tem certeza que deseja deletar este contato?')) return;
+    const result = await apiFetch(`/api/contacts/${id}`, { method: 'DELETE' });
+    if (result) {
+        showNotification('✅ Contato deletado!');
+        loadContacts();
+    } else {
+        showNotification('❌ Erro ao deletar contato', true);
+    }
+}
+
+// ============ Agents Functions ============
+async function loadAgents() {
+    const agents = await apiFetch('/api/agents');
+    const container = document.getElementById('agentsList');
+    
+    if (!agents || !agents.agents) {
+        container.innerHTML = '<div class="col-span-2 text-center text-gray-500">Erro ao carregar agentes</div>';
+        return;
+    }
+
+    container.innerHTML = Object.entries(agents.agents).map(([name, config]) => `
+        <div class="bg-slate-700 p-4 rounded border border-slate-600">
+            <div class="font-semibold mb-2">${name.replace(/_/g, ' ')}</div>
+            <div class="text-sm text-gray-400">Modelo: ${config.model || 'N/A'}</div>
+            <div class="text-sm text-gray-400">Status: ${config.enabled ? '✅ Ativo' : '❌ Inativo'}</div>
+        </div>
+    `).join('');
+}
+
+// ============ Initialize ============
+async function initialize() {
+    const isAuthenticated = await checkAuth();
+    if (!isAuthenticated) return;
+
+    checkSystemHealth();
+    loadLeads();
+    loadCampaigns();
+    loadContacts();
+    loadAgents();
+
+    // Atualizar a cada 15 segundos
+    setInterval(() => {
+        loadLeads();
+        loadCampaigns();
+        loadContacts();
+        checkSystemHealth();
+    }, 15000);
+}
+
+// Start
+document.addEventListener('DOMContentLoaded', initialize);
+</script>
+
+<!-- Login Modal -->
+<div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div class="bg-slate-800 p-8 rounded-lg border border-slate-700 w-96 shadow-xl">
+        <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold text-2xl mx-auto mb-4">N</div>
+            <h2 class="text-2xl font-bold">Nexus CRM</h2>
+            <p class="text-gray-400 mt-2">Acesse sua plataforma de vendas</p>
+        </div>
+
+        <form onsubmit="doLogin(event)">
+            <div class="mb-4">
+                <label class="block text-gray-300 font-semibold mb-2">Email</label>
+                <input type="email" id="loginEmail" required class="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500" placeholder="seu@email.com">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-300 font-semibold mb-2">Senha</label>
+                <input type="password" id="loginPassword" required class="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500" placeholder="Sua senha">
+            </div>
+
+            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded transition">Entrar</button>
+
+            <div class="mt-6 text-center text-gray-400 text-xs">
+                <p>Ambiente de Demonstração</p>
+                <p class="text-gray-500">test@nexus.com / test123</p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// ============ Settings Functions ============
+function showToast(msg, isError = false) {
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.className = `toast ${isError ? 'error' : ''}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function saveAccountSettings() {
+    const name = document.getElementById('settingName').value;
+    const email = document.getElementById('settingEmail').value;
+    const company = document.getElementById('settingCompany').value;
+    const phone = document.getElementById('settingPhone').value;
+    
+    if (!name || !email) {
+        showToast('Por favor, preencha Nome e Email', true);
+        return;
+    }
+    
+    // Simular salvamento
+    localStorage.setItem('userAccount', JSON.stringify({ name, email, company, phone }));
+    showToast('✅ Dados da conta salvos com sucesso!');
+}
+
+function changePassword() {
+    const current = document.getElementById('currentPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    
+    if (!current || !newPass || !confirm) {
+        showToast('Por favor, preencha todos os campos de senha', true);
+        return;
+    }
+    
+    if (newPass !== confirm) {
+        showToast('As novas senhas não coincidem', true);
+        return;
+    }
+    
+    if (newPass.length < 6) {
+        showToast('A senha deve ter no mínimo 6 caracteres', true);
+        return;
+    }
+    
+    // Simular alteração de senha
+    localStorage.setItem('userPassword', newPass);
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    showToast('🔐 Senha alterada com sucesso!');
+}
+
+function savePreferences() {
+    const prefs = {
+        emailNotif: document.getElementById('emailNotif').checked,
+        whatsappNotif: document.getElementById('whatsappNotif').checked,
+        weeklyReports: document.getElementById('weeklyReports').checked,
+        darkMode: document.getElementById('darkMode').checked
+    };
+    
+    localStorage.setItem('userPreferences', JSON.stringify(prefs));
+    showToast('✅ Preferências salvas com sucesso!');
+}
+
+function upgradePlan() {
+    showToast('Redirecionando para planos...');
+    setTimeout(() => {
+        window.location.href = '/plan-selection.html';
+    }, 1000);
+}
+
+function connectIntegration(type) {
+    showToast(`🔗 Conectando ${type}...`);
+    setTimeout(() => {
+        showToast(`✅ ${type.toUpperCase()} conectado com sucesso!`);
+    }, 2000);
+}
+
+function viewInvoices() {
+    showToast('📄 Abrindo histórico de faturas...');
+    // Simular abertura de invoices
+    alert('Histórico de Faturas:\n\n- 01/04/2026: R$ 1.500 (Professional)\n- 01/03/2026: R$ 1.500 (Professional)\n- 01/02/2026: R$ 1.500 (Professional)');
+}
+
+function downloadData() {
+    showToast('📥 Preparando download de dados...');
+    setTimeout(() => {
+        const data = {
+            account: localStorage.getItem('userAccount'),
+            leads: localStorage.getItem('leads') || [],
+            contacts: localStorage.getItem('contacts') || [],
+            exported: new Date().toISOString()
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `nexus-backup-${new Date().getTime()}.json`;
+        a.click();
+        showToast('✅ Dados baixados com sucesso!');
+    }, 1500);
+}
+
+function deleteAccountConfirm() {
+    const confirm = window.confirm('⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL e deletará sua conta permanentemente!\n\nTodos os seus dados serão perdidos.\n\nDeseja continuar?');
+    if (confirm) {
+        const doubleConfirm = window.prompt('Digite "SIM" para confirmar a exclusão da conta:');
+        if (doubleConfirm === 'SIM') {
+            showToast('Deletando conta...');
+            setTimeout(() => {
+                localStorage.clear();
+                showToast('✅ Conta deletada com sucesso!');
+                window.location.href = '/signup';
+            }, 2000);
+        } else {
+            showToast('Exclusão cancelada', true);
+        }
+    }
+}
+
+// Load settings on page load
+function loadUserSettings() {
+    const account = JSON.parse(localStorage.getItem('userAccount') || '{}');
+    if (account.name) {
+        document.getElementById('settingName').value = account.name;
+        document.getElementById('settingEmail').value = account.email;
+        document.getElementById('settingCompany').value = account.company || '';
+        document.getElementById('settingPhone').value = account.phone || '';
+    }
+    
+    const prefs = JSON.parse(localStorage.getItem('userPreferences') || '{}');
+    if (Object.keys(prefs).length > 0) {
+        document.getElementById('emailNotif').checked = prefs.emailNotif !== false;
+        document.getElementById('whatsappNotif').checked = prefs.whatsappNotif !== false;
+        document.getElementById('weeklyReports').checked = prefs.weeklyReports !== false;
+        document.getElementById('darkMode').checked = prefs.darkMode !== false;
+    }
+}
+
+// Load plan info from localStorage
+function loadPlanInfo() {
+    const planPrices = {
+        starter: { name: '🚀 Starter', price: 'R$ 1.000' },
+        professional: { name: '💼 Professional', price: 'R$ 1.500' },
+        premium: { name: '🏆 Premium', price: 'R$ 2.000' }
+    };
+    
+    const selectedPlan = localStorage.getItem('selected_plan') || 'professional';
+    const planData = planPrices[selectedPlan] || planPrices['professional'];
+    
+    document.getElementById('currentPlan').textContent = planData.name;
+    document.getElementById('currentPrice').textContent = planData.price;
+}
+
+// Initialize settings on load
+document.addEventListener('DOMContentLoaded', function() {
+    loadUserSettings();
+    loadPlanInfo();
+});
+</script>
+
+</body>
+</html>

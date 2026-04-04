@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Escolha seu Plano - Nexus Service</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0F172A 0%, #1a1f3a 50%, #0F172A 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Background effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(26, 86, 219, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+        }
+
+        .plans-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .plan-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(139, 92, 246, 0.6);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);
+        }
+
+        .plan-card.selected {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .plan-badge {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .plan-name {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-tagline {
+            color: #94A3B8;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+
+        .plan-price-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+
+        .plan-price-monthly {
+            color: #64748B;
+            font-size: 0.875rem;
+        }
+
+        .plan-description {
+            color: #CBD5E1;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .plan-features li {
+            color: #E2E8F0;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .plan-features li:before {
+            content: '✓';
+            color: #10B981;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .plan-button {
+            width: 100%;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .plan-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .payment-section {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .payment-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .payment-method {
+            background: rgba(51, 65, 85, 0.5);
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .payment-method:hover,
+        .payment-method.selected {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .payment-method-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .payment-method-name {
+            color: white;
+            font-weight: 600;
+        }
+
+        .cnpj-field {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .cnpj-field.show {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            color: #E2E8F0;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.125rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .back-link {
+            color: #8b5cf6;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .page-wrapper {
+                padding: 1rem;
+            }
+
+            .plans-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .plan-card {
+                padding: 1.5rem;
+            }
+
+            .plan-name {
+                font-size: 1.5rem;
+            }
+
+            .plan-price {
+                font-size: 2rem;
+            }
+
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <a href="/signup" class="back-link">← Voltar ao cadastro</a>
+
+        <h1 style="text-align: center; font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1rem;">
+            Escolha seu Plano
+        </h1>
+        <p style="text-align: center; color: #94A3B8; margin-bottom: 3rem; font-size: 1.125rem;">
+            Selecione o plano ideal para seu negócio e forma de pagamento
+        </p>
+
+        <!-- Plan Selection -->
+        <div class="plans-container">
+            <div class="plan-card" data-plan="starter">
+                <div class="plan-name">🚀 Starter</div>
+                <p class="plan-tagline">Ideal para pequenas empresas começando</p>
+                <div class="plan-price-section">
+                    <div class="plan-price">R$ 1.500</div>
+                    <div class="plan-price-monthly">por mês, ou R$ 18.000/ano (2 meses grátis)</div>
+                </div>
+                <p class="plan-description">Perfeito para empresas que estão dando os primeiros passos na gestão de vendas com IA.</p>
+                <ul class="plan-features">
+                    <li>Até 500 contatos</li>
+                    <li>Qualificação automática de leads</li>
+                    <li>Dashboard básico</li>
+                    <li>Relatórios mensais</li>
+                    <li>Suporte por email</li>
+                    <li>Integração com WhatsApp</li>
+                    <li>1 usuário</li>
+                    <li>Backup diário</li>
+                </ul>
+                <button class="plan-button" onclick="selectPlan('starter', this)">Selecionar Starter</button>
+            </div>
+
+            <div class="plan-card selected" data-plan="professional">
+                <div class="plan-badge">⭐ MAIS POPULAR</div>
+                <div class="plan-name">💼 Professional</div>
+                <p class="plan-tagline">Para empresas em crescimento</p>
+                <div class="plan-price-section">
+                    <div class="plan-price">R$ 1.800</div>
+                    <div class="plan-price-monthly">por mês, ou R$ 21.600/ano (2 meses grátis)</div>
+                </div>
+                <p class="plan-description">Solução completa para empresas que querem acelerar suas vendas com automação inteligente.</p>
+                <ul class="plan-features">
+                    <li>Até 2.000 contatos</li>
+                    <li>Qualificação avançada de leads</li>
+                    <li>Dashboard avançado com analytics</li>
+                    <li>Relatórios em tempo real</li>
+                    <li>Automações personalizadas</li>
+                    <li>Integrações ilimitadas</li>
+                    <li>Até 5 usuários</li>
+                    <li>Backup em tempo real</li>
+                    <li>API access</li>
+                    <li>Suporte prioritário</li>
+                </ul>
+                <button class="plan-button" onclick="selectPlan('professional', this)">Selecionar Professional</button>
+            </div>
+
+            <div class="plan-card" data-plan="premium">
+                <div class="plan-name">🏆 Premium</div>
+                <p class="plan-tagline">Para grandes empresas</p>
+                <div class="plan-price-section">
+                    <div class="plan-price">R$ 2.000</div>
+                    <div class="plan-price-monthly">por mês, ou R$ 24.000/ano (2 meses grátis)</div>
+                </div>
+                <p class="plan-description">A solução mais avançada para empresas que precisam de controle total sobre suas vendas.</p>
+                <ul class="plan-features">
+                    <li>Contatos ilimitados</li>
+                    <li>IA avançada de qualificação</li>
+                    <li>Dashboard executivo completo</li>
+                    <li>Relatórios customizados</li>
+                    <li>Automações ilimitadas</li>
+                    <li>Todas as integrações</li>
+                    <li>Usuários ilimitados</li>
+                    <li>Backup enterprise</li>
+                    <li>API completa</li>
+                    <li>Consultoria dedicada</li>
+                    <li>SLA garantido</li>
+                </ul>
+                <button class="plan-button" onclick="selectPlan('premium', this)">Selecionar Premium</button>
+            </div>
+        </div>
+
+        <!-- Payment Section -->
+        <div class="payment-section">
+            <h2 class="payment-title">Escolha a Forma de Pagamento</h2>
+
+            <div class="payment-methods">
+                <div class="payment-method selected" data-method="card" onclick="selectPaymentMethod('card')">
+                    <div class="payment-method-icon">💳</div>
+                    <div class="payment-method-name">Cartão de Crédito</div>
+                </div>
+                <div class="payment-method" data-method="boleto" onclick="selectPaymentMethod('boleto')">
+                    <div class="payment-method-icon">📄</div>
+                    <div class="payment-method-name">Boleto Bancário</div>
+                </div>
+            </div>
+
+            <div class="cnpj-field" id="cnpjField">
+                <div class="form-group">
+                    <label class="form-label" for="cnpj">CNPJ da Empresa *</label>
+                    <input type="text" id="cnpj" class="form-input" placeholder="00.000.000/0000-00" maxlength="18">
+                    <small style="color: #64748B; font-size: 0.875rem;">Obrigatório para emissão de boleto</small>
+                </div>
+            </div>
+
+            <button class="submit-btn" onclick="processPayment()" id="submitBtn">
+                Finalizar Assinatura
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedPlan = 'professional';
+        let selectedPaymentMethod = 'card';
+
+        function selectPlan(planName, buttonElement) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selected class to clicked card
+            buttonElement.closest('.plan-card').classList.add('selected');
+
+            // Update selected plan
+            selectedPlan = planName;
+
+            // Update button text
+            document.querySelectorAll('.plan-button').forEach(btn => {
+                btn.textContent = 'Selecionar ' + btn.closest('.plan-card').querySelector('.plan-name').textContent.split(' ')[1];
+            });
+            buttonElement.textContent = 'Selecionado ✓';
+        }
+
+        function selectPaymentMethod(method) {
+            // Remove selected class from all methods
+            document.querySelectorAll('.payment-method').forEach(methodEl => {
+                methodEl.classList.remove('selected');
+            });
+
+            // Add selected class to clicked method
+            document.querySelector(`[data-method="${method}"]`).classList.add('selected');
+
+            // Update selected payment method
+            selectedPaymentMethod = method;
+
+            // Show/hide CNPJ field
+            const cnpjField = document.getElementById('cnpjField');
+            if (method === 'boleto') {
+                cnpjField.classList.add('show');
+            } else {
+                cnpjField.classList.remove('show');
+            }
+        }
+
+        function formatCNPJ(value) {
+            // Remove all non-digits
+            value = value.replace(/\D/g, '');
+
+            // Apply CNPJ mask
+            if (value.length <= 2) return value;
+            if (value.length <= 5) return value.replace(/(\d{2})(\d+)/, '$1.$2');
+            if (value.length <= 8) return value.replace(/(\d{2})(\d{3})(\d+)/, '$1.$2.$3');
+            if (value.length <= 12) return value.replace(/(\d{2})(\d{3})(\d{3})(\d+)/, '$1.$2.$3/$4');
+            return value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d+)/, '$1.$2.$3/$4-$5');
+        }
+
+        // Format CNPJ input
+        document.getElementById('cnpj').addEventListener('input', function(e) {
+            e.target.value = formatCNPJ(e.target.value);
+        });
+
+        async function processPayment() {
+            const submitBtn = document.getElementById('submitBtn');
+            const originalText = submitBtn.textContent;
+
+            // Validate CNPJ if boleto is selected
+            if (selectedPaymentMethod === 'boleto') {
+                const cnpj = document.getElementById('cnpj').value.replace(/\D/g, '');
+                if (cnpj.length !== 14) {
+                    alert('Por favor, informe um CNPJ válido');
+                    return;
+                }
+            }
+
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processando...';
+
+            try {
+                // Prepare payment data
+                const paymentData = {
+                    plan: selectedPlan,
+                    paymentMethod: selectedPaymentMethod,
+                    cnpj: selectedPaymentMethod === 'boleto' ? document.getElementById('cnpj').value : null
+                };
+
+                // Call payment API (this would need to be implemented on backend)
+                const response = await fetch('/api/payment/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData)
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.detail || 'Erro ao processar pagamento');
+                }
+
+                // Success - redirect to dashboard
+                alert('Assinatura realizada com sucesso! Redirecionando para o dashboard...');
+                window.location.href = '/dashboard';
+
+            } catch (error) {
+                alert('Erro ao processar pagamento: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default selections
+            selectPlan('professional', document.querySelector('.plan-card.selected .plan-button'));
+            selectPaymentMethod('card');
+        });
+    </script>
+</body>
+</html></content>
+<parameter name="filePath">/home/victor-emanuel/PycharmProjects/Vexus Service/frontend/payment.html

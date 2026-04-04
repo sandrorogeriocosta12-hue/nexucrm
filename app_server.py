@@ -14,11 +14,13 @@ print("🚀 STARTING NEXUS CRM SERVER - BUILD: 2026-04-04")
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 import os
 import logging
 from datetime import datetime
+from pathlib import Path
 
 # ═════════════════════════════════════════════════════════════
 # IMPORTS DOS NOVOS MÓDULOS
@@ -63,7 +65,7 @@ app = FastAPI(
     description="🚀 Sistema de integração de canais de comunicação com IA",
     version="2.0.0",
 )
-
+frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
 # ═════════════════════════════════════════════════════════════
 # CORS
 # ═════════════════════════════════════════════════════════════
@@ -98,14 +100,25 @@ else:
 
 @app.get("/integrations-ui")
 async def integrations_ui():
-    return FileResponse("frontend/integrations-oneclick.html")
+    return FileResponse(os.path.join(frontend_path, "integrations-oneclick.html"))
 
 # ═════════════════════════════════════════════════════════════
 # ROTAS BÁSICAS
 # ═════════════════════════════════════════════════════════════
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
+    home_file = os.path.join(frontend_path, "home.html")
+    if os.path.exists(home_file):
+        content = Path(home_file).read_text(encoding="utf-8")
+        return HTMLResponse(
+            content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
     return {
         "app": "Nexus CRM",
         "version": "2.0.0",
@@ -118,6 +131,38 @@ async def root():
             "docs": "/docs"
         }
     }
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    login_file = os.path.join(frontend_path, "login.html")
+    if os.path.exists(login_file):
+        content = Path(login_file).read_text(encoding="utf-8")
+        return HTMLResponse(
+            content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    raise HTTPException(status_code=404, detail="Login page not found")
+
+@app.get("/signup", response_class=HTMLResponse)
+async def signup_page(t: str = None):
+    signup_file = os.path.join(frontend_path, "signup.html")
+    if os.path.exists(signup_file):
+        content = Path(signup_file).read_text(encoding="utf-8")
+        if t:
+            content = content.replace("</head>", f'<script>window.inviteToken="{t}";</script></head>')
+        return HTMLResponse(
+            content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    raise HTTPException(status_code=404, detail="Signup page not found")
 
 @app.get("/health")
 async def health():
@@ -151,6 +196,8 @@ async def debug_modules():
         import_status["one_click_integrations_error"] = str(e)
     
     return import_status
+
+app.mount("/", StaticFiles(directory=frontend_path), name="frontend")
 
 # ═════════════════════════════════════════════════════════════
 # STARTUP EVENTS

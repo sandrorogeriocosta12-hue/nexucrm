@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importar Contatos - Nexus Service</title>
+    <link rel="stylesheet" href="css/design-system.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--spacing-xl);
+        }
+
+        .header {
+            margin-bottom: var(--spacing-2xl);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: var(--spacing-md);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-2xl);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-3xl);
+            text-align: center;
+            background: var(--bg-primary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: var(--bg-secondary);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .upload-text h2 {
+            font-size: 1.3rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .upload-text p {
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .upload-button {
+            display: inline-block;
+            padding: var(--spacing-md) var(--spacing-xl);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(26, 86, 219, 0.3);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        .progress-bar {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .progress-step {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .progress-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--text-muted);
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .progress-circle.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .progress-circle.done {
+            background: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+
+        .progress-circle.done::after {
+            content: '✓';
+        }
+
+        .mapping-table {
+            width: 100%;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .mapping-row {
+            display: flex;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .mapping-column {
+            flex: 1;
+        }
+
+        .mapping-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .mapping-input {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            width: 100%;
+        }
+
+        .status-message {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            display: none;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .status-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--error-color);
+            color: var(--error-color);
+        }
+
+        .status-message.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning-color);
+            color: var(--warning-color);
+        }
+
+        .button-group {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: var(--spacing-md) var(--spacing-xl);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .preview-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .preview-item {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-item-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .preview-item-email {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .preview-item-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-valid {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+
+        .status-invalid {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error-color);
+        }
+
+        .success-icon {
+            color: var(--success-color);
+            font-size: 2rem;
+            text-align: center;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-2xl);
+        }
+
+        .nav-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📥 Importar Contatos</h1>
+            <p>Importe seus contatos em massa usando um arquivo CSV ou Excel</p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-step">
+                <div class="progress-circle active" id="step1Circle">1</div>
+                <div>Upload</div>
+            </div>
+            <div class="progress-step">
+                <div class="progress-circle" id="step2Circle">2</div>
+                <div>Mapeamento</div>
+            </div>
+            <div class="progress-step">
+                <div class="progress-circle" id="step3Circle">3</div>
+                <div>Revisão</div>
+            </div>
+            <div class="progress-step">
+                <div class="progress-circle" id="step4Circle">4</div>
+                <div>Conclusão</div>
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        <div id="statusMessage" class="status-message"></div>
+
+        <!-- STEP 1: Upload -->
+        <div id="step1" class="step active">
+            <div class="card">
+                <div class="upload-area" id="uploadArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">
+                        <h2>Clique ou arraste o arquivo aqui</h2>
+                        <p>Formatos suportados: CSV, XLSX (Excel), XLS</p>
+                        <p style="font-size: 0.85rem;">Tamanho máximo: 5 MB</p>
+                        <button class="upload-button" onclick="document.getElementById('fileInput').click()">Selecionar Arquivo</button>
+                    </div>
+                </div>
+                <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls" onchange="handleFileSelect(event)">
+                <p style="margin-top: var(--spacing-lg); color: var(--text-muted); font-size: 0.9rem;">
+                    <strong>💡 Dica:</strong> Certifique-se que seu arquivo tem colunas com: Nome, Email, Telefone, Empresa
+                </p>
+            </div>
+        </div>
+
+        <!-- STEP 2: Mapping -->
+        <div id="step2" class="step">
+            <div class="card">
+                <h2 style="margin-bottom: var(--spacing-lg);">Mapeamento de Colunas</h2>
+                <p style="color: var(--text-muted); margin-bottom: var(--spacing-lg);">
+                    Mapeie as colunas do seu arquivo para os campos do sistema:
+                </p>
+                <div id="mappingContainer"></div>
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Voltar</button>
+                    <button class="btn btn-primary" onclick="nextStep()">Continuar →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: Review -->
+        <div id="step3" class="step">
+            <div class="card">
+                <h2 style="margin-bottom: var(--spacing-lg);">Revisão dos Dados</h2>
+                <div id="validationContainer"></div>
+                <div class="preview-list" id="previewList"></div>
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Voltar</button>
+                    <button class="btn btn-primary" onclick="importContacts()">Importar (<span id="countToImport">0</span>)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4: Success -->
+        <div id="step4" class="step">
+            <div class="card" style="text-align: center;">
+                <div class="success-icon">✅</div>
+                <h2>Importação Completa!</h2>
+                <p style="color: var(--text-muted); margin: var(--spacing-lg) 0;">
+                    <span id="importedCount">0</span> contato(s) foram importado(s) com sucesso
+                </p>
+                <div class="nav-links">
+                    <a href="dashboard.html">← Voltar ao Dashboard</a>
+                    <a href="contacts.html">→ Ver Contatos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        let currentStep = 1;
+        let fileData = null;
+        let parsedData = null;
+        let mapping = {};
+        let validationResult = null;
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('uploadArea').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            document.getElementById('uploadArea').classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('uploadArea').classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                handleFileSelect({ target: { files: files } });
+            }
+        }
+
+        async function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const result = await NexusUtils.parseCSV(file);
+                fileData = result;
+                
+                if (result.length === 0) {
+                    showStatus('Arquivo CSV vazio!', 'error');
+                    return;
+                }
+
+                const headers = Object.keys(result[0]);
+                mapping = NexusUtils.autoMapColumns(headers);
+                
+                nextStep();
+            } catch (error) {
+                showStatus(`Erro ao processar arquivo: ${error.message}`, 'error');
+            }
+        }
+
+        function renderMapping() {
+            const container = document.getElementById('mappingContainer');
+            const headers = Object.keys(fileData[0]);
+            
+            let html = '<div class="mapping-table">';
+            headers.forEach(header => {
+                html += `
+                    <div class="mapping-row">
+                        <div class="mapping-column" style="flex: 0.5;">
+                            <div class="mapping-label">Arquivo (${header})</div>
+                            <div style="padding: var(--spacing-md); background: var(--bg-primary); border-radius: 6px; font-weight: 500;">
+                                ${header}
+                            </div>
+                        </div>
+                        <div style="flex: 0.2; text-align: center; color: var(--text-muted);">↓</div>
+                        <div class="mapping-column" style="flex: 0.5;">
+                            <div class="mapping-label">Sistema</div>
+                            <select class="mapping-input" onchange="mapping['${header}'] = this.value">
+                                <option value="ignore">— Ignorar —</option>
+                                <option value="name" ${mapping[header] === 'name' ? 'selected' : ''}>Nome</option>
+                                <option value="email" ${mapping[header] === 'email' ? 'selected' : ''}>Email</option>
+                                <option value="phone" ${mapping[header] === 'phone' ? 'selected' : ''}>Telefone</option>
+                                <option value="company" ${mapping[header] === 'company' ? 'selected' : ''}>Empresa</option>
+                                <option value="status" ${mapping[header] === 'status' ? 'selected' : ''}>Status</option>
+                                <option value="tags" ${mapping[header] === 'tags' ? 'selected' : ''}>Tags</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderValidation() {
+            validationResult = NexusUtils.validateImportData(parsedData);
+            const container = document.getElementById('validationContainer');
+            
+            let html = '';
+            
+            if (validationResult.errors.length > 0) {
+                html += `
+                    <div class="status-message error" style="display: block;">
+                        <strong>❌ Erros encontrados (${validationResult.errors.length}):</strong>
+                        <ul class="import-validation-list">
+                            ${validationResult.errors.map(err => `<li class="import-validation-item">${err}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            if (validationResult.warnings.length > 0) {
+                html += `
+                    <div class="status-message warning" style="display: block;">
+                        <strong>⚠️ Avisos (${validationResult.warnings.length}):</strong>
+                        <ul class="import-validation-list">
+                            ${validationResult.warnings.map(warn => `<li class="import-validation-item">${warn}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            if (validationResult.valid) {
+                html += `
+                    <div class="status-message success" style="display: block;">
+                        <strong>✅ ${validationResult.count} contato(s) pronto(s) para importar</strong>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function renderPreview() {
+            const list = document.getElementById('previewList');
+            const validItems = parsedData.filter(item => item.name && item.name.trim());
+            
+            let html = '<h3 style="margin-bottom: var(--spacing-md);">Primeiros 10 contatos:</h3>';
+            html += validItems.slice(0, 10).map(item => `
+                <div class="preview-item">
+                    <div>
+                        <div class="preview-item-name">${item.name || 'N/A'}</div>
+                        <div class="preview-item-email">${item.email || item.phone || '—'}</div>
+                    </div>
+                    <span class="preview-item-status status-valid">✓ OK</span>
+                </div>
+            `).join('');
+            
+            if (validItems.length > 10) {
+                html += `<div style="padding: var(--spacing-md); text-align: center; color: var(--text-muted);">
+                    ... e ${validItems.length - 10} contato(s) mais
+                </div>`;
+            }
+            
+            list.innerHTML = html;
+            document.getElementById('countToImport').textContent = validItems.length;
+        }
+
+        function nextStep() {
+            if (currentStep === 1) {
+                if (!fileData) {
+                    showStatus('Selecione um arquivo primeiro', 'error');
+                    return;
+                }
+                renderMapping();
+            } else if (currentStep === 2) {
+                // Aplicar mapeamento
+                parsedData = fileData.map(row => {
+                    const newRow = {};
+                    Object.entries(mapping).forEach(([original, mapped]) => {
+                        if (mapped !== 'ignore') {
+                            newRow[mapped] = row[original];
+                        }
+                    });
+                    return newRow;
+                });
+                renderValidation();
+                renderPreview();
+            } else if (currentStep === 3) {
+                return; // Será chamado pelo botão de importar
+            }
+            
+            currentStep++;
+            updateProgressBar();
+            showStep(currentStep);
+        }
+
+        function prevStep() {
+            currentStep--;
+            updateProgressBar();
+            showStep(currentStep);
+        }
+
+        function showStep(step) {
+            for (let i = 1; i <= 4; i++) {
+                const elem = document.getElementById(`step${i}`);
+                if (elem) {
+                    elem.classList.remove('active');
+                }
+            }
+            const elem = document.getElementById(`step${step}`);
+            if (elem) {
+                elem.classList.add('active');
+            }
+        }
+
+        function updateProgressBar() {
+            for (let i = 1; i <= 4; i++) {
+                const circle = document.getElementById(`step${i}Circle`);
+                circle.classList.remove('active', 'done');
+                if (i < currentStep) {
+                    circle.classList.add('done');
+                } else if (i === currentStep) {
+                    circle.classList.add('active');
+                }
+            }
+        }
+
+        function showStatus(message, type = 'info') {
+            const elem = document.getElementById('statusMessage');
+            elem.textContent = message;
+            elem.className = `status-message ${type} show`;
+            setTimeout(() => elem.classList.remove('show'), 5000);
+        }
+
+        async function importContacts() {
+            try {
+                // Validar dados
+                if (!validationResult.valid) {
+                    showStatus('Corrija os erros antes de importar', 'error');
+                    return;
+                }
+
+                const validItems = parsedData.filter(item => item.name && item.name.trim());
+                
+                // Salvar em localStorage (simulado)
+                const existingContacts = JSON.parse(localStorage.getItem('contacts') || '[]');
+                const newContacts = validItems.map((item, idx) => ({
+                    id: 'contact_' + Date.now() + '_' + idx,
+                    name: item.name,
+                    email: item.email || '',
+                    phone: item.phone || '',
+                    company: item.company || '',
+                    status: item.status || 'prospect',
+                    tags: item.tags ? item.tags.split(',').map(t => t.trim()) : [],
+                    createdAt: new Date().toISOString()
+                }));
+                
+                const allContacts = [...existingContacts, ...newContacts];
+                localStorage.setItem('contacts', JSON.stringify(allContacts));
+                
+                // Próximo passo
+                document.getElementById('importedCount').textContent = newContacts.length;
+                currentStep = 4;
+                updateProgressBar();
+                showStep(currentStep);
+                
+                NexusUtils.toastSuccess(`${newContacts.length} contato(s) importado(s) com sucesso!`, 5000);
+            } catch (error) {
+                showStatus(`Erro na importação: ${error.message}`, 'error');
+            }
+        }
+
+        // Inicializar
+        updateProgressBar();
+    </script>
+</body>
+</html>

@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Criar Conta - Nexus Service</title>
+    <link rel="stylesheet" href="css/design-system.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0F172A 0%, #1a1f3a 50%, #0F172A 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Background effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(26, 86, 219, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 100%;
+            padding: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signup-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            width: 100%;
+            max-width: 1200px;
+            align-items: center;
+        }
+
+        /* LEFT SIDE - Marketing */
+        .signup-left {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .brand-logo {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #1A56DB 0%, #7C3AED 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 8px 32px rgba(26, 86, 219, 0.4);
+        }
+
+        .brand-info h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .brand-info p {
+            font-size: 13px;
+            color: #94A3B8;
+        }
+
+        .hero-headline {
+            margin-bottom: 1rem;
+        }
+
+        .hero-headline h1 {
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .hero-headline p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #CBD5E1;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .benefit-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .benefit-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(26, 86, 219, 0.15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .benefit-text h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .benefit-text p {
+            font-size: 14px;
+            color: #94A3B8;
+            line-height: 1.5;
+        }
+
+        /* RIGHT SIDE - Form */
+        .signup-right {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .form-header {
+            margin-bottom: 2rem;
+        }
+
+        .form-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-header p {
+            font-size: 15px;
+            color: #CBD5E1;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            color: white;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 11px 14px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            transition: all 0.25s ease;
+            font-family: inherit;
+        }
+
+        .form-input::placeholder {
+            color: #64748B;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #7C3AED;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin-top: 3px;
+            cursor: pointer;
+            accent-color: #7C3AED;
+        }
+
+        .checkbox-label {
+            font-size: 13px;
+            color: #CBD5E1;
+            line-height: 1.5;
+        }
+
+        .checkbox-label a {
+            color: #7C3AED;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .checkbox-label a:hover {
+            color: #1A56DB;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #1A56DB 0%, #7C3AED 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 24px rgba(26, 86, 219, 0.3);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(26, 86, 219, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-link {
+            text-align: center;
+            font-size: 14px;
+            color: #CBD5E1;
+        }
+
+        .auth-link a {
+            color: #7C3AED;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .auth-link a:hover {
+            color: #1A56DB;
+        }
+
+        .alert-message {
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #FCA5A5;
+        }
+
+        .alert-message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #86EFAC;
+        }
+
+        .alert-message.show {
+            display: flex;
+        }
+
+        /* Plan Selection Styles */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .plan-card {
+            position: relative;
+            padding: 1.25rem;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            background: #1e293b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .plan-card:hover {
+            border-color: #7C3AED;
+            background: #263449;
+            transform: translateY(-2px);
+        }
+
+        .plan-card.selected,
+        .plan-card.recommended {
+            border-color: #7C3AED;
+            background: rgba(124, 58, 237, 0.1);
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+        }
+
+        .plan-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #EC4899 0%, #7C3AED 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .plan-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .plan-subtitle {
+            font-size: 12px;
+            color: #94A3B8;
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-amount {
+            font-size: 20px;
+            font-weight: 700;
+            color: #7C3AED;
+        }
+
+        .price-period {
+            font-size: 12px;
+            color: #64748B;
+        }
+
+        .plan-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            color: #CBD5E1;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hidden-input {
+            display: none;
+        }
+
+        @media (max-width: 1024px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .plan-card {
+                padding: 1rem;
+            }
+
+            .plan-header h3 {
+                font-size: 14px;
+            }
+
+            .price-amount {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .signup-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .hero-headline h1 {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page-wrapper {
+                padding: 1rem;
+            }
+
+            .form-card {
+                padding: 1.5rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-headline h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="signup-container">
+            <!-- LEFT: Marketing -->
+            <div class="signup-left">
+                <div class="brand-header">
+                    <div class="brand-logo">N</div>
+                    <div class="brand-info">
+                        <h2>Nexus Service</h2>
+                        <p>Lead Scoring IA</p>
+                    </div>
+                </div>
+
+                <div class="hero-headline">
+                    <h1>Qualifique Leads em Tempo Real</h1>
+                    <p>Use inteligência artificial para identificar os melhores prospects automaticamente. Aumente suas vendas com leads mais qualificados.</p>
+                </div>
+
+                <div class="benefits-grid">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">⚡</div>
+                        <div class="benefit-text">
+                            <h3>Tempo Real</h3>
+                            <p>Qualifique leads em segundos com IA</p>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-icon">📈</div>
+                        <div class="benefit-text">
+                            <h3>+3x Vendas</h3>
+                            <p>Aumente seu pipeline com leads melhores</p>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🔒</div>
+                        <div class="benefit-text">
+                            <h3>100% Seguro</h3>
+                            <p>Dados criptografados em produção</p>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✨</div>
+                        <div class="benefit-text">
+                            <h3>Fácil Setup</h3>
+                            <p>Comece em menos de 5 minutos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Form -->
+            <div class="signup-right">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h2>Comece Gratuitamente</h2>
+                        <p>Teste por 14 dias, sem cartão de crédito</p>
+                    </div>
+
+                    <div id="errorMessage" class="alert-message error">
+                        <span>✕</span>
+                        <span id="errorText"></span>
+                    </div>
+
+                    <div id="successMessage" class="alert-message success">
+                        <span>✓</span>
+                        <span id="successText"></span>
+                    </div>
+
+                    <form id="signupForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName" class="form-label">Nome</label>
+                                <input
+                                    type="text"
+                                    id="firstName"
+                                    class="form-input"
+                                    placeholder="João"
+                                    required
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName" class="form-label">Sobrenome</label>
+                                <input
+                                    type="text"
+                                    id="lastName"
+                                    class="form-input"
+                                    placeholder="Silva"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">E-mail Profissional</label>
+                            <input
+                                type="email"
+                                id="email"
+                                class="form-input"
+                                placeholder="voce@empresa.com"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="company" class="form-label">Empresa</label>
+                            <input
+                                type="text"
+                                id="company"
+                                class="form-input"
+                                placeholder="Nexus Ltda"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">Senha</label>
+                            <input
+                                type="password"
+                                id="password"
+                                class="form-input"
+                                placeholder="Mínimo 6 caracteres"
+                                required
+                            >
+                        </div>
+
+                        <!-- Plan Selection -->
+                        <div class="form-group">
+                            <label class="form-label">Escolha seu plano</label>
+                            <div class="plans-grid">
+                                <!-- Starter Plan -->
+                                <div class="plan-card" onclick="selectPlanCard('starter', this)">
+                                    <input type="radio" name="selected-plan" value="starter" class="hidden-input">
+                                    <div class="plan-header">
+                                        <h3>🚀 Starter</h3>
+                                        <p class="plan-subtitle">Ideal para pequenas empresas</p>
+                                    </div>
+                                    <div class="plan-price">
+                                        <span class="price-amount">R$ 1.500</span>
+                                        <span class="price-period">/mês</span>
+                                    </div>
+                                    <ul class="plan-features">
+                                        <li>✓ Até 500 contatos</li>
+                                        <li>✓ 2 usuários simultâneos</li>
+                                        <li>✓ Email + WhatsApp</li>
+                                        <li>✓ Funil de vendas básico</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Professional Plan -->
+                                <div class="plan-card recommended" onclick="selectPlanCard('professional', this)">
+                                    <input type="radio" name="selected-plan" value="professional" checked class="hidden-input">
+                                    <div class="plan-badge">⭐ Mais Popular</div>
+                                    <div class="plan-header">
+                                        <h3>💼 Professional</h3>
+                                        <p class="plan-subtitle">Mais completo da categoria</p>
+                                    </div>
+                                    <div class="plan-price">
+                                        <span class="price-amount">R$ 1.800</span>
+                                        <span class="price-period">/mês</span>
+                                    </div>
+                                    <ul class="plan-features">
+                                        <li>✓ Até 5.000 contatos</li>
+                                        <li>✓ 10 usuários simultâneos</li>
+                                        <li>✓ Email + WhatsApp + Instagram</li>
+                                        <li>✓ Automação de seguimento</li>
+                                    </ul>
+                                </div>
+
+                                <!-- Premium Plan -->
+                                <div class="plan-card" onclick="selectPlanCard('premium', this)">
+                                    <input type="radio" name="selected-plan" value="premium" class="hidden-input">
+                                    <div class="plan-header">
+                                        <h3>👑 Premium</h3>
+                                        <p class="plan-subtitle">Total e sem limites</p>
+                                    </div>
+                                    <div class="plan-price">
+                                        <span class="price-amount">R$ 2.000</span>
+                                        <span class="price-period">/mês</span>
+                                    </div>
+                                    <ul class="plan-features">
+                                        <li>✓ Contatos ilimitados</li>
+                                        <li>✓ Usuários ilimitados</li>
+                                        <li>✓ Todos os canais</li>
+                                        <li>✓ Suporte VIP 24/7</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="terms" required>
+                            <label for="terms" class="checkbox-label">
+                                Concordo com os <a href="#" target="_blank">Termos de Serviço</a> e <a href="#" target="_blank">Política de Privacidade</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Criar Conta Gratuitamente</button>
+
+                        <div class="auth-link">
+                            Já tem uma conta? <a href="/login">Fazer login</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Plan selection function
+        function selectPlanCard(planValue, element) {
+            // Update radio button
+            const radio = element.querySelector(`input[value="${planValue}"]`);
+            if (radio) {
+                radio.checked = true;
+            }
+
+            // Update UI
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card !== element) {
+                    card.classList.remove('recommended');
+                }
+            });
+            element.classList.add('selected');
+        }
+
+        const form = document.getElementById('signupForm');
+        const errorEl = document.getElementById('errorMessage');
+        const successEl = document.getElementById('successMessage');
+        const errorTextEl = document.getElementById('errorText');
+        const successTextEl = document.getElementById('successText');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form values
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const company = document.getElementById('company').value.trim();
+            const password = document.getElementById('password').value;
+            const terms = document.getElementById('terms').checked;
+            const selectedPlan = document.querySelector('input[name="selected-plan"]:checked');
+
+            // Clear messages
+            errorEl.classList.remove('show');
+            successEl.classList.remove('show');
+
+            // Validation
+            if (!firstName || !lastName || !email || !company || !password) {
+                showError('Por favor, preencha todos os campos');
+                return;
+            }
+
+            if (!NexusUtils.isValidEmail(email)) {
+                showError('Email inválido');
+                return;
+            }
+
+            if (password.length < 6) {
+                showError('Senha deve ter mínimo 6 caracteres');
+                return;
+            }
+
+            if (!selectedPlan) {
+                showError('Por favor, escolha um plano');
+                return;
+            }
+
+            if (!terms) {
+                showError('Você precisa aceitar os Termos de Serviço');
+                return;
+            }
+
+            // Submit
+            const btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Criando conta...';
+
+            try {
+                // Combine firstName and lastName into name, as backend expects
+                const fullName = `${firstName} ${lastName}`;
+                
+                // Call signup API with plan
+                const response = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: fullName,
+                        email,
+                        password,
+                        company,
+                        plan: selectedPlan.value
+                    })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.detail || 'Erro ao criar conta');
+                }
+
+                showSuccess('Conta criada com sucesso! Redirecionando...');
+                
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            } catch (error) {
+                showError(error.message || 'Erro ao criar conta. Tente novamente.');
+                btn.disabled = false;
+                btn.textContent = 'Criar Conta Grátis';
+            }
+        });
+
+        function showError(message) {
+            errorTextEl.textContent = message;
+            errorEl.classList.add('show');
+            NexusUtils.toastError(message);
+        }
+
+        function showSuccess(message) {
+            successTextEl.textContent = message;
+            successEl.classList.add('show');
+            NexusUtils.toastSuccess(message);
+        }
+    </script>
+</body>
+</html>
