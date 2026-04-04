@@ -127,20 +127,31 @@ async def health():
         "timestamp": datetime.now().isoformat()
     }
 
-@app.get("/status")
-async def status():
-    """Status completo do sistem"""
-    return {
-        "app": "Nexus CRM v2.0",
-        "status": "online",
-        "modules": {
-            "webhooks": "✅" if WEBHOOK_ROUTER else "❌",
-            "integrations": "✅" if INTEGRATION_ROUTER else "❌",
-            "frontend": "✅",
-        },
-        "environment": os.getenv("ENVIRONMENT", "development"),
-        "timestamp": datetime.now().isoformat()
+@app.get("/debug/modules")
+async def debug_modules():
+    """Debug endpoint para verificar imports dos módulos"""
+    import_status = {
+        "webhook_receiver": False,
+        "one_click_integrations": False,
+        "routers_loaded": {
+            "WEBHOOK_ROUTER": WEBHOOK_ROUTER is not None,
+            "INTEGRATION_ROUTER": INTEGRATION_ROUTER is not None
+        }
     }
+    
+    try:
+        import webhook_receiver
+        import_status["webhook_receiver"] = True
+    except ImportError as e:
+        import_status["webhook_receiver_error"] = str(e)
+    
+    try:
+        import one_click_integrations
+        import_status["one_click_integrations"] = True
+    except ImportError as e:
+        import_status["one_click_integrations_error"] = str(e)
+    
+    return import_status
 
 # ═════════════════════════════════════════════════════════════
 # STARTUP EVENTS
