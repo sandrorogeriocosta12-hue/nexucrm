@@ -4,7 +4,7 @@ console.log('auth.js loaded');
 async function login(email, password) {
     const data = await apiFetch('/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ username: email, password }),
+        body: JSON.stringify({ email, password }),
     });
     // servidor define cookie; não armazenamos no localStorage
     localStorage.setItem('user', JSON.stringify(data.user));

@@ -1,7 +1,8 @@
 // Configuração da API
-const API_BASE_URL = 'http://localhost:8002'; // mude para seu domínio em produção
+const API_BASE_URL = window.location.origin;
+const API_PREFIX = '/api';
 
-console.log('api.js loaded, API_BASE_URL:', API_BASE_URL);
+console.log('api.js loaded, API_BASE_URL:', API_BASE_URL, 'API_PREFIX:', API_PREFIX);
 
 async function apiFetch(endpoint, options = {}) {
     // usa cookies para autenticação; envia credenciais automaticamente
@@ -10,7 +11,7 @@ async function apiFetch(endpoint, options = {}) {
         ...options.headers,
     };
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
         credentials: 'include',
         ...options,
         headers,

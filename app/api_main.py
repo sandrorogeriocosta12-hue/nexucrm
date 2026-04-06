@@ -124,6 +124,13 @@ mock_users = {
         "password_hash": get_password_hash("admin123"),
         "name": "Admin Vexus",
         "role": "admin",
+    },
+    "victor226942@gmail.com": {
+        "id": 2,
+        "email": "victor226942@gmail.com",
+        "password_hash": get_password_hash("226942Hd$"),
+        "name": "Victor",
+        "role": "user",
     }
 }
 
