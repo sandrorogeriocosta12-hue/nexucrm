@@ -1,6 +1,7 @@
 [build]
 builder = "dockerfile"
 dockerfilePath = "./Dockerfile"
+# Force rebuild: 2024-01-15 21:30 UTC
 
 [deploy]
 healthcheckPath = "/health"
