@@ -1,6 +1,11 @@
 # Railway-specific Dockerfile
-# Force rebuild: 2024-01-15-EMERGENCY
+# Force rebuild: 2024-01-15-EMERGENCY-CACHE-BUST
+# Timestamp: 2024-01-15 20:30 UTC
 FROM python:3.9-slim
+
+# Add cache busting
+ARG CACHE_BUST=2024-01-15-20-30
+RUN echo "Cache bust: $CACHE_BUST"
 
 WORKDIR /app
 
@@ -17,9 +22,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy app code
 COPY . .
 
+# Force rebuild timestamp
+RUN echo "Build timestamp: $(date)" > /app/build_timestamp.txt
+
 # Railway expects the app to listen on $PORT
 ENV PORT=8080
 EXPOSE $PORT
 
-# Start command
-CMD uvicorn app_server:app --host 0.0.0.0 --port $PORT
+# Start command with cache bust
+CMD echo "Starting app at $(date)" && uvicorn app_server:app --host 0.0.0.0 --port $PORT
