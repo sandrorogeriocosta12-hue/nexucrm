@@ -1,15 +1,18 @@
 # Railway-specific Dockerfile
-# Force rebuild: 2024-01-15-EMERGENCY-CACHE-BUST
-# Timestamp: 2024-01-15 20:30 UTC
+# FORCE COMPLETE REBUILD: 2024-01-15 22:00 UTC - NUCLEAR OPTION
+# This should force Railway to rebuild from scratch
+ARG FORCE_REBUILD=2024-01-15-22-00-00
+RUN echo "FORCE_REBUILD=$FORCE_REBUILD"
+
 FROM python:3.9-slim
 
-# Add cache busting
-ARG CACHE_BUST=2024-01-15-20-30
-RUN echo "Cache bust: $CACHE_BUST"
+# Force rebuild with timestamp
+ARG BUILD_TIMESTAMP=2024-01-15-22-00-00
+RUN echo "Build timestamp: $BUILD_TIMESTAMP"
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies with cache bust
 RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
@@ -23,11 +26,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Force rebuild timestamp
-RUN echo "Build timestamp: $(date)" > /app/build_timestamp.txt
+RUN echo "Build timestamp: $(date +%s)" > /app/build_timestamp.txt && echo "NUCLEAR REBUILD: $(date)" >> /app/build_timestamp.txt
 
 # Railway expects the app to listen on $PORT
 ENV PORT=8080
 EXPOSE $PORT
 
-# Start command with cache bust - FORCE REBUILD
-CMD echo "Starting app at $(date) - FORCE REBUILD VERSION" && python -c "import sys; print('Python version:', sys.version)" && uvicorn app_server:app --host 0.0.0.0 --port $PORT
+# Start command with NUCLEAR FORCE REBUILD - USING BACKUP FILE
+CMD echo "🚨🚨🚨 USING BACKUP FILE - NUCLEAR REBUILD 🚨🚨🚨" && python -c "import sys; print('Python version:', sys.version)" && echo "🚨 FORCE REBUILD VERSION 🚨" && uvicorn app_server_backup:app --host 0.0.0.0 --port $PORT
