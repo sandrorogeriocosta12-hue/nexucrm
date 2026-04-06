@@ -633,8 +633,15 @@ async def send_message_unified(req: SendMessageRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def create_integration_router():
-    return router
+@router.get("/debug/code")
+async def debug_code():
+    """Debug endpoint to check if the updated code is running"""
+    return {
+        "file": "one_click_integrations.py",
+        "has_debug_logs": True,
+        "evolution_api_check": _is_evolution_api_enabled(),
+        "timestamp": "2024-01-15-debug"
+    }
 
 
 if __name__ == "__main__":
