@@ -29,5 +29,5 @@ RUN echo "Build timestamp: $(date)" > /app/build_timestamp.txt
 ENV PORT=8080
 EXPOSE $PORT
 
-# Start command with cache bust
-CMD echo "Starting app at $(date)" && uvicorn app_server:app --host 0.0.0.0 --port $PORT
+# Start command with cache bust - FORCE REBUILD
+CMD echo "Starting app at $(date) - FORCE REBUILD VERSION" && python -c "import sys; print('Python version:', sys.version)" && uvicorn app_server:app --host 0.0.0.0 --port $PORT

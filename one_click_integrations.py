@@ -1,6 +1,8 @@
 """
 🎯 ONE-CLICK INTEGRATION SYSTEM
 Autorização de "um clique" para WhatsApp (QR Code), Instagram (OAuth), Telegram (Manual Rápido)
+
+FORCE REBUILD: 2024-01-15 21:00 UTC - Emergency cache bust
 """
 
 from fastapi import APIRouter, HTTPException, Depends
