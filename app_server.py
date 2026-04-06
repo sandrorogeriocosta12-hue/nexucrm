@@ -223,6 +223,21 @@ async def payment_page():
         )
     raise HTTPException(status_code=404, detail="Payment page not found")
 
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page():
+    """Dashboard funcional com metrics e análises"""
+    dashboard_file = os.path.join(frontend_path, "dashboard-functional.html")
+    if os.path.exists(dashboard_file):
+        content = Path(dashboard_file).read_text(encoding="utf-8")
+        return HTMLResponse(
+            content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    raise HTTPException(status_code=404, detail="Dashboard page not found")
 
 @app.get("/health")
 async def health():
