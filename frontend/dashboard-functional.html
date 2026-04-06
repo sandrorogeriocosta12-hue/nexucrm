@@ -328,7 +328,15 @@
                             <span id="whatsappStatus" class="text-red-400 font-bold">✗ Não conectado</span>
                         </div>
                         <div class="flex items-center justify-between p-3 bg-slate-700 rounded">
-                            <span>📧 Gmail Integration</span>
+                            <span>� Facebook/Meta</span>
+                            <button onclick="connectIntegration('facebook')" class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm font-semibold">Conectar</button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-slate-700 rounded">
+                            <span>📸 Instagram</span>
+                            <button onclick="connectIntegration('instagram')" class="bg-pink-600 hover:bg-pink-700 px-4 py-1 rounded text-sm font-semibold">Conectar</button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-slate-700 rounded">
+                            <span>�📧 Gmail Integration</span>
                             <button onclick="connectIntegration('gmail')" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-1 rounded text-sm font-semibold">Conectar</button>
                         </div>
                         <div class="flex items-center justify-between p-3 bg-slate-700 rounded">
@@ -878,10 +886,24 @@ function upgradePlan() {
 }
 
 function connectIntegration(type) {
-    showToast(`🔗 Conectando ${type}...`);
-    setTimeout(() => {
-        showToast(`✅ ${type.toUpperCase()} conectado com sucesso!`);
-    }, 2000);
+    if (type === 'facebook') {
+        showToast('🔗 Redirecionando para Facebook...');
+        setTimeout(() => {
+            window.open('/integrations-ui', '_blank');
+            showToast('✅ Abra a aba de integrações para conectar Facebook');
+        }, 1000);
+    } else if (type === 'instagram') {
+        showToast('📸 Redirecionando para Instagram...');
+        setTimeout(() => {
+            window.open('/integrations-ui', '_blank');
+            showToast('✅ Abra a aba de integrações para conectar Instagram');
+        }, 1000);
+    } else {
+        showToast(`🔗 Conectando ${type}...`);
+        setTimeout(() => {
+            showToast(`✅ ${type.toUpperCase()} conectado com sucesso!`);
+        }, 2000);
+    }
 }
 
 function viewInvoices() {

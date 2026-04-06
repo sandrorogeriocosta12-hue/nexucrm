@@ -410,7 +410,32 @@
 
                 <div class="button-group">
                     <button class="btn btn-primary" onclick="connectInstagram()">
-                        Conectar com Facebook
+                        Conectar Instagram
+                    </button>
+                </div>
+
+                <div class="info-box">
+                    <strong>O que vai acontecer:</strong><br>
+                    1. Você será redirecionado para Meta<br>
+                    2. Fazer login (seguro)<br>
+                    3. Autorizar acesso ao Nexus<br>
+                    4. Pronto! ✓
+                </div>
+            </div>
+
+            <!-- Facebook Card -->
+            <div class="integration-card disconnected" id="facebook-card">
+                <div class="card-icon">📘</div>
+                <div class="card-title">Facebook</div>
+                <div class="card-description">Sincronize Messenger e Inbox.</div>
+                
+                <div class="status-badge disconnected" id="facebook-status">
+                    ❌ Desconectado
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="connectFacebook()">
+                        Conectar Facebook
                     </button>
                 </div>
 
@@ -616,6 +641,24 @@
             } catch (error) {
                 console.error(error);
                 showError("Erro ao conectar Instagram");
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        // 📘 FACEBOOK
+        // ═══════════════════════════════════════════════════════════
+
+        async function connectFacebook() {
+            try {
+                const response = await fetch(`${API_BASE}/integrations/facebook/oauth-url`);
+                const data = await response.json();
+
+                // Redirecionar para OAuth da Meta
+                window.location.href = data.oauth_url;
+
+            } catch (error) {
+                console.error(error);
+                showError("Erro ao conectar Facebook");
             }
         }
 

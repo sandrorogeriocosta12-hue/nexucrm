@@ -148,6 +148,40 @@ async def get_instagram_oauth_url():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/integrations/facebook/oauth-url")
+async def get_facebook_oauth_url():
+    """
+    Cliente clica em "Conectar Facebook"
+    Frontend redireciona para aqui
+    Retorna URL de login OAuth da Meta para Facebook Messenger
+    """
+    try:
+        FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
+        FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
+        REDIRECT_URI = os.getenv("REDIRECT_URI", "https://api.nexuscrm.tech/integrations/instagram/callback")
+        
+        # URL oficial do Facebook Login para Messenger
+        oauth_url = (
+            f"https://www.facebook.com/v18.0/dialog/oauth?"
+            f"client_id={FACEBOOK_APP_ID}&"
+            f"redirect_uri={REDIRECT_URI}&"
+            f"scopes=pages_messaging,pages_show_list,pages_manage_metadata&"
+            f"response_type=code"
+        )
+        
+        logger.info("📘 OAuth URL gerada para Facebook")
+        
+        return {
+            "oauth_url": oauth_url,
+            "button_text": "Conectar com Facebook",
+            "instruction": "Você será redirecionado para fazer login na Meta. Autorize o acesso ao Messenger."
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Erro ao gerar OAuth URL para Facebook: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/integrations/instagram/callback")
 async def instagram_oauth_callback(code: str, state: str = None):
     """
