@@ -1,0 +1,21 @@
+# === CONFIGURAÇÕES OMNICHANNEL PARA RAILWAY ===
+# Adicione estas variáveis no painel do Railway (Settings > Variables)
+
+# TELEGRAM
+TELEGRAM_BOT_TOKEN=seu_token_aqui
+
+# FACEBOOK & INSTAGRAM (META)
+FB_PAGE_ACCESS_TOKEN=seu_token_aqui
+IG_ACCESS_TOKEN=seu_token_aqui
+
+# WHATSAPP BUSINESS API
+WHATSAPP_ACCESS_TOKEN=seu_token_aqui
+WHATSAPP_PHONE_ID=seu_id_aqui
+
+# BANCO DE DADOS (O Railway geralmente preenche automaticamente se houver um serviço Postgres)
+DATABASE_URL=postgresql://user:pass@host:port/db
+
+# SEGURANÇA
+SECRET_KEY=uma_chave_secreta_longa_e_segura
+ENVIRONMENT=production
+DEBUG=false

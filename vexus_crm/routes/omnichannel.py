@@ -17,11 +17,15 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/omnichannel", tags=["Omnichannel Integration"])
 
 # Configurações (Devem ser setadas no Railway como variáveis de ambiente)
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-FB_PAGE_ACCESS_TOKEN = os.getenv("FB_PAGE_ACCESS_TOKEN", "")
-IG_ACCESS_TOKEN = os.getenv("IG_ACCESS_TOKEN", "")
-WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN", "")
-WHATSAPP_PHONE_ID = os.getenv("WHATSAPP_PHONE_ID", "")
+# Configurações do Railway (Settings > Variables)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+FB_PAGE_ACCESS_TOKEN = os.getenv("FB_PAGE_ACCESS_TOKEN")
+IG_ACCESS_TOKEN = os.getenv("IG_ACCESS_TOKEN")
+WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
+WHATSAPP_PHONE_ID = os.getenv("WHATSAPP_PHONE_ID")
+
+if not any([TELEGRAM_BOT_TOKEN, FB_PAGE_ACCESS_TOKEN, IG_ACCESS_TOKEN, WHATSAPP_ACCESS_TOKEN]):
+    logger.warning("⚠️ Atenção: Nenhuma variável de ambiente OMNICHANNEL foi configurada no Railway ainda.")
 
 class UnifiedMessage(BaseModel):
     recipient_id: str
