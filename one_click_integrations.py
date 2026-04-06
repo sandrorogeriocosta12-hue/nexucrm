@@ -644,6 +644,10 @@ async def debug_code():
     }
 
 
+def create_integration_router():
+    return router
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
