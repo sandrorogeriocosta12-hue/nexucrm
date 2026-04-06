@@ -141,6 +141,7 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
     Sistema fica "listening" no webhook
     Done! ✅
     """
+    print("🚨🚨🚨 EMERGENCY DEBUG: generate_whatsapp_qrcode called - VERSION 2024-01-15 🚨🚨🚨")
     try:
         logger.info("🔍 DEBUG: Starting WhatsApp QR generation")
         EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
