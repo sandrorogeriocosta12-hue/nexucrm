@@ -502,66 +502,39 @@ async function apiFetch(endpoint, options = {}) {
 
 // ============ Auth Functions ============
 async function checkAuth() {
-    // Dashboard público - não requer autenticação JWT
-    // Apenas mostra o email do usuário se disponível
-    const userEmail = sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || 'Visitante';
+    // Dashboard público - SEMPRE acessível após pagamento
+    // Nunca requer autenticação JWT - apenas mostra dados do usuário
+    const userEmail = sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || 'Usuário';
     document.getElementById('userEmail').innerHTML = `
         <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
         👤 ${userEmail}
     `;
     
-    // Esconder modal de login se estiver visível
+    // GARANTIR que modal de login NUNCA apareça
     const loginModal = document.getElementById('loginModal');
     if (loginModal) {
         loginModal.classList.add('hidden');
+        loginModal.style.display = 'none';
     }
     
-    return true; // Sempre retorna true para dashboard público
+    return true; // Sempre retorna true - dashboard é público
 }
 
 function showLoginModal() {
-    document.getElementById('loginModal').classList.remove('hidden');
-}
-
-async function doLogin(e) {
-    e.preventDefault();
-    const username = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-
-    try {
-        const response = await fetch(API_BASE + '/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json();
-        
-        if (data.access_token) {
-            authToken = data.access_token;
-            localStorage.setItem('nexus_token', authToken);
-            showNotification('✅ Login bem-sucedido!');
-            document.getElementById('loginModal').classList.add('hidden');
-            document.getElementById('loginEmail').value = '';
-            document.getElementById('loginPassword').value = '';
-            checkAuth();
-            loadLeads();
-            loadCampaigns();
-            loadContacts();
-            loadAgents();
-        } else {
-            showNotification('❌ Email ou senha incorretos', true);
-        }
-    } catch (e) {
-        showNotification('❌ Erro ao fazer login', true);
-    }
+    // Dashboard público - modal de login DESABILITADO
+    console.log('Login modal desabilitado - dashboard é público');
+    return false;
 }
 
 function logout() {
-    localStorage.removeItem('nexus_token');
-    authToken = null;
-    document.getElementById('userEmail').textContent = 'Desconectado';
-    showLoginModal();
+    // Logout desabilitado - apenas limpa dados locais
+    sessionStorage.removeItem('user_email');
+    localStorage.removeItem('user_email');
+    document.getElementById('userEmail').innerHTML = `
+        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+        👤 Visitante
+    `;
+    showNotification('Dados locais limpos', false);
 }
 
 // ============ Toast Notifications ============
@@ -829,35 +802,7 @@ async function initialize() {
 document.addEventListener('DOMContentLoaded', initialize);
 </script>
 
-<!-- Login Modal -->
-<div id="loginModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-    <div class="dashboard-card w-96 shadow-2xl">
-        <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-2xl mx-auto mb-4 shadow-lg">N</div>
-            <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Nexus CRM</h2>
-            <p class="text-slate-400 mt-2">Acesse sua plataforma de vendas</p>
-        </div>
-
-        <form onsubmit="doLogin(event)">
-            <div class="mb-4">
-                <label class="block text-slate-300 font-semibold mb-2">Email</label>
-                <input type="email" id="loginEmail" required class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" placeholder="seu@email.com">
-            </div>
-
-            <div class="mb-6">
-                <label class="block text-slate-300 font-semibold mb-2">Senha</label>
-                <input type="password" id="loginPassword" required class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" placeholder="Sua senha">
-            </div>
-
-            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02]">Entrar</button>
-
-            <div class="mt-6 text-center text-slate-400 text-xs">
-                <p>Ambiente de Demonstração</p>
-                <p class="text-slate-500">test@nexus.com / test123</p>
-            </div>
-        </form>
-    </div>
-</div>
+<!-- Login Modal REMOVIDO - Dashboard é público após pagamento -->
 
 <script>
 // ============ Settings Functions ============
