@@ -1,6 +1,7 @@
 [build]
-builder = "NIXPACKS"
-# Force rebuild with NIXPACKS: 2024-04-06 18:00 UTC
+builder = "dockerfile"
+dockerfilePath = "./Dockerfile"
+# Force rebuild: 2024-04-06 18:05 UTC - NIXPACKS attempt
 
 [deploy]
 healthcheckPath = "/health"
@@ -18,3 +19,4 @@ DATABASE_MAX_OVERFLOW = "10"
 REDIS_SSL = "false"
 OPENAI_MODEL = "gpt-4"
 OPENAI_TEMPERATURE = "0.7"
+FORCE_REBUILD_HASH = "2024-04-06-18-05"
