@@ -10,7 +10,7 @@ Integrações:
 Webhooks + AI Scoring + Auto-responses
 """
 
-print("🚀 STARTING NEXUS CRM SERVER - BUILD: 2026-04-06-FIX")
+print("🚀 STARTING NEXUS CRM SERVER - BUILD: 2026-04-06-REBUILD")
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
