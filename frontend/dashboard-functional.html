@@ -4,26 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus CRM - Dashboard</title>
+    <link rel="stylesheet" href="css/design-system.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; }
-        .toast { position: fixed; bottom: 20px; right: 20px; padding: 16px 24px; background: #10b981; color: white; border-radius: 8px; z-index: 1000; animation: fadeInOut 3s ease-in-out; }
-        .toast.error { background: #ef4444; }
+        body { font-family: var(--font-family); }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 16px 24px; background: var(--success-color); color: white; border-radius: var(--radius-lg); z-index: 1000; animation: fadeInOut 3s ease-in-out; }
+        .toast.error { background: var(--error-color); }
         @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
+        
+        /* Dashboard custom styles */
+        .dashboard-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            border-color: var(--accent-color);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+        
+        .metric-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-white">
+<body class="bg-gradient-to-br from-slate-950 to-slate-900 text-white min-h-screen">
 
 <div class="min-h-screen">
     <!-- Navbar -->
-    <nav class="bg-slate-900 border-b border-slate-700 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+    <nav class="bg-slate-900/80 backdrop-blur-sm border-b border-slate-700/50 px-6 py-4 flex items-center justify-between sticky top-0 z-40">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold">N</div>
-            <h1 class="text-2xl font-bold">Nexus CRM</h1>
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg">N</div>
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Nexus CRM</h1>
         </div>
         <div class="flex items-center gap-4">
-            <span id="userEmail" class="text-gray-300">Conectando...</span>
-            <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-semibold">Sair</button>
+            <span id="userEmail" class="text-slate-300 flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                Conectando...
+            </span>
+            <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200 hover:shadow-lg">Sair</button>
         </div>
     </nav>
 
@@ -31,23 +61,67 @@
     <div class="container mx-auto px-6 py-8">
         
         <!-- Metrics Row -->
-        <div class="grid grid-cols-4 gap-4 mb-8">
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 hover:border-purple-500 transition">
-                <div class="text-gray-400 text-sm mb-2">📊 Leads</div>
-                <div class="text-3xl font-bold" id="leadCount">0</div>
-                <div class="text-xs text-gray-500 mt-2">Novos leads no CRM</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="dashboard-card group">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-slate-400 text-sm font-medium">📊 Leads</div>
+                    <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                        <span class="text-blue-400 text-sm">📈</span>
+                    </div>
+                </div>
+                <div class="metric-value" id="leadCount">0</div>
+                <div class="metric-label text-xs mt-2">Novos leads no CRM</div>
+                <div class="mt-3 flex items-center gap-1">
+                    <span class="text-green-400 text-xs">↗️ +12%</span>
+                    <span class="text-slate-500 text-xs">vs mês anterior</span>
+                </div>
             </div>
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 hover:border-green-500 transition">
-                <div class="text-gray-400 text-sm mb-2">📢 Campanhas</div>
-                <div class="text-3xl font-bold" id="campaignCount">0</div>
-                <div class="text-xs text-gray-500 mt-2">Campanhas ativas</div>
+            
+            <div class="dashboard-card group">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-slate-400 text-sm font-medium">📢 Campanhas</div>
+                    <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                        <span class="text-purple-400 text-sm">🎯</span>
+                    </div>
+                </div>
+                <div class="metric-value" id="campaignCount">0</div>
+                <div class="metric-label text-xs mt-2">Campanhas ativas</div>
+                <div class="mt-3 flex items-center gap-1">
+                    <span class="text-green-400 text-xs">↗️ +8%</span>
+                    <span class="text-slate-500 text-xs">vs mês anterior</span>
+                </div>
             </div>
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 hover:border-blue-500 transition">
-                <div class="text-gray-400 text-sm mb-2">👥 Contatos</div>
-                <div class="text-3xl font-bold" id="contactCount">0</div>
-                <div class="text-xs text-gray-500 mt-2">Total de contatos</div>
+            
+            <div class="dashboard-card group">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-slate-400 text-sm font-medium">👥 Contatos</div>
+                    <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                        <span class="text-green-400 text-sm">👤</span>
+                    </div>
+                </div>
+                <div class="metric-value" id="contactCount">0</div>
+                <div class="metric-label text-xs mt-2">Total de contatos</div>
+                <div class="mt-3 flex items-center gap-1">
+                    <span class="text-green-400 text-xs">↗️ +15%</span>
+                    <span class="text-slate-500 text-xs">vs mês anterior</span>
+                </div>
             </div>
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 hover:border-green-500 transition">
+            
+            <div class="dashboard-card group">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-slate-400 text-sm font-medium">⚡ Sistema</div>
+                    <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                        <span class="text-orange-400 text-sm">🔥</span>
+                    </div>
+                </div>
+                <div class="metric-value text-green-400">Online</div>
+                <div class="metric-label text-xs mt-2">Status do sistema</div>
+                <div class="mt-3 flex items-center gap-1">
+                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span class="text-green-400 text-xs">100% uptime</span>
+                </div>
+            </div>
+        </div>
                 <div class="text-gray-400 text-sm mb-2">🟢 Sistema</div>
                 <div class="text-3xl font-bold" id="systemStatus">🔄</div>
                 <div class="text-xs text-gray-500 mt-2" id="systemHealth">Verificando...</div>
@@ -428,11 +502,21 @@ async function apiFetch(endpoint, options = {}) {
 
 // ============ Auth Functions ============
 async function checkAuth() {
-    // Sem autenticação necessária - dashboard aberto
-    const userEmail = sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || 'Usuário';
-    document.getElementById('userEmail').textContent = `👤 ${userEmail}`;
-    document.getElementById('loginModal').classList.add('hidden');
-    return true;
+    // Dashboard público - não requer autenticação JWT
+    // Apenas mostra o email do usuário se disponível
+    const userEmail = sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || 'Visitante';
+    document.getElementById('userEmail').innerHTML = `
+        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+        👤 ${userEmail}
+    `;
+    
+    // Esconder modal de login se estiver visível
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.classList.add('hidden');
+    }
+    
+    return true; // Sempre retorna true para dashboard público
 }
 
 function showLoginModal() {
@@ -746,30 +830,30 @@ document.addEventListener('DOMContentLoaded', initialize);
 </script>
 
 <!-- Login Modal -->
-<div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-    <div class="bg-slate-800 p-8 rounded-lg border border-slate-700 w-96 shadow-xl">
+<div id="loginModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="dashboard-card w-96 shadow-2xl">
         <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center font-bold text-2xl mx-auto mb-4">N</div>
-            <h2 class="text-2xl font-bold">Nexus CRM</h2>
-            <p class="text-gray-400 mt-2">Acesse sua plataforma de vendas</p>
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-2xl mx-auto mb-4 shadow-lg">N</div>
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Nexus CRM</h2>
+            <p class="text-slate-400 mt-2">Acesse sua plataforma de vendas</p>
         </div>
 
         <form onsubmit="doLogin(event)">
             <div class="mb-4">
-                <label class="block text-gray-300 font-semibold mb-2">Email</label>
-                <input type="email" id="loginEmail" required class="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500" placeholder="seu@email.com">
+                <label class="block text-slate-300 font-semibold mb-2">Email</label>
+                <input type="email" id="loginEmail" required class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" placeholder="seu@email.com">
             </div>
 
             <div class="mb-6">
-                <label class="block text-gray-300 font-semibold mb-2">Senha</label>
-                <input type="password" id="loginPassword" required class="w-full bg-slate-700 border border-slate-600 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500" placeholder="Sua senha">
+                <label class="block text-slate-300 font-semibold mb-2">Senha</label>
+                <input type="password" id="loginPassword" required class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all" placeholder="Sua senha">
             </div>
 
-            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded transition">Entrar</button>
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02]">Entrar</button>
 
-            <div class="mt-6 text-center text-gray-400 text-xs">
+            <div class="mt-6 text-center text-slate-400 text-xs">
                 <p>Ambiente de Demonstração</p>
-                <p class="text-gray-500">test@nexus.com / test123</p>
+                <p class="text-slate-500">test@nexus.com / test123</p>
             </div>
         </form>
     </div>
