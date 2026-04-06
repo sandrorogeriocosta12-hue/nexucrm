@@ -140,10 +140,13 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
     Done! ✅
     """
     try:
+        logger.info("🔍 DEBUG: Starting WhatsApp QR generation")
         EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
         EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "seu_api_key")
+        logger.info(f"🔍 DEBUG: EVOLUTION_API_URL={EVOLUTION_API_URL}, EVOLUTION_API_KEY={'*' * len(EVOLUTION_API_KEY) if EVOLUTION_API_KEY else 'None'}")
 
         use_real_evolution = await _evolution_api_health_check()
+        logger.info(f"🔍 DEBUG: use_real_evolution={use_real_evolution}")
 
         if use_real_evolution:
             try:
@@ -188,6 +191,7 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
                     )
                 )
 
+        logger.info("🔍 DEBUG: Raising 503 because Evolution API is not available")
         raise HTTPException(
             status_code=503,
             detail=(
