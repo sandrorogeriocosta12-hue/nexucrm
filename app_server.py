@@ -190,6 +190,13 @@ except Exception as e:
     logger.warning(f"⚠ WhatsApp router not available: {e}")
 
 try:
+    from vexus_crm.routes.omnichannel import router as omnichannel_router
+    app.include_router(omnichannel_router, prefix="/api")
+    logger.info("✓ Omnichannel router loaded")
+except Exception as e:
+    logger.warning(f"⚠ Omnichannel router not available: {e}")
+
+try:
     from vexus_crm.routes.segmentation import router as segmentation_router
     app.include_router(segmentation_router, prefix="/api")
     logger.info("✓ Segmentation router loaded")
