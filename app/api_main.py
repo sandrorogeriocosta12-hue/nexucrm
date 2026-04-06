@@ -127,6 +127,11 @@ mock_users = {
     }
 }
 
+def clear_user_from_mock(email: str):
+    """Remove usuário da memória"""
+    if email in mock_users:
+        del mock_users[email]
+
 # Mock companies and subscriptions (simple in-memory)
 mock_companies = {}
 mock_subscriptions = {}
@@ -439,7 +444,7 @@ async def get_subscription(current_user: dict = Depends(get_current_user)):
     return {"subscription": subs}
 
 
-@app.post("/api/payment/process")
+@app.post("/payment/process")
 async def process_payment(request: Request):
     """
     Complete payment processing with contact info and notification
