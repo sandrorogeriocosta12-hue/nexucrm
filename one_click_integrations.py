@@ -8,9 +8,113 @@ from pydantic import BaseModel
 import httpx
 import os
 import logging
+import time
+import base64
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from io import BytesIO
+
+try:
+    import qrcode
+except ImportError:
+    qrcode = None
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Mock WhatsApp state when Evolution API is unavailable
+mock_whatsapp_instances = {}
+
+
+def _is_evolution_api_enabled() -> bool:
+    url = os.getenv("EVOLUTION_API_URL", "").strip()
+    key = os.getenv("EVOLUTION_API_KEY", "").strip()
+    if not url or not key or "seu_api_key" in key.lower():
+        return False
+    return True
+
+
+async def _evolution_api_health_check() -> bool:
+    if not _is_evolution_api_enabled():
+        return False
+
+    try:
+        async with httpx.AsyncClient(timeout=3) as client:
+            response = await client.get(f"{os.getenv('EVOLUTION_API_URL')}/health")
+            return response.status_code == 200
+    except Exception:
+        return False
+
+
+def _generate_mock_qrcode(instance_name: str) -> str:
+    if qrcode is None:
+        return "https://via.placeholder.com/260x260.png?text=WhatsApp+QR"
+
+    qr_data = f"https://api.nexuscrm.tech/mock-whatsapp/{instance_name}"
+    img = qrcode.make(qr_data)
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+
+def _is_env_configured(*keys: str) -> bool:
+    for key in keys:
+        value = os.getenv(key, "").strip()
+        if not value or "your-" in value.lower() or "seu_" in value.lower() or "seu-" in value.lower():
+            return False
+    return True
+
+
+def _is_smtp_configured() -> bool:
+    return _is_env_configured(
+        "SMTP_SERVER",
+        "SMTP_PORT",
+        "SMTP_USER",
+        "SMTP_PASSWORD",
+        "FROM_EMAIL"
+    )
+
+
+def _send_email_via_smtp(to_email: str, subject: str, html_body: str, plain_text: str | None = None) -> bool:
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"Nexus CRM <{os.getenv('FROM_EMAIL', 'noreply@nexuscrm.tech')}>"
+        msg["To"] = to_email
+
+        if plain_text:
+            msg.attach(MIMEText(plain_text, "plain"))
+        msg.attach(MIMEText(html_body, "html"))
+
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        smtp_user = os.getenv("SMTP_USER", "")
+        smtp_password = os.getenv("SMTP_PASSWORD", "")
+
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=15) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(msg["From"], [to_email], msg.as_string())
+
+        logger.info(f"✅ Email enviado para {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"❌ Falha ao enviar email para {to_email}: {str(e)}")
+        return False
+
+
+def _get_email_status() -> dict:
+    if _is_smtp_configured():
+        return {
+            "status": "connected",
+            "message": "Email configurado com SMTP"
+        }
+
+    return {
+        "status": "pending",
+        "message": "Email SMTP não configurado"
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -27,9 +131,9 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
     """
     PASSO 1: Cliente clica em "Conectar WhatsApp"
     Frontend faz POST aqui
-    
+
     Response: URL com QR Code gerada
-    
+
     Cliente escaneia com celular
     WhatsApp conecta
     Sistema fica "listening" no webhook
@@ -38,41 +142,60 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
     try:
         EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
         EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "seu_api_key")
-        
-        # 1️⃣ Chamar Evolution API para criar instância
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{EVOLUTION_API_URL}/instance/create",
-                headers={"apikey": EVOLUTION_API_KEY},
-                json={
-                    "instanceName": req.instance_name,
-                    "qrcode": True,  # Gerar QR Code
-                    "token": {},
-                    "webhook": {
-                        "url": f"https://api.nexuscrm.tech/webhooks/whatsapp/{req.instance_name}",
-                        "events": ["messages.upsert", "connection.update"]
-                    }
+
+        use_real_evolution = await _evolution_api_health_check()
+
+        if use_real_evolution:
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{EVOLUTION_API_URL}/instance/create",
+                        headers={"apikey": EVOLUTION_API_KEY},
+                        json={
+                            "instanceName": req.instance_name,
+                            "qrcode": True,
+                            "token": {},
+                            "webhook": {
+                                "url": f"https://api.nexuscrm.tech/webhooks/whatsapp/{req.instance_name}",
+                                "events": ["messages.upsert", "connection.update"]
+                            }
+                        }
+                    )
+
+                result = response.json()
+                if response.status_code != 201:
+                    raise Exception(f"Evolution API error: {result}")
+
+                qrcode_url = result.get("qrcode", {}).get("imageUrl", "")
+                if not qrcode_url:
+                    raise Exception("Evolution API retornou QR Code vazio")
+
+                logger.info(f"✅ QR Code gerado para {req.instance_name}")
+                return {
+                    "status": "pending",
+                    "message": "Escaneie o QR Code com seu WhatsApp",
+                    "qrcode_url": qrcode_url,
+                    "instance_name": req.instance_name,
+                    "instruction": "1. Aponte a câmera do seu celular para o código\n2. Escaneie com o WhatsApp\n3. Aguarde conexão (leva ~10 segundos)"
                 }
+            except Exception as e:
+                logger.warning(f"⚠️ Evolution API falhou ao gerar QR Code: {str(e)}")
+                raise HTTPException(
+                    status_code=503,
+                    detail=(
+                        "Evolution API indisponível ou inacessível. "
+                        "Verifique EVOLUTION_API_URL, EVOLUTION_API_KEY e se o serviço está rodando."
+                    )
+                )
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Evolution API não está configurada corretamente ou não está acessível. "
+                "O QR Code real do WhatsApp só é gerado quando o serviço está disponível."
             )
-            
-            result = response.json()
-            
-            if response.status_code != 201:
-                raise Exception(f"Evolution API error: {result}")
-            
-            # 2️⃣ Retornar QR Code URL
-            qrcode_url = result.get("qrcode", {}).get("imageUrl", "")
-            
-            logger.info(f"✅ QR Code gerado para {req.instance_name}")
-            
-            return {
-                "status": "pending",
-                "message": "Escaneie o QR Code com seu WhatsApp",
-                "qrcode_url": qrcode_url,
-                "instance_name": req.instance_name,
-                "instruction": "1. Aponte a câmera do seu celular para o código\n2. Escaneie com o WhatsApp\n3. Aguarde conexão (leva ~10 segundos)"
-            }
-    
+        )
+
     except Exception as e:
         logger.error(f"❌ Erro ao gerar QR Code: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -82,29 +205,55 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
 async def check_whatsapp_status(instance_name: str):
     """
     Frontend faz polling aqui enquanto aguarda QR Code ser scanneado
-    
+
     GET /integrations/whatsapp/status/nexus_victor
     Response: {"status": "connected"} ou {"status": "waiting"}
     """
     try:
+        if instance_name in mock_whatsapp_instances:
+            info = mock_whatsapp_instances[instance_name]
+            return {
+                "status": "waiting",
+                "state": "DISCONNECTED",
+                "message": "Modo demonstração ativo. Sem Evolution API real, não há leitura do QR Code."
+            }
+
         EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
         EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY")
-        
+
+        if not _is_env_configured("EVOLUTION_API_URL", "EVOLUTION_API_KEY"):
+            return {
+                "status": "pending",
+                "state": "DISCONNECTED",
+                "message": "WhatsApp/Evolution API não configurado"
+            }
+
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{EVOLUTION_API_URL}/instance/connectionstate/{instance_name}",
-                headers={"apikey": EVOLUTION_API_KEY}
+                headers={"apikey": EVOLUTION_API_KEY},
+                timeout=10
             )
-            
+
+            if response.status_code != 200:
+                raise Exception(f"Evolution API retornou {response.status_code}")
+
             result = response.json()
             connection_state = result.get("connectionState", "DISCONNECTED")
-            
+
             return {
                 "status": "connected" if connection_state == "CONNECTED" else "waiting",
                 "state": connection_state,
                 "message": "WhatsApp conectado!" if connection_state == "CONNECTED" else "Aguardando QR Code..."
             }
-    
+    except Exception as e:
+        logger.warning(f"⚠️ Erro ao verificar status do WhatsApp: {str(e)}")
+        return {
+            "status": "pending",
+            "state": "DISCONNECTED",
+            "message": "Serviço WhatsApp temporariamente indisponível. Tente novamente mais tarde."
+        }
+
     except Exception as e:
         logger.error(f"❌ Erro ao verificar status: {str(e)}")
         return {"status": "error", "message": str(e)}
@@ -122,6 +271,9 @@ async def get_instagram_oauth_url():
     Retorna URL de login OAuth da Meta
     """
     try:
+        if not _is_env_configured("FACEBOOK_APP_ID", "FACEBOOK_APP_SECRET"):
+            raise HTTPException(status_code=503, detail="Instagram OAuth não configurado")
+
         FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
         FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
         REDIRECT_URI = os.getenv("REDIRECT_URI", "https://api.nexuscrm.tech/integrations/instagram/callback")
@@ -156,6 +308,9 @@ async def get_facebook_oauth_url():
     Retorna URL de login OAuth da Meta para Facebook Messenger
     """
     try:
+        if not _is_env_configured("FACEBOOK_APP_ID", "FACEBOOK_APP_SECRET"):
+            raise HTTPException(status_code=503, detail="Facebook OAuth não configurado")
+
         FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
         FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
         REDIRECT_URI = os.getenv("REDIRECT_URI", "https://api.nexuscrm.tech/integrations/instagram/callback")
@@ -190,6 +345,12 @@ async def instagram_oauth_callback(code: str, state: str = None):
     Você troca o code por um access_token
     """
     try:
+        if not _is_env_configured("FACEBOOK_APP_ID", "FACEBOOK_APP_SECRET"):
+            raise HTTPException(status_code=503, detail="Instagram callback não configurado")
+
+        if not code:
+            raise HTTPException(status_code=400, detail="OAuth code é obrigatório")
+
         FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
         FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
         REDIRECT_URI = os.getenv("REDIRECT_URI", "https://api.nexuscrm.tech/integrations/instagram/callback")
@@ -322,27 +483,24 @@ async def get_all_integrations_status(client_id: str):
         # Buscar do banco de dados
         integrations = {
             "whatsapp": {
-                "status": "connected",
+                "status": "connected" if _is_env_configured("EVOLUTION_API_URL", "EVOLUTION_API_KEY") else "pending",
                 "instance_name": "nexus_victor",
                 "connected_at": "2026-04-03T10:30:00",
                 "phone": "+55 11 987654321"
             },
             "instagram": {
-                "status": "connected",
+                "status": "connected" if _is_env_configured("FACEBOOK_APP_ID", "FACEBOOK_APP_SECRET") else "pending",
                 "user_id": "987654321",
                 "user_name": "victor_instagram",
                 "connected_at": "2026-04-03T10:45:00"
             },
             "telegram": {
-                "status": "connected",
+                "status": "connected" if os.getenv("TELEGRAM_BOT_TOKEN") else "pending",
                 "bot_id": "123456789",
                 "bot_name": "NexusBot",
                 "connected_at": "2026-04-03T11:00:00"
             },
-            "email": {
-                "status": "pending",
-                "message": "Não configurado ainda"
-            }
+            "email": _get_email_status()
         }
         
         connected_count = sum(1 for i in integrations.values() if i.get("status") == "connected")
@@ -383,12 +541,16 @@ async def send_message_unified(req: SendMessageRequest):
     }
     """
     try:
-        if req.channel == "whatsapp":
-            # Chamar Evolution API
+        channel = req.channel.strip().lower()
+
+        if channel == "whatsapp":
+            if not _is_env_configured("EVOLUTION_API_URL", "EVOLUTION_API_KEY"):
+                raise HTTPException(status_code=503, detail="WhatsApp/Evolution API não configurado")
+
             EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL")
             EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY")
-            
-            async with httpx.AsyncClient() as client:
+
+            async with httpx.AsyncClient(timeout=15) as client:
                 response = await client.post(
                     f"{EVOLUTION_API_URL}/message/sendText",
                     headers={"apikey": EVOLUTION_API_KEY, "Content-Type": "application/json"},
@@ -397,15 +559,19 @@ async def send_message_unified(req: SendMessageRequest):
                         "text": req.message
                     }
                 )
-            
+
+            if response.status_code >= 400:
+                raise Exception(f"WhatsApp/Evolution API error: {response.status_code} {response.text}")
+
             logger.info(f"📱 WhatsApp enviado para {req.recipient}")
             return {"status": "sent", "channel": "whatsapp"}
-        
-        elif req.channel == "telegram":
-            # Chamar Telegram API
-            TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-            
-            async with httpx.AsyncClient() as client:
+
+        elif channel == "telegram":
+            TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+            if not TELEGRAM_BOT_TOKEN:
+                raise HTTPException(status_code=503, detail="Token do Telegram não configurado")
+
+            async with httpx.AsyncClient(timeout=15) as client:
                 response = await client.post(
                     f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
                     json={
@@ -413,27 +579,51 @@ async def send_message_unified(req: SendMessageRequest):
                         "text": req.message
                     }
                 )
-            
+
+            result = response.json()
+            if not result.get("ok"):
+                raise Exception(f"Telegram error: {result}")
+
             logger.info(f"🤖 Telegram enviado para {req.recipient}")
             return {"status": "sent", "channel": "telegram"}
-        
-        elif req.channel == "instagram":
-            # Chamar Meta API
-            INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN")
-            
-            async with httpx.AsyncClient() as client:
+
+        elif channel == "instagram":
+            INSTAGRAM_ACCESS_TOKEN = os.getenv("INSTAGRAM_ACCESS_TOKEN", "").strip()
+            if not INSTAGRAM_ACCESS_TOKEN:
+                raise HTTPException(status_code=503, detail="Instagram não configurado")
+
+            async with httpx.AsyncClient(timeout=15) as client:
                 response = await client.post(
                     f"https://graph.instagram.com/v18.0/{req.recipient}/messages",
                     headers={"Authorization": f"Bearer {INSTAGRAM_ACCESS_TOKEN}"},
                     json={"message": req.message}
                 )
-            
+
+            if response.status_code >= 400:
+                raise Exception(f"Instagram API error: {response.status_code} {response.text}")
+
             logger.info(f"📸 Instagram enviado para {req.recipient}")
             return {"status": "sent", "channel": "instagram"}
-        
+
+        elif channel == "email":
+            if not _is_smtp_configured():
+                raise HTTPException(status_code=503, detail="Email SMTP não configurado")
+
+            subject = os.getenv("EMAIL_SUBJECT", "Nexus CRM Mensagem")
+            html_body = f"<p>{req.message}</p>"
+            text_body = req.message
+            success = _send_email_via_smtp(req.recipient, subject, html_body, text_body)
+
+            if not success:
+                raise Exception("Falha ao enviar email via SMTP")
+
+            return {"status": "sent", "channel": "email"}
+
         else:
             raise HTTPException(status_code=400, detail=f"Canal desconhecido: {req.channel}")
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Erro ao enviar: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

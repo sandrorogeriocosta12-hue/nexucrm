@@ -25,7 +25,13 @@ echo ""
 # ═══════════════════════════════════════════════════════════════════════
 
 echo "⬇️  Passo 2: Baixar imagem Evolution API..."
-docker pull atendaiw/evolution-api:latest
+if ! docker pull atendaiw/evolution-api:latest; then
+    echo "❌ Falha ao baixar a imagem atendaiw/evolution-api:latest"
+    echo "   Verifique acesso ao registry ou credenciais Docker."
+    echo "   Se o repositório for privado, faça login com 'docker login'."
+    exit 1
+fi
+
 echo "✅ Imagem baixada"
 echo ""
 
@@ -87,7 +93,7 @@ echo "🚀 Passo 5: Iniciando container..."
 
 docker run -d \
   --name evolution-api \
-  --port 3000:3000 \
+  -p 3000:3000 \
   --env-file ~/evolution-api/.env \
   --volume ~/evolution-api/data:/data \
   --restart unless-stopped \
