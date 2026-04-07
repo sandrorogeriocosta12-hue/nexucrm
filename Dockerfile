@@ -1,10 +1,9 @@
 # Railway-specific Dockerfile
 # FORCE COMPLETE REBUILD: 2024-01-15 22:00 UTC - NUCLEAR OPTION
 # This should force Railway to rebuild from scratch
+FROM python:3.9-slim
 ARG FORCE_REBUILD=2024-01-15-22-00-00
 RUN echo "FORCE_REBUILD=$FORCE_REBUILD"
-
-FROM python:3.9-slim
 
 # Force rebuild with timestamp
 ARG BUILD_TIMESTAMP=2024-01-15-22-00-00
