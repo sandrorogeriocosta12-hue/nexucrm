@@ -33,4 +33,4 @@ ENV PORT=8080
 EXPOSE $PORT
 
 # Start command with NUCLEAR FORCE REBUILD - USING BACKUP FILE
-CMD echo "🚨🚨🚨 USING BACKUP FILE - NUCLEAR REBUILD 🚨🚨🚨" && python -c "import sys; print('Python version:', sys.version)" && echo "🚨 FORCE REBUILD VERSION 🚨" && uvicorn app_server_backup:app --host 0.0.0.0 --port $PORT
+CMD echo "🚀 Starting Nexus CRM app" && python -c "import sys; print('Python version:', sys.version)" && echo "🚀 Serving app_server:app" && uvicorn app_server:app --host 0.0.0.0 --port $PORT
