@@ -118,6 +118,11 @@ async def integrations_ui():
 # ROTAS BÁSICAS
 # ═════════════════════════════════════════════════════════════
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Railway"""
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
     home_file = os.path.join(frontend_path, "home.html")
