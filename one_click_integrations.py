@@ -199,9 +199,10 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
             status_code=503,
             detail=(
                 "Evolution API não está configurada corretamente ou não está acessível. "
-                        "O QR Code real do WhatsApp só é gerado quando o serviço está disponível. "
-                        "VERSION: 2024-01-15-FIXED"
-        raise HTTPException(status_code=500, detail=str(e))
+                "O QR Code real do WhatsApp só é gerado quando o serviço está disponível. "
+                "VERSION: 2024-01-15-FIXED"
+            )
+        )
 
 
 @router.get("/integrations/whatsapp/status/{instance_name}")
