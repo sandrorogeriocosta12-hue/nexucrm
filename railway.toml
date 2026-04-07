@@ -1,7 +1,6 @@
 [build]
-builder = "dockerfile"
-dockerfilePath = "./Dockerfile"
-# Force rebuild: 2024-04-06 18:05 UTC - NIXPACKS attempt
+builder = "NIXPACKS"
+# Force rebuild with NIXPACKS: 2026-04-07 19:00 UTC - bypass Docker cache
 
 [deploy]
 healthcheckPath = "/health"
