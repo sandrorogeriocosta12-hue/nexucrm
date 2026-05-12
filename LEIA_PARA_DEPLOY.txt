@@ -1,0 +1,58 @@
+🚀 DEPLOY PARA LOCAWEB - INSTRUÇÕES RÁPIDAS
+═══════════════════════════════════════════════════════════
+
+✅ VERIFICAÇÃO COMPLETA:
+
+O sistema foi totalmente verificado e configurado:
+✅ Servidor FastAPI funcionando na porta 8080
+✅ Webhooks operacionais (WhatsApp e Instagram)
+✅ Redis cache ativo
+✅ Banco de dados PostgreSQL conectado
+✅ Todos os erros corrigidos
+✅ GitHub sincronizado com 4 commits novos
+
+═══════════════════════════════════════════════════════════
+
+🔥 PARA FAZER DEPLOY AGORA (OPÇÃO 1 - MAIS RÁPIDO):
+
+  bash DEPLOY_AGORA.sh
+
+═══════════════════════════════════════════════════════════
+
+🔥 OU MANUALMENTE (OPÇÃO 2):
+
+  chmod +x deploy_locaweb_auto.sh
+  ./deploy_locaweb_auto.sh
+
+═══════════════════════════════════════════════════════════
+
+🔥 OU DIRETO NO SSH (OPÇÃO 3):
+
+  ssh -i ~/.ssh/id_ed25519 victor-emanuel@177.53.142.144
+  cd /home/victor-emanuel/nexuscrm.tech
+  git pull origin deploy-production
+  docker-compose down
+  docker-compose up -d --build
+
+═══════════════════════════════════════════════════════════
+
+📊 DEPOIS DO DEPLOY:
+
+Verificar logs:
+  docker-compose logs -f vexus-backend
+
+Testar API:
+  curl https://api.nexuscrm.tech/docs
+
+═══════════════════════════════════════════════════════════
+
+📖 DOCUMENTAÇÃO DISPONÍVEL:
+
+  - DEPLOY_AGORA.sh              (Script rápido)
+  - DEPLOYMENT_LOCAWEB_GUIA.md   (Guia completo)
+  - DEPLOY_LOCAWEB_STATUS.md     (Status e checklist)
+  - deploy_locaweb_auto.sh       (Deploy automático)
+
+═══════════════════════════════════════════════════════════
+
+✨ TUDO PRONTO! SÓ EXECUTAR O DEPLOY! 🚀
