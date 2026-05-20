@@ -5,11 +5,15 @@ const API_PREFIX = '/api';
 console.log('api.js loaded, API_BASE_URL:', API_BASE_URL, 'API_PREFIX:', API_PREFIX);
 
 async function apiFetch(endpoint, options = {}) {
-    // usa cookies para autenticação; envia credenciais automaticamente
+    const token = localStorage.getItem('access_token');
     const headers = {
         'Content-Type': 'application/json',
         ...options.headers,
     };
+
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const response = await fetch(`${API_BASE_URL}${API_PREFIX}${endpoint}`, {
         credentials: 'include',

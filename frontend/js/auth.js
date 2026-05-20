@@ -6,8 +6,10 @@ async function login(email, password) {
         method: 'POST',
         body: JSON.stringify({ email, password }),
     });
-    // servidor define cookie; não armazenamos no localStorage
-    localStorage.setItem('user', JSON.stringify(data.user));
+    // servidor retorna token JWT; armazenar apenas para chamadas autenticadas
+    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('refresh_token', data.refresh_token);
+    localStorage.setItem('user', JSON.stringify({ user_id: data.user_id, email: data.email, name: data.name }));
     return data;
 }
 
@@ -15,8 +17,8 @@ async function login(email, password) {
 function logout() {
     if (!confirm('Deseja realmente sair?')) return;
     localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
-    // não temos cookie JS, backend pode limpar se precisar
     window.location.href = '/login-nexus.html';
 }
 

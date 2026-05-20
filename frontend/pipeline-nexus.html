@@ -175,160 +175,32 @@
 
         <!-- KANBAN BOARD -->
         <div class="flex-1 overflow-x-auto">
-            <div class="kanban-container" style="min-width: max-content;">
-                
-                <!-- COLUMN 1: NOVO -->
-                <div class="kanban-column">
-                    <div class="kanban-header">
-                        <span class="kanban-title">📬 Novo</span>
-                        <span class="kanban-count">32</span>
-                    </div>
-                    <div class="kanban-cards">
-                        
-                        <div class="card" data-status="new" data-lead-id="1">
-                            <div class="card-title">João Silva</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-hot">🔥 0.87</span>
-                                <span class="text-xs text-gray-400">Há 5 min</span>
-                            </div>
-                            <p class="card-contact">📧 joao@email.com</p>
-                        </div>
-
-                        <div class="card" data-status="new" data-lead-id="2">
-                            <div class="card-title">Ana Costa</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-hot">🔥 0.92</span>
-                                <span class="text-xs text-gray-400">Há 12 min</span>
-                            </div>
-                            <p class="card-contact">📱 (11) 98765-4321</p>
-                        </div>
-
-                        <div class="card" data-status="new" data-lead-id="3">
-                            <div class="card-title">Carlos Mendes</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-warm">⚠️ 0.58</span>
-                                <span class="text-xs text-gray-400">Há 45 min</span>
-                            </div>
-                            <p class="card-contact">📧 carlos@company.com</p>
-                        </div>
-
-                        <div class="card" data-status="new" data-lead-id="4">
-                            <div class="card-title">Maria Oliveira</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-cold">❄️ 0.32</span>
-                                <span class="text-xs text-gray-400">Há 2h</span>
-                            </div>
-                            <p class="card-contact">📧 maria@startup.io</p>
-                        </div>
-
-                    </div>
+            <div id="kanban-board" class="kanban-container" style="min-width: max-content;">
+                <div class="w-full text-center text-slate-400 py-24">
+                    Carregando funis e oportunidades...
                 </div>
+            </div>
+        </div>
 
-                <!-- COLUMN 2: QUALIFICADO -->
-                <div class="kanban-column">
-                    <div class="kanban-header">
-                        <span class="kanban-title">✅ Qualificado</span>
-                        <span class="kanban-count">28</span>
+        <!-- MODAL DE NEGÓCIO -->
+        <div id="deal-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-950/90 p-4">
+            <div class="w-full max-w-2xl rounded-3xl border border-slate-700 bg-slate-900 p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-4 mb-6">
+                    <div>
+                        <h2 id="deal-modal-title" class="text-2xl font-bold text-white"></h2>
+                        <p id="deal-modal-contact" class="text-sm text-slate-400 mt-1"></p>
                     </div>
-                    <div class="kanban-cards">
-                        
-                        <div class="card">
-                            <div class="card-title">Roberto Junior</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-hot">🔥 0.88</span>
-                                <span class="text-xs text-gray-400">Qualificado há 2h</span>
-                            </div>
-                            <p class="card-contact">📧 roberto@industria.com</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-title">Patricia Franco</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-hot">🔥 0.85</span>
-                                <span class="text-xs text-gray-400">Qualificado há 4h</span>
-                            </div>
-                            <p class="card-contact">📱 (21) 99876-5432</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-title">Lucas Ferreira</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-warm">⚠️ 0.65</span>
-                                <span class="text-xs text-gray-400">Qualificado há 6h</span>
-                            </div>
-                            <p class="card-contact">📧 lucas@ecommerce.br</p>
-                        </div>
-
-                    </div>
+                    <button id="deal-modal-close" class="rounded-full border border-slate-700 px-4 py-2 text-slate-200 hover:bg-slate-800">Fechar</button>
                 </div>
-
-                <!-- COLUMN 3: PROPOSTA ENVIADA -->
-                <div class="kanban-column">
-                    <div class="kanban-header">
-                        <span class="kanban-title">📄 Proposta</span>
-                        <span class="kanban-count">18</span>
-                    </div>
-                    <div class="kanban-cards">
-                        
-                        <div class="card">
-                            <div class="card-title">Empresa XYZ Ltda</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-hot">🔥 0.89</span>
-                                <span class="text-xs text-gray-400">Proposta há 1h</span>
-                            </div>
-                            <p class="card-contact">💰 R$ 8.500 potencial</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-title">Tech Startup Inc</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-hot">🔥 0.91</span>
-                                <span class="text-xs text-gray-400">Proposta há 3h</span>
-                            </div>
-                            <p class="card-contact">💰 R$ 12.000 potencial</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-title">Consultoria ABC</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-warm">⚠️ 0.72</span>
-                                <span class="text-xs text-gray-400">Proposta há 8h</span>
-                            </div>
-                            <p class="card-contact">💰 R$ 5.200 potencial</p>
-                        </div>
-
-                    </div>
+                <div class="grid grid-cols-2 gap-4 text-sm text-slate-300 mb-6">
+                    <div><strong>Fase:</strong> <span id="deal-modal-stage"></span></div>
+                    <div><strong>Valor:</strong> <span id="deal-modal-value"></span></div>
+                    <div><strong>Probabilidade:</strong> <span id="deal-modal-probability"></span></div>
+                    <div><strong>Atualizado:</strong> <span id="deal-modal-updated"></span></div>
                 </div>
-
-                <!-- COLUMN 4: CONTRATO -->
-                <div class="kanban-column">
-                    <div class="kanban-header">
-                        <span class="kanban-title">🎉 Contrato</span>
-                        <span class="kanban-count">8</span>
-                    </div>
-                    <div class="kanban-cards">
-                        
-                        <div class="card">
-                            <div class="card-title">Big Company Corp</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-hot">🔥 0.95</span>
-                                <span class="text-xs text-gray-400">Assinado há 1h</span>
-                            </div>
-                            <p class="card-contact">💰 R$ 25.000/mês</p>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-title">Industrial SA</div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="card-score score-hot">🔥 0.93</span>
-                                <span class="text-xs text-gray-400">Assinado há 3h</span>
-                            </div>
-                            <p class="card-contact">💰 R$ 18.000/mês</p>
-                        </div>
-
-                    </div>
+                <div class="prose prose-invert text-slate-200">
+                    <p id="deal-modal-notes"></p>
                 </div>
-
             </div>
         </div>
 
@@ -339,6 +211,8 @@
     <!-- core scripts -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="js/pipeline.js"></script>
     <script src="js/ui.js"></script>
 </body>
 </html>

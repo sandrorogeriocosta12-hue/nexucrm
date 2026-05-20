@@ -95,7 +95,11 @@ function initPage() {
         loadDashboard();
     }
     if (document.body.classList.contains('pipeline-page')) {
-        enablePipeline();
+        if (typeof initializePipelinePage === 'function') {
+            initializePipelinePage();
+        } else {
+            enablePipeline();
+        }
     }
 }
 
