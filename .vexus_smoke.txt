@@ -1,0 +1,11 @@
+== /frontend/app.html ==
+200\n== /docs ==
+404\n== /health ==
+200\n== POST /api/v1/auth/login ==
+{"detail":"Method Not Allowed"}\n== GET /api/v1/dashboard/metrics ==
+404\n== GET /api/v1/pipeline/stages ==
+{"detail":"Rota não encontrada","path":"https://api.nexuscrm.tech/api/v1/pipeline/stages","available_docs":"/docs"}
+HTTP:404
+\n== GET /api/v1/webhooks/whatsapp (challenge) ==
+{"detail":"Rota não encontrada","path":"https://api.nexuscrm.tech/api/v1/webhooks/whatsapp?hub.mode=subscribe&hub.challenge=CHALLENGE&hub.verify_token=token","available_docs":"/docs"}
+HTTP:404

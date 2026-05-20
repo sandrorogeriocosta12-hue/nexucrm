@@ -1,0 +1,17 @@
+[Unit]
+Description=Vexus CRM API (uvicorn)
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/home/victor-emanuel/PycharmProjects/Vexus Service
+EnvironmentFile=/home/victor-emanuel/PycharmProjects/Vexus Service/.env
+ExecStart=/home/victor-emanuel/.venv/bin/uvicorn app_server:app \
+  --host 127.0.0.1 --port 8001 --workers 4 --proxy-headers
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

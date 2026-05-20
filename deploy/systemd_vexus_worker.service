@@ -1,0 +1,17 @@
+[Unit]
+Description=Vexus CRM Worker Pool
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/home/victor-emanuel/PycharmProjects/Vexus Service
+EnvironmentFile=/home/victor-emanuel/PycharmProjects/Vexus Service/.env
+# Adjust ExecStart to the worker entrypoint in your codebase
+ExecStart=/home/victor-emanuel/.venv/bin/python -m api_v1_workers
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

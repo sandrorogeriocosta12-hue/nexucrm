@@ -76,7 +76,7 @@ Clínicas, salões, consultórios, restaurantes, oficinas, agências - qualquer 
 ┌──────────────────────────────────────────┐
 │  🎨 THE SHELL                            │
 │  Frontend: Next.js + Tailwind            │
-│  Dashboard Admin + Cliente Web            │
+│  Dashboard Admin + Cliente Web           │
 └────────────────┬─────────────────────────┘
                  │
 ┌────────────────▼──────────────────────────┐
