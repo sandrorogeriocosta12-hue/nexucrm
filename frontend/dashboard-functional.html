@@ -91,7 +91,7 @@
     <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="campaigns" title="Campanhas" onclick="setActiveNav(this,'campaigns')">📢</button>
     <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="contacts" title="Contatos" onclick="setActiveNav(this,'contacts')">👥</button>
     <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="agents" title="Agentes IA" onclick="setActiveNav(this,'agents')">🤖</button>
-    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="integrations" title="Integrações" onclick="window.open('/integrations-ui','_self')">🔗</button>
+    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="integrations" title="Integrações" onclick="setActiveNav(this,'integrations')">🔗</button>
     <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="pipeline" title="Pipeline" onclick="window.open('/pipeline-nexus.html','_self')">📋</button>
 
     <div class="flex-1"></div>
@@ -281,6 +281,161 @@
             </div>
         </section>
 
+        <!-- ── INTEGRATIONS ──────────────────────────── -->
+        <section id="sec-integrations" class="hidden page-fade">
+            <div class="mb-6">
+                <h2 class="text-xl font-bold">Integrações</h2>
+                <p class="text-slate-500 text-sm mt-1">Conecte seus canais de comunicação</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl">
+
+                <!-- WhatsApp -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 bg-green-500/15 rounded-xl flex items-center justify-center text-2xl">📱</div>
+                            <div>
+                                <div class="font-bold">WhatsApp</div>
+                                <div class="text-xs text-slate-500">via Evolution API</div>
+                            </div>
+                        </div>
+                        <span id="wa-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-900/50 text-red-300 border border-red-700/50">Desconectado</span>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-xs text-slate-400 mb-1.5">Nome da Instância</label>
+                        <input type="text" id="waInstanceName" value="nexus_main" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <button onclick="generateWhatsAppQR()" id="wa-btn" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all">📱 Gerar QR Code</button>
+                    <button onclick="checkWhatsAppStatus()" class="ml-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">🔄 Verificar</button>
+                </div>
+
+                <!-- Telegram -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 bg-blue-500/15 rounded-xl flex items-center justify-center text-2xl">✈️</div>
+                            <div>
+                                <div class="font-bold">Telegram</div>
+                                <div class="text-xs text-slate-500">Bot via @BotFather</div>
+                            </div>
+                        </div>
+                        <span id="tg-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-400 border border-slate-600">Não configurado</span>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-lg p-3 mb-4 text-xs text-slate-400 leading-5">
+                        1. Abra <a href="https://t.me/BotFather" target="_blank" class="text-blue-400 underline">@BotFather</a> no Telegram<br>
+                        2. Digite <code class="text-green-400">/newbot</code> e siga as instruções<br>
+                        3. Cole o token recebido abaixo
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-xs text-slate-400 mb-1.5">Token do Bot</label>
+                        <input type="text" id="telegramToken" placeholder="123456789:AABBccDD..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button onclick="connectTelegram()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all">✈️ Conectar Bot</button>
+                </div>
+
+                <!-- Facebook -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 bg-blue-600/15 rounded-xl flex items-center justify-center text-2xl">📘</div>
+                            <div>
+                                <div class="font-bold">Facebook Messenger</div>
+                                <div class="text-xs text-slate-500">Meta Business API</div>
+                            </div>
+                        </div>
+                        <span id="fb-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-400 border border-slate-600">Não configurado</span>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-lg p-3 mb-4 text-xs text-slate-400 leading-5">
+                        Crie um App em <a href="https://developers.facebook.com" target="_blank" class="text-blue-400 underline">developers.facebook.com</a>,
+                        adicione o produto "Messenger" e copie o App ID e o Secret abaixo.
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5">App ID</label>
+                            <input type="text" id="fbAppId" placeholder="1234567890" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5">App Secret</label>
+                            <input type="password" id="fbAppSecret" placeholder="••••••••••••" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <button onclick="connectFacebook()" class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg text-sm font-semibold transition-all">📘 Salvar e Conectar</button>
+                </div>
+
+                <!-- Instagram -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 bg-pink-500/15 rounded-xl flex items-center justify-center text-2xl">📸</div>
+                            <div>
+                                <div class="font-bold">Instagram</div>
+                                <div class="text-xs text-slate-500">Meta Instagram API</div>
+                            </div>
+                        </div>
+                        <span id="ig-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-400 border border-slate-600">Não configurado</span>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-lg p-3 mb-4 text-xs text-slate-400 leading-5">
+                        Usa o mesmo App do Facebook. Adicione o produto "Instagram" no seu App da Meta e use o mesmo App ID e Secret.
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5">App ID</label>
+                            <input type="text" id="igAppId" placeholder="1234567890" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-pink-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5">App Secret</label>
+                            <input type="password" id="igAppSecret" placeholder="••••••••••••" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-pink-500">
+                        </div>
+                    </div>
+                    <button onclick="connectInstagram()" class="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all">📸 Salvar e Conectar</button>
+                </div>
+
+                <!-- Email - full width -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6 lg:col-span-2">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 bg-yellow-500/15 rounded-xl flex items-center justify-center text-2xl">📧</div>
+                            <div>
+                                <div class="font-bold">Email (SMTP)</div>
+                                <div class="text-xs text-slate-500">Gmail, Outlook, SendGrid ou qualquer servidor SMTP</div>
+                            </div>
+                        </div>
+                        <span id="email-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-400 border border-slate-600">Não configurado</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs text-slate-400 mb-1.5">Servidor SMTP</label>
+                            <input type="text" id="smtpServer" placeholder="smtp.gmail.com" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5">Porta</label>
+                            <input type="number" id="smtpPort" placeholder="587" value="587" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5">Usuário (email)</label>
+                            <input type="email" id="smtpUser" placeholder="seu@gmail.com" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5">Senha / App Password</label>
+                            <input type="password" id="smtpPassword" placeholder="••••••••••••" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5">Email Remetente</label>
+                            <input type="email" id="smtpFrom" placeholder="Nexus CRM &lt;seu@gmail.com&gt;" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                    </div>
+                    <div class="bg-slate-800/40 rounded-lg p-3 mb-4 text-xs text-slate-500">
+                        💡 <strong class="text-slate-400">Gmail</strong>: Use uma <a href="https://myaccount.google.com/apppasswords" target="_blank" class="text-yellow-400 underline">Senha de App</a> (não sua senha normal). &nbsp;|&nbsp;
+                        <strong class="text-slate-400">SendGrid</strong>: Servidor <code class="text-green-400">smtp.sendgrid.net</code>, porta <code class="text-green-400">587</code>, usuário <code class="text-green-400">apikey</code>.
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="configureEmail()" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all">📧 Salvar Configuração</button>
+                        <button onclick="testEmail()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">🧪 Testar Envio</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ── AGENTS ─────────────────────────────────── -->
         <section id="sec-agents" class="hidden page-fade">
             <div class="mb-6">
@@ -438,6 +593,29 @@
     </div>
 </div>
 
+<!-- WhatsApp QR Modal -->
+<div id="waQrModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-slate-700 p-7 rounded-2xl max-w-sm w-full shadow-2xl text-center">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-green-400">📱 Conectar WhatsApp</h2>
+            <button onclick="closeWaModal()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+        <p class="text-slate-400 text-sm mb-4" id="waQrInstruction">Gerando QR Code...</p>
+        <div id="waQrContainer" class="flex items-center justify-center min-h-[200px]">
+            <div class="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full"></div>
+        </div>
+        <div id="waQrSteps" class="hidden mt-4 bg-slate-800/60 rounded-lg p-3 text-xs text-slate-400 text-left leading-5">
+            1. Abra o WhatsApp no seu celular<br>
+            2. Toque em <strong class="text-white">⋮ Menu → Aparelhos Conectados</strong><br>
+            3. Toque em <strong class="text-white">Conectar um aparelho</strong><br>
+            4. Aponte a câmera para o QR Code acima
+        </div>
+        <div id="waConnectedMsg" class="hidden mt-4 bg-green-900/30 border border-green-700/50 rounded-lg p-3 text-green-400 text-sm font-semibold">
+            ✅ WhatsApp conectado com sucesso!
+        </div>
+    </div>
+</div>
+
 <!-- ══════════════════════════════════════════════════
      SCRIPTS
 ══════════════════════════════════════════════════ -->
@@ -451,6 +629,7 @@ const PAGE_META = {
     campaigns:    { title: 'Campanhas',    subtitle: 'Marketing e automações' },
     contacts:     { title: 'Contatos',     subtitle: 'Base de relacionamentos' },
     agents:       { title: 'Agentes IA',   subtitle: 'Robôs de atendimento' },
+    integrations: { title: 'Integrações',  subtitle: 'Conecte seus canais de comunicação' },
     settings:     { title: 'Configurações',subtitle: 'Conta e preferências' },
 };
 
@@ -471,6 +650,7 @@ function setActiveNav(btn, tab) {
     if (tab === 'campaigns') loadCampaigns();
     if (tab === 'contacts') loadContacts();
     if (tab === 'agents') loadAgents();
+    if (tab === 'integrations') loadIntegrationsStatus();
     if (tab === 'settings') { loadUserSettings(); loadPlanInfo(); }
 }
 
@@ -722,7 +902,208 @@ function changePassword() {
 }
 
 function upgradePlan() { showToast('Redirecionando...'); setTimeout(() => window.location.href = '/plan-selection.html', 800); }
-function connectIntegration(t) { showToast('Abrindo integrações...'); setTimeout(() => window.open('/integrations-ui','_self'), 800); }
+
+// ─── Integrations ─────────────────────────────────────
+let waPollingInterval = null;
+
+async function loadIntegrationsStatus() {
+    // WhatsApp
+    const instance = document.getElementById('waInstanceName').value || 'nexus_main';
+    try {
+        const r = await apiFetch(`/integrations/whatsapp/status/${instance}`);
+        if (r) updateWaBadge(r.status === 'connected');
+    } catch(e) {}
+
+    // Email — check if configured
+    try {
+        const r = await apiFetch('/integrations/email/status');
+        if (r && r.status === 'connected') {
+            const badge = document.getElementById('email-badge');
+            if (badge) { badge.textContent = 'Configurado'; badge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-green-900/50 text-green-300 border border-green-700/50'; }
+            if (document.getElementById('smtpServer') && r.config) {
+                document.getElementById('smtpServer').value = r.config.server || '';
+                document.getElementById('smtpPort').value = r.config.port || '587';
+                document.getElementById('smtpUser').value = r.config.user || '';
+                document.getElementById('smtpFrom').value = r.config.from_email || '';
+            }
+        }
+    } catch(e) {}
+}
+
+function updateWaBadge(connected) {
+    const badge = document.getElementById('wa-badge');
+    if (!badge) return;
+    if (connected) {
+        badge.textContent = 'Conectado';
+        badge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-green-900/50 text-green-300 border border-green-700/50';
+    } else {
+        badge.textContent = 'Desconectado';
+        badge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-red-900/50 text-red-300 border border-red-700/50';
+    }
+}
+
+async function generateWhatsAppQR() {
+    const instanceName = document.getElementById('waInstanceName').value.trim() || 'nexus_main';
+    document.getElementById('waQrModal').classList.remove('hidden');
+    document.getElementById('waQrInstruction').textContent = 'Gerando QR Code...';
+    document.getElementById('waQrContainer').innerHTML = '<div class="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full"></div>';
+    document.getElementById('waQrSteps').classList.add('hidden');
+    document.getElementById('waConnectedMsg').classList.add('hidden');
+
+    try {
+        const r = await apiFetch('/integrations/whatsapp/generate-qrcode', {
+            method: 'POST',
+            body: JSON.stringify({ client_id: 'nexus_main', instance_name: instanceName })
+        });
+        if (!r) throw new Error('Sem resposta da API');
+        if (r.detail) throw new Error(r.detail);
+
+        const qrUrl = r.qrcode_url;
+        if (qrUrl) {
+            document.getElementById('waQrContainer').innerHTML = `<img src="${qrUrl}" alt="WhatsApp QR Code" class="rounded-xl border-2 border-green-600/50 max-w-[220px]">`;
+            document.getElementById('waQrInstruction').textContent = 'Escaneie com o WhatsApp';
+            document.getElementById('waQrSteps').classList.remove('hidden');
+            startWaPolling(instanceName);
+        } else {
+            throw new Error('QR Code não gerado');
+        }
+    } catch(e) {
+        document.getElementById('waQrContainer').innerHTML = `<div class="text-red-400 text-sm p-4">❌ ${e.message}</div>`;
+        document.getElementById('waQrInstruction').textContent = 'Erro ao gerar QR Code';
+    }
+}
+
+function startWaPolling(instanceName) {
+    if (waPollingInterval) clearInterval(waPollingInterval);
+    waPollingInterval = setInterval(async () => {
+        try {
+            const r = await apiFetch(`/integrations/whatsapp/status/${instanceName}`);
+            if (r && r.status === 'connected') {
+                clearInterval(waPollingInterval);
+                document.getElementById('waQrContainer').innerHTML = '<div class="text-5xl">✅</div>';
+                document.getElementById('waQrInstruction').textContent = 'WhatsApp conectado!';
+                document.getElementById('waQrSteps').classList.add('hidden');
+                document.getElementById('waConnectedMsg').classList.remove('hidden');
+                updateWaBadge(true);
+                setTimeout(() => closeWaModal(), 2500);
+            }
+        } catch(e) {}
+    }, 3000);
+}
+
+function closeWaModal() {
+    if (waPollingInterval) { clearInterval(waPollingInterval); waPollingInterval = null; }
+    document.getElementById('waQrModal').classList.add('hidden');
+}
+
+async function checkWhatsAppStatus() {
+    const instance = document.getElementById('waInstanceName').value.trim() || 'nexus_main';
+    const r = await apiFetch(`/integrations/whatsapp/status/${instance}`);
+    if (r) {
+        updateWaBadge(r.status === 'connected');
+        showToast(r.status === 'connected' ? '✅ WhatsApp conectado!' : `📱 Status: ${r.state || r.message}`);
+    } else {
+        showToast('❌ Erro ao verificar status', true);
+    }
+}
+
+async function connectTelegram() {
+    const token = document.getElementById('telegramToken').value.trim();
+    if (!token) { showToast('Cole o token do bot', true); return; }
+    showToast('Conectando bot...');
+    const r = await apiFetch('/integrations/telegram/connect', {
+        method: 'POST',
+        body: JSON.stringify({ client_id: 'nexus_main', bot_token: token })
+    });
+    if (r && r.status === 'connected') {
+        showToast(`✅ Bot @${r.bot_name} conectado!`);
+        const badge = document.getElementById('tg-badge');
+        badge.textContent = `@${r.bot_name}`;
+        badge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-green-900/50 text-green-300 border border-green-700/50';
+    } else {
+        showToast(`❌ ${(r && r.detail) || 'Token inválido ou erro de conexão'}`, true);
+    }
+}
+
+async function connectFacebook() {
+    const appId = document.getElementById('fbAppId').value.trim();
+    const appSecret = document.getElementById('fbAppSecret').value.trim();
+    if (!appId || !appSecret) { showToast('Preencha App ID e App Secret', true); return; }
+    showToast('Salvando credenciais...');
+    const r = await apiFetch('/integrations/meta/configure', {
+        method: 'POST',
+        body: JSON.stringify({ channel: 'facebook', app_id: appId, app_secret: appSecret })
+    });
+    if (r && !r.detail) {
+        showToast('✅ Credenciais salvas! Redirecionando...');
+        setTimeout(async () => {
+            const oauth = await apiFetch('/integrations/facebook/oauth-url');
+            if (oauth && oauth.oauth_url) window.location.href = oauth.oauth_url;
+            else showToast('❌ Erro ao gerar URL de OAuth', true);
+        }, 1000);
+    } else {
+        showToast(`❌ ${(r && r.detail) || 'Erro ao salvar'}`, true);
+    }
+}
+
+async function connectInstagram() {
+    const appId = document.getElementById('igAppId').value.trim();
+    const appSecret = document.getElementById('igAppSecret').value.trim();
+    if (!appId || !appSecret) { showToast('Preencha App ID e App Secret', true); return; }
+    showToast('Salvando credenciais...');
+    const r = await apiFetch('/integrations/meta/configure', {
+        method: 'POST',
+        body: JSON.stringify({ channel: 'instagram', app_id: appId, app_secret: appSecret })
+    });
+    if (r && !r.detail) {
+        showToast('✅ Credenciais salvas! Redirecionando...');
+        setTimeout(async () => {
+            const oauth = await apiFetch('/integrations/instagram/oauth-url');
+            if (oauth && oauth.oauth_url) window.location.href = oauth.oauth_url;
+            else showToast('❌ Erro ao gerar URL de OAuth', true);
+        }, 1000);
+    } else {
+        showToast(`❌ ${(r && r.detail) || 'Erro ao salvar'}`, true);
+    }
+}
+
+async function configureEmail() {
+    const server = document.getElementById('smtpServer').value.trim();
+    const port = document.getElementById('smtpPort').value.trim();
+    const user = document.getElementById('smtpUser').value.trim();
+    const password = document.getElementById('smtpPassword').value.trim();
+    const fromEmail = document.getElementById('smtpFrom').value.trim() || user;
+    if (!server || !port || !user || !password) { showToast('Preencha todos os campos de SMTP', true); return; }
+    showToast('Salvando configuração...');
+    const r = await apiFetch('/integrations/email/configure', {
+        method: 'POST',
+        body: JSON.stringify({ server, port: parseInt(port), user, password, from_email: fromEmail })
+    });
+    if (r && r.status === 'saved') {
+        showToast('✅ Email configurado!');
+        const badge = document.getElementById('email-badge');
+        badge.textContent = 'Configurado';
+        badge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-green-900/50 text-green-300 border border-green-700/50';
+        document.getElementById('smtpPassword').value = '';
+    } else {
+        showToast(`❌ ${(r && r.detail) || 'Erro ao salvar configuração'}`, true);
+    }
+}
+
+async function testEmail() {
+    const user = document.getElementById('smtpUser').value.trim();
+    if (!user) { showToast('Preencha o usuário (email) primeiro', true); return; }
+    showToast('Enviando email de teste...');
+    const r = await apiFetch('/integrations/email/test', {
+        method: 'POST',
+        body: JSON.stringify({ to_email: user })
+    });
+    if (r && r.status === 'sent') {
+        showToast(`✅ Email de teste enviado para ${user}!`);
+    } else {
+        showToast(`❌ ${(r && r.detail) || 'Falha ao enviar. Verifique as configurações.'}`, true);
+    }
+}
 function viewInvoices() { alert('Histórico de Faturas:\n\n- 01/05/2026: R$ 1.500\n- 01/04/2026: R$ 1.500\n- 01/03/2026: R$ 1.500'); }
 function downloadData() {
     showToast('Preparando download...');

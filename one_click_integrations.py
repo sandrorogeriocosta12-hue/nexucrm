@@ -7,8 +7,10 @@ FORCE REBUILD: 2024-01-15 21:00 UTC - Emergency cache bust
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from typing import Optional
 import httpx
 import os
+import json
 import logging
 import time
 import base64
@@ -16,6 +18,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from io import BytesIO
+from pathlib import Path
 
 try:
     import qrcode
@@ -27,6 +30,30 @@ router = APIRouter()
 
 # Mock WhatsApp state when Evolution API is unavailable
 mock_whatsapp_instances = {}
+
+# ── Integration config file (persists SMTP/Meta credentials) ──────────
+_CONFIG_FILE = Path(__file__).parent / "integrations_config.json"
+
+def _load_config() -> dict:
+    try:
+        if _CONFIG_FILE.exists():
+            return json.loads(_CONFIG_FILE.read_text())
+    except Exception:
+        pass
+    return {}
+
+def _save_config(data: dict):
+    existing = _load_config()
+    existing.update(data)
+    _CONFIG_FILE.write_text(json.dumps(existing, indent=2))
+
+def _get_cfg(key: str, env_key: str = None) -> str:
+    cfg = _load_config()
+    if key in cfg and cfg[key]:
+        return str(cfg[key])
+    if env_key:
+        return os.getenv(env_key, "")
+    return ""
 
 
 def _is_evolution_api_enabled() -> bool:
@@ -69,13 +96,10 @@ def _is_env_configured(*keys: str) -> bool:
 
 
 def _is_smtp_configured() -> bool:
-    return _is_env_configured(
-        "SMTP_SERVER",
-        "SMTP_PORT",
-        "SMTP_USER",
-        "SMTP_PASSWORD",
-        "FROM_EMAIL"
-    )
+    cfg = _load_config()
+    if all(cfg.get(k) for k in ("smtp_server", "smtp_user", "smtp_password")):
+        return True
+    return _is_env_configured("SMTP_SERVER", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "FROM_EMAIL")
 
 
 def _send_email_via_smtp(to_email: str, subject: str, html_body: str, plain_text: str | None = None) -> bool:
@@ -89,10 +113,11 @@ def _send_email_via_smtp(to_email: str, subject: str, html_body: str, plain_text
             msg.attach(MIMEText(plain_text, "plain"))
         msg.attach(MIMEText(html_body, "html"))
 
-        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-        smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        smtp_user = os.getenv("SMTP_USER", "")
-        smtp_password = os.getenv("SMTP_PASSWORD", "")
+        cfg = _load_config()
+        smtp_server = cfg.get("smtp_server") or os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(cfg.get("smtp_port") or os.getenv("SMTP_PORT", "587"))
+        smtp_user = cfg.get("smtp_user") or os.getenv("SMTP_USER", "")
+        smtp_password = cfg.get("smtp_password") or os.getenv("SMTP_PASSWORD", "")
 
         with smtplib.SMTP(smtp_server, smtp_port, timeout=15) as server:
             server.starttls()
@@ -108,11 +133,17 @@ def _send_email_via_smtp(to_email: str, subject: str, html_body: str, plain_text
 
 def _get_email_status() -> dict:
     if _is_smtp_configured():
+        cfg = _load_config()
         return {
             "status": "connected",
-            "message": "Email configurado com SMTP"
+            "message": "Email configurado com SMTP",
+            "config": {
+                "server": cfg.get("smtp_server") or os.getenv("SMTP_SERVER", ""),
+                "port": cfg.get("smtp_port") or os.getenv("SMTP_PORT", "587"),
+                "user": cfg.get("smtp_user") or os.getenv("SMTP_USER", ""),
+                "from_email": cfg.get("smtp_from_email") or os.getenv("FROM_EMAIL", ""),
+            }
         }
-
     return {
         "status": "pending",
         "message": "Email SMTP não configurado"
@@ -271,17 +302,13 @@ async def check_whatsapp_status(instance_name: str):
 
 @router.get("/integrations/instagram/oauth-url")
 async def get_instagram_oauth_url():
-    """
-    Cliente clica em "Conectar Instagram"
-    Frontend redireciona para aqui
-    Retorna URL de login OAuth da Meta
-    """
     try:
-        if not _is_env_configured("FACEBOOK_APP_ID", "FACEBOOK_APP_SECRET"):
-            raise HTTPException(status_code=503, detail="Instagram OAuth não configurado")
+        cfg = _load_config()
+        app_id = cfg.get("instagram_app_id") or cfg.get("facebook_app_id") or os.getenv("FACEBOOK_APP_ID", "")
+        if not app_id or "seu_" in app_id.lower():
+            raise HTTPException(status_code=503, detail="Instagram OAuth não configurado. Adicione App ID e Secret na aba Integrações.")
 
-        FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
-        FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
+        FACEBOOK_APP_ID = app_id
         REDIRECT_URI = os.getenv("REDIRECT_URI", "https://api.nexuscrm.tech/integrations/instagram/callback")
         
         # URL oficial do Facebook Login
@@ -308,17 +335,13 @@ async def get_instagram_oauth_url():
 
 @router.get("/integrations/facebook/oauth-url")
 async def get_facebook_oauth_url():
-    """
-    Cliente clica em "Conectar Facebook"
-    Frontend redireciona para aqui
-    Retorna URL de login OAuth da Meta para Facebook Messenger
-    """
     try:
-        if not _is_env_configured("FACEBOOK_APP_ID", "FACEBOOK_APP_SECRET"):
-            raise HTTPException(status_code=503, detail="Facebook OAuth não configurado")
+        cfg = _load_config()
+        app_id = cfg.get("facebook_app_id") or os.getenv("FACEBOOK_APP_ID", "")
+        if not app_id or "seu_" in app_id.lower():
+            raise HTTPException(status_code=503, detail="Facebook OAuth não configurado. Adicione App ID e Secret na aba Integrações.")
 
-        FACEBOOK_APP_ID = os.getenv("FACEBOOK_APP_ID")
-        FACEBOOK_APP_SECRET = os.getenv("FACEBOOK_APP_SECRET")
+        FACEBOOK_APP_ID = app_id
         REDIRECT_URI = os.getenv("REDIRECT_URI", "https://api.nexuscrm.tech/integrations/instagram/callback")
         
         # URL oficial do Facebook Login para Messenger
@@ -635,14 +658,91 @@ async def send_message_unified(req: SendMessageRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# 📧 EMAIL: Configure SMTP
+# ═══════════════════════════════════════════════════════════════════════
+
+class EmailConfigRequest(BaseModel):
+    server: str
+    port: int = 587
+    user: str
+    password: str
+    from_email: Optional[str] = None
+
+
+@router.get("/integrations/email/status")
+async def email_status():
+    return _get_email_status()
+
+
+@router.post("/integrations/email/configure")
+async def configure_email(req: EmailConfigRequest):
+    try:
+        _save_config({
+            "smtp_server": req.server,
+            "smtp_port": req.port,
+            "smtp_user": req.user,
+            "smtp_password": req.password,
+            "smtp_from_email": req.from_email or req.user,
+        })
+        logger.info(f"✅ Email SMTP configurado: {req.server}:{req.port} user={req.user}")
+        return {"status": "saved", "message": "Configuração de email salva com sucesso"}
+    except Exception as e:
+        logger.error(f"❌ Erro ao salvar config email: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class EmailTestRequest(BaseModel):
+    to_email: str
+
+
+@router.post("/integrations/email/test")
+async def test_email(req: EmailTestRequest):
+    if not _is_smtp_configured():
+        raise HTTPException(status_code=503, detail="Email SMTP não configurado. Salve a configuração primeiro.")
+    try:
+        html = "<h2>✅ Nexus CRM - Teste de Email</h2><p>Seu email está configurado corretamente!</p>"
+        ok = _send_email_via_smtp(req.to_email, "Nexus CRM - Teste de Conexão", html, "Seu email está configurado!")
+        if ok:
+            return {"status": "sent", "message": f"Email de teste enviado para {req.to_email}"}
+        raise Exception("Falha ao enviar")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao enviar email: {str(e)}")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 🔧 META CREDENTIALS: Save App ID + Secret
+# ═══════════════════════════════════════════════════════════════════════
+
+class MetaConfigRequest(BaseModel):
+    channel: str  # "facebook" or "instagram"
+    app_id: str
+    app_secret: str
+
+
+@router.post("/integrations/meta/configure")
+async def configure_meta(req: MetaConfigRequest):
+    try:
+        channel = req.channel.lower()
+        _save_config({
+            f"{channel}_app_id": req.app_id,
+            f"{channel}_app_secret": req.app_secret,
+            "facebook_app_id": req.app_id,
+            "facebook_app_secret": req.app_secret,
+        })
+        logger.info(f"✅ Meta credentials saved for {channel}")
+        return {"status": "saved", "channel": channel}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/debug/code")
 async def debug_code():
-    """Debug endpoint to check if the updated code is running"""
     return {
         "file": "one_click_integrations.py",
-        "has_debug_logs": True,
+        "smtp_configured": _is_smtp_configured(),
         "evolution_api_check": _is_evolution_api_enabled(),
-        "timestamp": "2024-01-15-debug"
+        "config_keys": list(_load_config().keys()),
     }
 
 
