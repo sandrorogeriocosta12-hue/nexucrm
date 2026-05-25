@@ -10,13 +10,13 @@ jobs:
 
     steps:
       # ─────────────────────────────────────────────────────────
-      # 1. Checkout do código (necessário para artefatos)
+      # 1. Checkout do código no runner do GitHub
       # ─────────────────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
       # ─────────────────────────────────────────────────────────
-      # 2. Configurar SSH
+      # 2. Configurar SSH (chave para acessar a Locaweb)
       # ─────────────────────────────────────────────────────────
       - name: Configurar SSH
         run: |
@@ -24,67 +24,61 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          echo "Host locaweb" >> ~/.ssh/config
+          echo "  HostName ${{ secrets.SERVER_HOST }}" >> ~/.ssh/config
+          echo "  User ${{ secrets.SERVER_USER }}" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
 
       # ─────────────────────────────────────────────────────────
-      # 3. Clone ou atualizar repositório no servidor
+      # 3. Criar arquivos .env no runner (a partir dos Secrets)
+      #    Serão enviados junto com o rsync, mas separadamente
       # ─────────────────────────────────────────────────────────
-      - name: Atualizar código no servidor
+      - name: Criar arquivos de configuração
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} bash -s << 'ENDSSH'
-            set -e
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            REPO_URL="git@github.com:sandrorogeriocosta12-hue/nexucrm.git"
-
-            if [ ! -d "$DEPLOY_PATH/.git" ]; then
-              echo "Primeiro deploy: clonando repositório..."
-              mkdir -p "$(dirname $DEPLOY_PATH)"
-              git clone "$REPO_URL" "$DEPLOY_PATH"
-            fi
-
-            cd "$DEPLOY_PATH"
-            git fetch origin
-            git reset --hard origin/main
-            echo "Código atualizado: $(git log -1 --oneline)"
-          ENDSSH
-
-      # ─────────────────────────────────────────────────────────
-      # 4. Criar arquivos de configuração a partir dos Secrets
-      # ─────────────────────────────────────────────────────────
-      - name: Criar .env de produção
-        run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} bash -s << 'ENDSSH'
-            set -e
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            cd "$DEPLOY_PATH"
-
-            # Arquivo .env principal (FastAPI backend)
-            cat > .env << 'EOF'
+          cat > .env << 'ENVEOF'
           ${{ secrets.PRODUCTION_ENV }}
-          EOF
-
-            # Arquivo evolution.env (Evolution API - WhatsApp gateway)
-            cat > evolution.env << 'EOF'
+          ENVEOF
+          cat > evolution.env << 'ENVEOF'
           ${{ secrets.EVOLUTION_ENV }}
-          EOF
-
-            chmod 600 .env evolution.env
-            echo ".env e evolution.env criados com sucesso"
-          ENDSSH
+          ENVEOF
+          chmod 600 .env evolution.env
 
       # ─────────────────────────────────────────────────────────
-      # 5. Subir os containers (sem Evolution API primeiro)
+      # 4. Criar pasta de destino no servidor
+      # ─────────────────────────────────────────────────────────
+      - name: Preparar pasta no servidor
+        run: |
+          ssh locaweb "mkdir -p ${{ secrets.DEPLOY_PATH }}"
+
+      # ─────────────────────────────────────────────────────────
+      # 5. Enviar código via rsync (runner → servidor)
+      #    O runner já tem o código: não precisa de git clone no servidor
+      # ─────────────────────────────────────────────────────────
+      - name: Enviar código para o servidor
+        run: |
+          rsync -avz --delete \
+            --exclude='.git/' \
+            --exclude='**/__pycache__/' \
+            --exclude='**/*.pyc' \
+            --exclude='venv/' \
+            --exclude='.venv/' \
+            --exclude='node_modules/' \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_PATH }}/
+          echo "Código enviado: $(git log -1 --oneline)"
+
+      # ─────────────────────────────────────────────────────────
+      # 6. Subir postgres, redis e backend
       # ─────────────────────────────────────────────────────────
       - name: Subir postgres, redis e backend
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} bash -s << 'ENDSSH'
+          ssh locaweb bash << 'ENDSSH'
             set -e
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            cd "$DEPLOY_PATH"
-
-            # Parar e reconstruir backend, manter dados persistentes
+            cd "${{ secrets.DEPLOY_PATH }}"
             docker compose pull postgres redis 2>/dev/null || true
             docker compose up -d --build postgres redis backend frontend
-            echo "Aguardando postgres ficar saudável..."
+            echo "Aguardando PostgreSQL..."
             for i in $(seq 1 30); do
               if docker compose exec -T postgres pg_isready -U vexus > /dev/null 2>&1; then
                 echo "PostgreSQL pronto."
@@ -96,138 +90,96 @@ jobs:
           ENDSSH
 
       # ─────────────────────────────────────────────────────────
-      # 6. Garantir schema e usuário do banco estão corretos
+      # 7. Inicializar banco de dados
       # ─────────────────────────────────────────────────────────
       - name: Inicializar banco de dados
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} bash -s << 'ENDSSH'
+          ssh locaweb bash << 'ENDSSH'
             set -e
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            cd "$DEPLOY_PATH"
-
+            cd "${{ secrets.DEPLOY_PATH }}"
             docker compose exec -T postgres psql -U vexus -d vexus_db -c "
               CREATE SCHEMA IF NOT EXISTS vexus;
               GRANT ALL ON SCHEMA vexus TO vexus;
-              GRANT ALL ON ALL TABLES IN SCHEMA vexus TO vexus;
               ALTER DEFAULT PRIVILEGES IN SCHEMA vexus GRANT ALL ON TABLES TO vexus;
             " 2>/dev/null || true
-
-            # Criar banco vexus_crm se não existir (usado pela Evolution API)
             docker compose exec -T postgres psql -U vexus -c \
               "SELECT 1 FROM pg_database WHERE datname='vexus_crm'" | grep -q 1 || \
               docker compose exec -T postgres psql -U vexus -c "CREATE DATABASE vexus_crm;" || true
-
             docker compose exec -T postgres psql -U vexus -d vexus_crm -c "
               CREATE SCHEMA IF NOT EXISTS vexus;
               GRANT ALL ON SCHEMA vexus TO vexus;
-              GRANT ALL ON ALL TABLES IN SCHEMA vexus TO vexus;
               ALTER DEFAULT PRIVILEGES IN SCHEMA vexus GRANT ALL ON TABLES TO vexus;
             " 2>/dev/null || true
-
             echo "Banco inicializado."
           ENDSSH
 
       # ─────────────────────────────────────────────────────────
-      # 7. Subir Evolution API (WhatsApp)
+      # 8. Subir Evolution API (WhatsApp)
       # ─────────────────────────────────────────────────────────
       - name: Subir Evolution API
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} bash -s << 'ENDSSH'
+          ssh locaweb bash << 'ENDSSH'
             set -e
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            cd "$DEPLOY_PATH"
-
-            # Parar container antigo sem apagar dados
+            cd "${{ secrets.DEPLOY_PATH }}"
             docker compose stop evolution-api 2>/dev/null || true
             docker compose rm -f evolution-api 2>/dev/null || true
-
-            # Subir novamente
             docker compose up -d evolution-api
-
-            echo "Aguardando Evolution API inicializar (Prisma migrations)..."
-            for i in $(seq 1 40); do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-                -H "apikey: $(grep AUTHENTICATION_API_KEY evolution.env | cut -d= -f2)" \
-                http://localhost:3000/ 2>/dev/null || echo "0")
+            echo "Aguardando Evolution API (até 2 min)..."
+            for i in $(seq 1 24); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/ 2>/dev/null || echo "0")
               if [ "$STATUS" = "200" ] || [ "$STATUS" = "401" ]; then
                 echo "Evolution API pronta (HTTP $STATUS)."
                 break
               fi
-              echo "  tentativa $i/40 (HTTP $STATUS)..."
+              echo "  tentativa $i/24 (HTTP $STATUS)..."
               sleep 5
             done
           ENDSSH
 
       # ─────────────────────────────────────────────────────────
-      # 8. Corrigir estado das migrations Prisma se necessário
+      # 9. Corrigir migrations Prisma travadas
       # ─────────────────────────────────────────────────────────
-      - name: Verificar migrations Prisma
+      - name: Limpar migrations Prisma pendentes
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} bash -s << 'ENDSSH'
-            set -e
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            cd "$DEPLOY_PATH"
-
-            # Limpar migrations com erro que bloqueiam restart
+          ssh locaweb bash << 'ENDSSH'
+            cd "${{ secrets.DEPLOY_PATH }}"
             docker compose exec -T postgres psql -U vexus -d vexus_crm -c "
               DELETE FROM vexus._prisma_migrations
               WHERE finished_at IS NULL
                 AND rolled_back_at IS NULL
                 AND started_at < NOW() - INTERVAL '5 minutes';
-            " 2>/dev/null && echo "Migrations pendentes limpas." || echo "Tabela _prisma_migrations ainda não existe (ok)."
+            " 2>/dev/null && echo "Migrations limpas." || echo "Tabela ainda não existe (ok)."
           ENDSSH
 
       # ─────────────────────────────────────────────────────────
-      # 9. Limpeza de imagens antigas
+      # 10. Limpeza
       # ─────────────────────────────────────────────────────────
-      - name: Limpar imagens Docker antigas
+      - name: Limpar imagens antigas
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} bash -s << 'ENDSSH'
+          ssh locaweb bash << 'ENDSSH'
             docker image prune -f --filter "until=48h" 2>/dev/null || true
             docker container prune -f 2>/dev/null || true
           ENDSSH
 
       # ─────────────────────────────────────────────────────────
-      # 10. Health checks finais
+      # 11. Health checks finais
       # ─────────────────────────────────────────────────────────
       - name: Health checks
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} bash -s << 'ENDSSH'
-            set -e
-            echo "=== Status dos containers ==="
+          ssh locaweb bash << 'ENDSSH'
+            echo "=== Containers em execução ==="
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
             echo ""
-            echo "=== Health check: Backend (FastAPI) ==="
-            BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || echo "0")
-            if [ "$BACKEND_STATUS" = "200" ]; then
-              echo "✅ Backend OK (HTTP 200)"
-            else
-              echo "⚠️  Backend retornou HTTP $BACKEND_STATUS"
-            fi
+            BACKEND=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health 2>/dev/null || echo "0")
+            [ "$BACKEND" = "200" ] && echo "✅ Backend OK" || echo "⚠️  Backend HTTP $BACKEND"
 
-            echo ""
-            echo "=== Health check: Evolution API ==="
-            EVOLUTION_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/ || echo "0")
-            if [ "$EVOLUTION_STATUS" = "200" ] || [ "$EVOLUTION_STATUS" = "401" ]; then
-              echo "✅ Evolution API OK (HTTP $EVOLUTION_STATUS)"
-            else
-              echo "⚠️  Evolution API retornou HTTP $EVOLUTION_STATUS"
-            fi
+            EVOLUTION=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/ 2>/dev/null || echo "0")
+            { [ "$EVOLUTION" = "200" ] || [ "$EVOLUTION" = "401" ]; } && echo "✅ Evolution API OK" || echo "⚠️  Evolution API HTTP $EVOLUTION"
           ENDSSH
 
-      - name: Health check externo
+      - name: Resultado do deploy
         run: |
-          DOMAIN="${{ secrets.PRODUCTION_DOMAIN }}"
-          if [ -n "$DOMAIN" ]; then
-            echo "Checando $DOMAIN/health ..."
-            sleep 10
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$DOMAIN/health" || echo "0")
-            if [ "$STATUS" = "200" ]; then
-              echo "✅ Produção online: https://$DOMAIN"
-            else
-              echo "⚠️  Domínio externo retornou HTTP $STATUS (pode ser problema de DNS/SSL, verifique manualmente)"
-            fi
-          else
-            echo "PRODUCTION_DOMAIN não configurado, pulando check externo."
-          fi
+          echo "✅ Deploy concluído: $(git log -1 --oneline)"
+          echo "Servidor: ${{ secrets.SERVER_HOST }}"
+          echo "Pasta: ${{ secrets.DEPLOY_PATH }}"
