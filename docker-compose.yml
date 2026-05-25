@@ -1,27 +1,8 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: vexus-postgres
-    environment:
-      POSTGRES_USER: vexus
-      POSTGRES_PASSWORD: vexus_password_123
-      POSTGRES_DB: vexus_db
-      POSTGRES_MULTIPLE_DATABASES: vexus_db,vexus_crm
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vexus"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    # use host networking to avoid creation of custom bridge network
-    network_mode: host
+  # PostgreSQL nativo do host (porta 5432 já em uso pelo systemd)
+  # Não sobe container - usa o PostgreSQL instalado diretamente na VPS
 
   # Redis Cache
   redis:
@@ -52,8 +33,6 @@ services:
       CORS_ORIGINS: "http://localhost:3000,http://localhost:9000,http://localhost:8081,http://localhost:8080"
       ENV: ${ENV:-development}
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     ports:
@@ -123,7 +102,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
   redis_data:
   evolution_instances:
   evolution_store:

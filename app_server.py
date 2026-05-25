@@ -123,8 +123,27 @@ async def health_check():
     """Health check endpoint for Railway"""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
+def _serve_html(filename: str):
+    filepath = os.path.join(frontend_path, filename)
+    if os.path.exists(filepath):
+        content = Path(filepath).read_text(encoding="utf-8")
+        return HTMLResponse(content, headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        })
+    raise HTTPException(status_code=404, detail=f"{filename} not found")
+
+@app.get("/frontend/app.html", response_class=HTMLResponse)
+async def frontend_app():
+    return _serve_html("dashboard-functional.html")
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
+    return _serve_html("dashboard-functional.html")
+
+@app.get("/_old_root", response_class=HTMLResponse)
+async def root_old():
     home_file = os.path.join(frontend_path, "home.html")
     if os.path.exists(home_file):
         content = Path(home_file).read_text(encoding="utf-8")
