@@ -232,6 +232,14 @@ async def reset_password_page(token: str = None):
         )
     raise HTTPException(status_code=404, detail="Reset password page not found")
 
+@app.get("/terms", response_class=HTMLResponse)
+async def terms_page():
+    return _serve_html("terms.html")
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_page():
+    return _serve_html("privacy.html")
+
 @app.get("/payment", response_class=HTMLResponse)
 async def payment_page():
     payment_file = os.path.join(frontend_path, "payment.html")
