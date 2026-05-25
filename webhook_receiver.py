@@ -255,92 +255,66 @@ async def webhook_email_sendgrid(request: Request):
 # ═══════════════════════════════════════════════════════════════════════
 
 async def process_incoming_message(message_data: Dict[str, Any]):
+    """Processa mensagem de qualquer canal.
+
+    Objetivo (agora):
+    - Persistir a mensagem no banco (sem quebrar o webhook)
+    - Rodar um score de IA (mock) para registro/log
+    - Retornar sempre sucesso HTTP para o provedor, mesmo se IA/DB falharem
     """
-    Procesamento central para QUALQUER mensagem que chega
-    
-    1. Salva no banco de dados
-    2. Envia para AI (predição de score/intenção)
-    3. Armazena resultado
-    4. Envia resposta automática (opcional)
-    """
+    from vexus_crm.database import get_db
+    from vexus_crm.models import Message
+
+    ai_score: float = 0.0
     try:
         logger.info(f"⚙️  Processando mensagem: {message_data}")
-        
-        # ═══════════════════════════════════════════════
-        # 1️⃣ SALVAR NO BANCO
-        # ═══════════════════════════════════════════════
-        # Aqui você insere em uma tabela "messages"
-        # Exemplo:
-        """
-        db.execute('''
-            INSERT INTO messages (
-                channel, sender, message_text, 
-                received_at, status
-            ) VALUES (?, ?, ?, ?, ?)
-        ''', (
-            message_data['channel'],
-            message_data['sender'],
-            message_data['message_text'],
-            message_data['received_at'],
-            'pending'
-        ))
-        db.commit()
-        """
-        
-        logger.info(f"✅ Mensagem salva no banco")
-        
-        # ═══════════════════════════════════════════════
-        # 2️⃣ ENVIAR PARA AI ENGINE
-        # ═══════════════════════════════════════════════
-        # Aqui você chama o NexusLearningEngine para fazer predição
-        # Exemplo:
-        """
-        from nexus_learning_engine import NexusLearningEngine
-        
-        engine = NexusLearningEngine()
-        prediction = engine.predict(
-            engagement=0.85,  # Extraído do texto via NLP
-            intention=0.72,   # Extraído do texto via NLP
-            ai_confidence=0.91,
-            niche="B2B SaaS"
-        )
-        """
-        
+
+        channel = message_data.get("channel")
+        sender = message_data.get("sender")
+        message_text = message_data.get("message_text", "")
+        received_at = message_data.get("received_at")
+
+        # Contact/Lead: se não existir, gravamos contact_id como sender
+        contact_id = sender or "unknown"
+        user_id = "system"
+
+        # Persistir no banco
+        # IMPORTANTE: get_db() retorna um generator, então usamos next()
+        db_gen = get_db()
+        db = next(db_gen)
+        try:
+            msg_obj = Message(
+                user_id=user_id,
+                contact_id=contact_id,
+                channel=str(channel),
+                direction="incoming",
+                message_text=message_text,
+                external_message_id=message_data.get("external_message_id"),
+            )
+            db.add(msg_obj)
+            db.commit()
+            logger.info(f"✅ Mensagem salva no banco (id={msg_obj.id})")
+        finally:
+            # fecha generator
+            try:
+                next(db_gen)
+            except StopIteration:
+                pass
+
+        # IA (mock)
         ai_score = await get_ai_prediction(message_data)
         logger.info(f"🧠 Score AI: {ai_score}")
-        
-        # ═══════════════════════════════════════════════
-        # 3️⃣ ARMAZENAR RESULTADO
-        # ═══════════════════════════════════════════════
-        # Update da mensagem com score
-        """
-        db.execute('''
-            UPDATE messages 
-            SET ai_score = ?, status = 'processed'
-            WHERE id = ?
-        ''', (ai_score, message_id))
-        db.commit()
-        """
-        
-        logger.info(f"💾 Resultado armazenado")
-        
-        # ═══════════════════════════════════════════════
-        # 4️⃣ ENVIAR RESPOSTA AUTOMÁTICA (Opcional)
-        # ═══════════════════════════════════════════════
-        if ai_score > 0.8:
-            # Lead qualificado - responder automaticamente
-            await send_auto_response(
-                channel=message_data['channel'],
-                sender=message_data['sender'],
-                ai_score=ai_score
-            )
-            logger.info(f"🤖 Resposta automática enviada")
-        
+
+        # Não dispara resposta real por enquanto (conforme solicitado)
+        # if ai_score > 0.8:
+        #     await send_auto_response(...)
+
         return {"processed": True, "score": ai_score}
-    
+
     except Exception as e:
-        logger.error(f"❌ Erro ao processar: {str(e)}")
-        raise
+        # Não deixar o webhook quebrar
+        logger.exception(f"❌ Erro ao processar webhook (não deve causar 500): {str(e)}")
+        return {"processed": False, "score": ai_score, "error": str(e)}
 
 
 async def get_ai_prediction(message_data: Dict[str, Any]) -> float:

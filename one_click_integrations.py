@@ -43,7 +43,7 @@ async def _evolution_api_health_check() -> bool:
 
     try:
         async with httpx.AsyncClient(timeout=3) as client:
-            response = await client.get(f"{os.getenv('EVOLUTION_API_URL')}/health")
+            response = await client.get(f"{os.getenv('EVOLUTION_API_URL')}/")
             return response.status_code == 200
     except Exception:
         return False
@@ -153,26 +153,28 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
 
         if use_real_evolution:
             try:
-                async with httpx.AsyncClient() as client:
+                async with httpx.AsyncClient(timeout=30) as client:
                     response = await client.post(
                         f"{EVOLUTION_API_URL}/instance/create",
                         headers={"apikey": EVOLUTION_API_KEY},
                         json={
                             "instanceName": req.instance_name,
                             "qrcode": True,
-                            "token": {},
+                            "integration": "WHATSAPP-BAILEYS",
                             "webhook": {
-                                "url": f"https://api.nexuscrm.tech/webhooks/whatsapp/{req.instance_name}",
-                                "events": ["messages.upsert", "connection.update"]
+                                "url": f"{os.getenv('API_BASE_URL', 'http://localhost:8080')}/webhooks/whatsapp/{req.instance_name}",
+                                "events": ["MESSAGES_UPSERT", "CONNECTION_UPDATE", "QRCODE_UPDATED"]
                             }
                         }
                     )
 
                 result = response.json()
-                if response.status_code != 201:
-                    raise Exception(f"Evolution API error: {result}")
+                if response.status_code not in (200, 201):
+                    raise Exception(f"Evolution API error {response.status_code}: {result}")
 
-                qrcode_url = result.get("qrcode", {}).get("imageUrl", "")
+                # Evolution API v2 retorna qrcode.base64 (não imageUrl)
+                qrcode_data = result.get("qrcode", {})
+                qrcode_url = qrcode_data.get("base64") or qrcode_data.get("imageUrl", "")
                 if not qrcode_url:
                     raise Exception("Evolution API retornou QR Code vazio")
 
@@ -199,10 +201,14 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
             status_code=503,
             detail=(
                 "Evolution API não está configurada corretamente ou não está acessível. "
-                "O QR Code real do WhatsApp só é gerado quando o serviço está disponível. "
-                "VERSION: 2024-01-15-FIXED"
+                "Verifique EVOLUTION_API_URL e EVOLUTION_API_KEY no .env e se o serviço está rodando."
             )
         )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Erro ao gerar QR Code WhatsApp: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/integrations/whatsapp/status/{instance_name}")
@@ -257,10 +263,6 @@ async def check_whatsapp_status(instance_name: str):
             "state": "DISCONNECTED",
             "message": "Serviço WhatsApp temporariamente indisponível. Tente novamente mais tarde."
         }
-
-    except Exception as e:
-        logger.error(f"❌ Erro ao verificar status: {str(e)}")
-        return {"status": "error", "message": str(e)}
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -444,7 +446,7 @@ async def connect_telegram(req: TelegramBotRequest):
             bot_id = bot_data.get("id")
             
             # 2️⃣ Registrar webhook
-            webhook_url = f"https://api.nexuscrm.tech/webhooks/telegram/{req.client_id}"
+            webhook_url = f"{os.getenv('API_BASE_URL', 'http://localhost:8080')}/webhooks/telegram/{req.client_id}"
             
             webhook_response = await client.post(
                 f"{TELEGRAM_API_URL}/bot{req.bot_token}/setWebhook",

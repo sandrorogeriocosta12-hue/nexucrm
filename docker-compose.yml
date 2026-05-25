@@ -9,6 +9,7 @@ services:
       POSTGRES_USER: vexus
       POSTGRES_PASSWORD: vexus_password_123
       POSTGRES_DB: vexus_db
+      POSTGRES_MULTIPLE_DATABASES: vexus_db,vexus_crm
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -86,9 +87,46 @@ services:
       retries: 3
     network_mode: host
 
+  # Evolution API - WhatsApp Gateway
+  # Acesso: http://localhost:3000
+  # API Key: vexus_evolution_key_change_me
+  evolution-api:
+    image: atendai/evolution-api:latest
+    container_name: vexus-evolution-api
+    environment:
+      # Variáveis para o script de migração (DOCKER_ENV=true ignora .env nos shell scripts)
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: "postgresql://vexus:vexus_password_123@localhost:5432/vexus_crm?schema=vexus"
+      DATABASE_URL: "postgresql://vexus:vexus_password_123@localhost:5432/vexus_crm?schema=vexus"
+      # Variáveis da aplicação
+      SERVER_PORT: "3000"
+      SERVER_URL: "http://localhost:3000"
+      AUTHENTICATION_API_KEY: "vexus_evolution_key_change_me"
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
+      DATABASE_CONNECTION_CLIENT_NAME: vexus_evolution
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+      DATABASE_SAVE_DATA_LABELS: "true"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: "redis://localhost:6379/6"
+      CACHE_REDIS_PREFIX_KEY: evolution
+      WEBHOOK_GLOBAL_ENABLED: "false"
+      LOG_LEVEL: ERROR,WARN,INFO
+    volumes:
+      - ./evolution.env:/evolution/.env:ro
+      - evolution_instances:/evolution/instances
+      - evolution_store:/evolution/store
+    network_mode: host
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
+  evolution_instances:
+  evolution_store:
 
 # networks:
 #   vexus-network:

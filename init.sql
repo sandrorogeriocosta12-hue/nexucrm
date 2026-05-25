@@ -1,5 +1,9 @@
 -- Initialize PostgreSQL database with pgvector extension and tables
 
+-- Criar banco vexus_crm para a Evolution API (WhatsApp gateway)
+SELECT 'CREATE DATABASE vexus_crm'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'vexus_crm')\gexec
+
 -- Create extension for vector embeddings
 CREATE EXTENSION IF NOT EXISTS vector;
 

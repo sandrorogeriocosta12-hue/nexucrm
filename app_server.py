@@ -292,7 +292,7 @@ async def startup_event():
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                os.getenv("EVOLUTION_API_URL", "http://localhost:3000") + "/health",
+                os.getenv("EVOLUTION_API_URL", "http://localhost:3000") + "/",
                 timeout=5
             )
             if response.status_code == 200:
