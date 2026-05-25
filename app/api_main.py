@@ -116,36 +116,28 @@ class PaymentRequest(BaseModel):
     company: Optional[str] = None
 
 
-# ===== Mock Database =====
-mock_users = {
-    "admin@vexus.com": {
-        "id": 1,
-        "email": "admin@vexus.com",
-        "password_hash": get_password_hash("admin123"),
-        "name": "Admin Vexus",
-        "role": "admin",
-    },
-    "victor226942@gmail.com": {
-        "id": 2,
-        "email": "victor226942@gmail.com",
-        "password_hash": get_password_hash("226942Hd$"),
-        "name": "Victor",
-        "role": "user",
-    }
-}
+# ===== In-Memory Database (per user) =====
+mock_users: dict = {}
 
 def clear_user_from_mock(email: str):
-    """Remove usuário da memória"""
     if email in mock_users:
         del mock_users[email]
 
-# Mock companies and subscriptions (simple in-memory)
-mock_companies = {}
-mock_subscriptions = {}
+mock_companies: dict = {}
+mock_subscriptions: dict = {}
+mock_chats: dict = {}
+mock_leads: dict = {}
+mock_proposals: dict = {}
 
-mock_chats = {}
-mock_leads = {}
-mock_proposals = {}
+# Per-user CRM data
+user_leads: dict = {}      # {email: [lead, ...]}
+user_campaigns: dict = {}  # {email: [campaign, ...]}
+user_contacts: dict = {}   # {email: [contact, ...]}
+
+import uuid as _uuid
+
+def _new_id() -> str:
+    return str(_uuid.uuid4())[:8]
 
 
 # ===== Dependencies =====
@@ -644,50 +636,100 @@ async def query_kb(query: KBQuery, current_user: dict = Depends(get_current_user
     }
 
 
-# ===== Leads/Pipeline Routes =====
+# ===== Leads Routes =====
 
+class LeadCreate(BaseModel):
+    name: str
+    email: str
+    company: str = ""
+    value: float = 0
+    status: str = "Novo"
 
 @app.get("/leads")
 async def get_leads(current_user: dict = Depends(get_current_user)):
-    """Get all leads."""
-    return {
-        "leads": [
-            {
-                "id": 1,
-                "name": "João Silva",
-                "email": "joao@example.com",
-                "score": 85,
-                "stage": "Negociação",
-            },
-            {
-                "id": 2,
-                "name": "Maria Santos",
-                "email": "maria@example.com",
-                "score": 75,
-                "stage": "Proposta",
-            },
-            {
-                "id": 3,
-                "name": "Carlos Mendes",
-                "email": "carlos@example.com",
-                "score": 62,
-                "stage": "Qualificação",
-            },
-        ]
-    }
+    return user_leads.get(current_user["email"], [])
 
+@app.post("/leads")
+async def create_lead(lead: LeadCreate, current_user: dict = Depends(get_current_user)):
+    email = current_user["email"]
+    new = lead.dict()
+    new["id"] = _new_id()
+    new["created_at"] = datetime.utcnow().isoformat()
+    user_leads.setdefault(email, []).append(new)
+    return new
+
+@app.delete("/leads/{lead_id}")
+async def delete_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
+    email = current_user["email"]
+    before = user_leads.get(email, [])
+    user_leads[email] = [l for l in before if str(l.get("id")) != str(lead_id)]
+    return {"deleted": lead_id}
 
 @app.get("/leads/{lead_id}")
-async def get_lead(lead_id: int, current_user: dict = Depends(get_current_user)):
-    """Get lead details."""
-    return {
-        "id": lead_id,
-        "name": f"Lead {lead_id}",
-        "email": f"lead{lead_id}@example.com",
-        "score": 85,
-        "stage": "Negociação",
-        "history": ["Contato", "Email enviado", "Proposta enviada"],
-    }
+async def get_lead(lead_id: str, current_user: dict = Depends(get_current_user)):
+    leads = user_leads.get(current_user["email"], [])
+    lead = next((l for l in leads if str(l.get("id")) == str(lead_id)), None)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return lead
+
+
+# ===== Campaigns Routes =====
+
+class CampaignCreate(BaseModel):
+    name: str
+    description: str = ""
+    budget: float = 0
+
+@app.get("/campaigns")
+async def get_campaigns(current_user: dict = Depends(get_current_user)):
+    return user_campaigns.get(current_user["email"], [])
+
+@app.post("/campaigns")
+async def create_campaign(campaign: CampaignCreate, current_user: dict = Depends(get_current_user)):
+    email = current_user["email"]
+    new = campaign.dict()
+    new["id"] = _new_id()
+    new["created_at"] = datetime.utcnow().isoformat()
+    user_campaigns.setdefault(email, []).append(new)
+    return new
+
+@app.delete("/campaigns/{campaign_id}")
+async def delete_campaign(campaign_id: str, current_user: dict = Depends(get_current_user)):
+    email = current_user["email"]
+    before = user_campaigns.get(email, [])
+    user_campaigns[email] = [c for c in before if str(c.get("id")) != str(campaign_id)]
+    return {"deleted": campaign_id}
+
+
+# ===== Contacts Routes =====
+
+class ContactCreate(BaseModel):
+    name: str
+    email: str
+    phone: Optional[str] = None
+    company: str = ""
+    title: Optional[str] = None
+
+@app.get("/contacts")
+async def get_contacts(current_user: dict = Depends(get_current_user)):
+    return user_contacts.get(current_user["email"], [])
+
+@app.post("/contacts")
+async def create_contact(contact: ContactCreate, current_user: dict = Depends(get_current_user)):
+    email = current_user["email"]
+    new = contact.dict()
+    new["id"] = _new_id()
+    new["created_at"] = datetime.utcnow().isoformat()
+    user_contacts.setdefault(email, []).append(new)
+    return new
+
+@app.delete("/contacts/{contact_id}")
+async def delete_contact(contact_id: str, current_user: dict = Depends(get_current_user)):
+    email = current_user["email"]
+    before = user_contacts.get(email, [])
+    user_contacts[email] = [c for c in before if str(c.get("id")) != str(contact_id)]
+    return {"deleted": contact_id}
 
 
 # ===== Proposals Routes =====
@@ -733,32 +775,8 @@ async def get_proposals(current_user: dict = Depends(get_current_user)):
 
 @app.get("/agents")
 async def get_agents(current_user: dict = Depends(get_current_user)):
-    """Get all agents."""
-    return {
-        "agents": [
-            {
-                "id": 1,
-                "name": "Agente Vendas",
-                "model": "GPT-4",
-                "status": "ativo",
-                "performance": 0.87,
-            },
-            {
-                "id": 2,
-                "name": "Agente Knowledge",
-                "model": "GPT-4",
-                "status": "ativo",
-                "performance": 0.94,
-            },
-            {
-                "id": 3,
-                "name": "Agente Email",
-                "model": "GPT-3.5",
-                "status": "ativo",
-                "performance": 0.82,
-            },
-        ]
-    }
+    """Get all agents (empty by default for new accounts)."""
+    return {"agents": {}}
 
 
 @app.put("/agents/{agent_id}/config")

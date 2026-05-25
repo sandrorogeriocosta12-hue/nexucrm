@@ -249,30 +249,7 @@ async def move_deal(
 # CONTATOS
 # ═══════════════════════════════════════════════════════════════════
 
-MOCK_CONTACTS = [
-    Contact(
-        id="contact_1",
-        name="Carlos Silva",
-        email="carlos@empresa.com",
-        phone="+5511999999999",
-        company="Empresa XYZ",
-        source="whatsapp",
-        created_at=datetime.now() - timedelta(days=30),
-        updated_at=datetime.now() - timedelta(days=1),
-        tags=["prospect", "premium"]
-    ),
-    Contact(
-        id="contact_2",
-        name="Ana Costa",
-        email="ana@startup.com",
-        phone="+5511988888888",
-        company="Startup ABC",
-        source="email",
-        created_at=datetime.now() - timedelta(days=10),
-        updated_at=datetime.now(),
-        tags=["hot lead"]
-    ),
-]
+MOCK_CONTACTS: list = []
 
 
 @contacts_router.get("/", response_model=List[Contact])
