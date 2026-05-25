@@ -21,11 +21,14 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    email: Optional[str] = None
+    name: Optional[str] = None
+    user_id: Optional[int] = None
 
 
 class TokenData(BaseModel):
     email: Optional[str] = None
-    user_id: Optional[str] = None
+    user_id: Optional[int] = None
     scopes: list[str] = []
 
 
@@ -100,7 +103,7 @@ def create_tokens(user_id: int, email: str, name: str, role: str = "user") -> To
     access_token = create_access_token(access_data)
     refresh_token = create_refresh_token(refresh_data)
 
-    return Token(access_token=access_token, refresh_token=refresh_token)
+    return Token(access_token=access_token, refresh_token=refresh_token, email=email, name=name, user_id=user_id)
 
 
 def create_email_verification_token(email: str) -> str:

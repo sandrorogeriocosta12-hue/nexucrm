@@ -672,6 +672,11 @@ async function apiFetch(endpoint, options = {}) {
 function checkAuth() {
     const email = sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || 'usuario@nexuscrm.tech';
     document.getElementById('userEmail').textContent = email;
+    // Sync token keys: se só tiver access_token, copiar para nexus_token
+    if (!localStorage.getItem('nexus_token') && localStorage.getItem('access_token')) {
+        localStorage.setItem('nexus_token', localStorage.getItem('access_token'));
+    }
+    authToken = localStorage.getItem('nexus_token');
 }
 
 function logout() {
