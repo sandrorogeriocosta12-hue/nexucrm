@@ -2076,6 +2076,39 @@ async def get_deal_activities(deal_id: int, current_user: dict = Depends(get_cur
         con.close()
 
 
+class DealActivityCreate(BaseModel):
+    content: str
+
+
+@app.post("/crm/deals/{deal_id}/activities", status_code=201)
+async def add_deal_activity(deal_id: int, payload: DealActivityCreate, current_user: dict = Depends(get_current_user)):
+    """Adiciona nota manual ao histórico do deal."""
+    user_email = current_user["email"]
+    if not payload.content.strip():
+        raise HTTPException(status_code=400, detail="Conteúdo não pode estar vazio")
+    con = _crm_conn()
+    try:
+        cur = con.cursor()
+        # Garante que o deal pertence ao usuário
+        cur.execute("SELECT id FROM nexus.deals WHERE id = %s AND user_email = %s", (deal_id, user_email))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Deal não encontrado")
+        cur.execute("""
+            INSERT INTO nexus.deal_activities (deal_id, user_email, content)
+            VALUES (%s, %s, %s) RETURNING id, created_at
+        """, (deal_id, user_email, payload.content.strip()))
+        row = cur.fetchone()
+        con.commit()
+        return {"id": row[0], "created_at": row[1].isoformat()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        con.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
+
+
 # ── Workflow Execution Engine ────────────────────────────────────────────────
 
 class WorkflowRunRequest(BaseModel):
