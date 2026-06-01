@@ -123,6 +123,7 @@ async def startup_event():
         _ensure_workflows_table()
         _ensure_whatsapp_instances_table()
         _ensure_kanban_tables()
+        _ensure_sales_goals_table()
     except Exception:
         pass
 
@@ -1981,6 +1982,28 @@ def _ensure_whatsapp_instances_table():
         con.close()
 
 
+def _ensure_sales_goals_table():
+    con = _crm_conn()
+    try:
+        con.autocommit = True
+        cur = con.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS nexus.sales_goals (
+                id           SERIAL PRIMARY KEY,
+                user_email   VARCHAR(255) NOT NULL,
+                period       VARCHAR(7) NOT NULL,   -- 'YYYY-MM'
+                target_value NUMERIC(14,2) DEFAULT 0,
+                target_deals INTEGER DEFAULT 0,
+                created_at   TIMESTAMP DEFAULT NOW(),
+                updated_at   TIMESTAMP DEFAULT NOW(),
+                UNIQUE (user_email, period)
+            )
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS sales_goals_user_period_idx ON nexus.sales_goals(user_email, period)")
+    finally:
+        con.close()
+
+
 def _ensure_kanban_tables():
     con = _crm_conn()
     try:
@@ -2449,6 +2472,95 @@ async def add_deal_activity(deal_id: int, payload: DealActivityCreate, current_u
     except Exception as e:
         con.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
+
+
+# ── Metas de Vendas ───────────────────────────────────────────────────────────
+
+class SalesGoalUpsert(BaseModel):
+    period:       str            # 'YYYY-MM'
+    target_value: float = 0.0
+    target_deals: int   = 0
+
+
+@app.get("/crm/goals")
+async def get_sales_goal(period: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+    """Retorna meta + realizado do período (padrão: mês atual)."""
+    from datetime import datetime as _dt
+    import psycopg2.extras
+    user_email = current_user["email"]
+    if not period:
+        period = _dt.utcnow().strftime("%Y-%m")
+    period_start = f"{period}-01"
+    con = _crm_conn()
+    try:
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # Meta configurada
+        cur.execute(
+            "SELECT target_value, target_deals FROM nexus.sales_goals WHERE user_email=%s AND period=%s",
+            (user_email, period)
+        )
+        goal_row = cur.fetchone()
+        target_value = float(goal_row["target_value"]) if goal_row else 0.0
+        target_deals = int(goal_row["target_deals"])   if goal_row else 0
+
+        # Realizado: deals marcados como Ganho no período
+        cur.execute("""
+            SELECT COALESCE(SUM(d.value),0) AS won_value, COUNT(*) AS won_deals
+            FROM nexus.deals d
+            JOIN nexus.pipeline_stages ps ON ps.id = d.stage_id
+            WHERE d.user_email = %s
+              AND ps.name = 'Ganho'
+              AND d.updated_at >= %s::date
+              AND d.updated_at < (%s::date + INTERVAL '1 month')
+        """, (user_email, period_start, period_start))
+        actual = cur.fetchone()
+        won_value = float(actual["won_value"]) if actual else 0.0
+        won_deals = int(actual["won_deals"])   if actual else 0
+
+        # Deals abertos (em andamento) com seus valores — para forecast
+        cur.execute("""
+            SELECT COALESCE(SUM(d.value),0) AS pipe_value, COUNT(*) AS pipe_deals
+            FROM nexus.deals d
+            JOIN nexus.pipeline_stages ps ON ps.id = d.stage_id
+            WHERE d.user_email = %s AND d.status = 'open' AND ps.name NOT IN ('Ganho','Perdido')
+        """, (user_email,))
+        pipe = cur.fetchone()
+        pipe_value = float(pipe["pipe_value"]) if pipe else 0.0
+
+        return {
+            "period":        period,
+            "target_value":  target_value,
+            "target_deals":  target_deals,
+            "won_value":     won_value,
+            "won_deals":     won_deals,
+            "pipeline_value": pipe_value,
+            "pct_value":     round((won_value / target_value * 100) if target_value > 0 else 0, 1),
+            "pct_deals":     round((won_deals / target_deals * 100) if target_deals > 0 else 0, 1),
+        }
+    finally:
+        con.close()
+
+
+@app.put("/crm/goals")
+async def upsert_sales_goal(payload: SalesGoalUpsert, current_user: dict = Depends(get_current_user)):
+    user_email = current_user["email"]
+    con = _crm_conn()
+    try:
+        cur = con.cursor()
+        cur.execute("""
+            INSERT INTO nexus.sales_goals (user_email, period, target_value, target_deals)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (user_email, period) DO UPDATE
+              SET target_value = EXCLUDED.target_value,
+                  target_deals = EXCLUDED.target_deals,
+                  updated_at   = NOW()
+        """, (user_email, payload.period, payload.target_value, payload.target_deals))
+        con.commit()
+        return {"saved": payload.period}
+    except Exception as e:
+        con.rollback(); raise HTTPException(status_code=500, detail=str(e))
     finally:
         con.close()
 

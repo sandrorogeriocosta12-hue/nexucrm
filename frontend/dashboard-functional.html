@@ -659,6 +659,52 @@
                     <button onclick="openCreateDealModal()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-xl text-sm font-semibold transition-all">+ Novo Lead</button>
                 </div>
             </div>
+            <!-- Widget de Metas -->
+            <div id="salesGoalWidget" class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 mb-5 hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-white">🎯 Metas de Vendas</span>
+                        <span id="goalPeriodLabel" class="text-xs text-slate-500"></span>
+                    </div>
+                    <button onclick="_openGoalEditor()" class="text-xs text-purple-400 hover:text-purple-300 transition-all">✏️ Definir meta</button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Meta em R$ -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400">Receita fechada</span>
+                            <span id="goalValueActual" class="text-green-400 font-semibold"></span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2 mb-1">
+                            <div id="goalValueBar" class="bg-green-500 h-2 rounded-full transition-all duration-500" style="width:0%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-600">
+                            <span>Meta: <span id="goalValueTarget"></span></span>
+                            <span id="goalValuePct" class="font-semibold"></span>
+                        </div>
+                    </div>
+                    <!-- Meta em deals -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-400">Deals fechados</span>
+                            <span id="goalDealsActual" class="text-blue-400 font-semibold"></span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2 mb-1">
+                            <div id="goalDealsBar" class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width:0%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-600">
+                            <span>Meta: <span id="goalDealsTarget"></span> deals</span>
+                            <span id="goalDealsPct" class="font-semibold"></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Forecast -->
+                <div class="mt-3 pt-3 border-t border-slate-800 flex items-center gap-2 text-xs text-slate-500">
+                    <span>📊 Em andamento no funil:</span>
+                    <span id="goalForecast" class="text-yellow-400 font-semibold"></span>
+                </div>
+            </div>
+
             <!-- Tabs de funis -->
             <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
                 <div id="pipelineTabs" class="flex gap-2"></div>
@@ -3016,6 +3062,75 @@ let _activePipelineId = null;
 
 const _STAGE_DOTS = ['bg-purple-400','bg-blue-400','bg-yellow-400','bg-orange-400','bg-green-400','bg-red-400'];
 
+// ── Metas de Vendas ──────────────────────────────────────────────────────────
+async function _loadSalesGoal() {
+    try {
+        const g = await apiFetch('/crm/goals');
+        if (!g) return;
+        const widget = document.getElementById('salesGoalWidget');
+        if (!widget) return;
+        widget.classList.remove('hidden');
+
+        const fmt = v => `R$ ${Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0})}`;
+        const now = new Date();
+        document.getElementById('goalPeriodLabel').textContent =
+            now.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+
+        document.getElementById('goalValueActual').textContent  = fmt(g.won_value);
+        document.getElementById('goalValueTarget').textContent  = fmt(g.target_value);
+        document.getElementById('goalValuePct').textContent     = g.target_value > 0 ? `${g.pct_value}%` : '—';
+        document.getElementById('goalValueBar').style.width     = `${Math.min(g.pct_value,100)}%`;
+        document.getElementById('goalValueBar').className       = `h-2 rounded-full transition-all duration-500 ${g.pct_value>=100?'bg-emerald-400':g.pct_value>=60?'bg-green-500':'bg-yellow-500'}`;
+
+        document.getElementById('goalDealsActual').textContent  = `${g.won_deals} deals`;
+        document.getElementById('goalDealsTarget').textContent  = g.target_deals;
+        document.getElementById('goalDealsPct').textContent     = g.target_deals > 0 ? `${g.pct_deals}%` : '—';
+        document.getElementById('goalDealsBar').style.width     = `${Math.min(g.pct_deals,100)}%`;
+        document.getElementById('goalDealsBar').className       = `h-2 rounded-full transition-all duration-500 ${g.pct_deals>=100?'bg-emerald-400':g.pct_deals>=60?'bg-blue-500':'bg-blue-700'}`;
+
+        document.getElementById('goalForecast').textContent     = fmt(g.pipeline_value);
+    } catch(_) {}
+}
+
+function _openGoalEditor() {
+    const now = new Date();
+    const period = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm';
+    overlay.innerHTML = `
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+            <h3 class="font-bold text-white mb-1">🎯 Definir Meta de Vendas</h3>
+            <p class="text-slate-500 text-xs mb-4">${now.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1.5">Meta de receita (R$)</label>
+                    <input id="goalValueInput" type="number" min="0" step="100" placeholder="Ex: 50000"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1.5">Meta de deals fechados</label>
+                    <input id="goalDealsInput" type="number" min="0" step="1" placeholder="Ex: 10"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-5">
+                <button onclick="this.closest('[class*=fixed]').remove()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg text-sm">Cancelar</button>
+                <button id="saveGoalBtn" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-2 rounded-lg text-sm font-semibold text-white">Salvar meta</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#saveGoalBtn').onclick = async () => {
+        const val   = parseFloat(overlay.querySelector('#goalValueInput').value) || 0;
+        const deals = parseInt(overlay.querySelector('#goalDealsInput').value)   || 0;
+        try {
+            await apiFetch('/crm/goals', { method: 'PUT', body: JSON.stringify({ period, target_value: val, target_deals: deals }) });
+            overlay.remove();
+            showToast && showToast('✅ Meta salva!');
+            _loadSalesGoal();
+        } catch(_) { showToast && showToast('Erro ao salvar meta', true); }
+    };
+}
+
 async function loadPipeline(pipelineId = null) {
     const board = document.getElementById('pipelineBoard');
     board.innerHTML = '<div class="flex items-center justify-center w-full py-16 text-slate-600 text-sm animate-pulse">Carregando funil...</div>';
@@ -3029,6 +3144,7 @@ async function loadPipeline(pipelineId = null) {
     _activePipelineId = _kanbanData.pipeline?.id || null;
     _renderPipelineTabs(pipelines || []);
     _renderKanban();
+    _loadSalesGoal();
 }
 
 function _renderPipelineTabs(pipelines) {
