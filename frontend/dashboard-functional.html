@@ -1257,13 +1257,22 @@ async function loadLeads() {
         document.getElementById('leadCount').textContent = '0'; return;
     }
     table.innerHTML = leads.map(l => `
-        <tr class="hover:bg-slate-800/40 transition-colors">
+        <tr class="hover:bg-slate-800/40 transition-colors group">
             <td class="px-5 py-4 font-semibold text-sm">${l.name||'—'}</td>
             <td class="px-5 py-4 text-slate-400 text-sm">${l.email||'—'}</td>
             <td class="px-5 py-4 text-slate-400 text-sm">${l.company||'—'}</td>
             <td class="px-5 py-4 text-green-400 font-semibold text-sm">R$ ${(l.value||0).toLocaleString('pt-BR')}</td>
             <td class="px-5 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-900/60 text-purple-300 border border-purple-700/50">${l.status||'Novo'}</span></td>
-            <td class="px-5 py-4"><button onclick="deleteLead('${l.id}')" class="text-red-400 hover:text-red-300 text-sm transition-colors">🗑️</button></td>
+            <td class="px-5 py-4">
+                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="promoteToPipeline(${JSON.stringify(l).replace(/"/g,'&quot;')})"
+                        class="text-xs bg-purple-700/30 hover:bg-purple-700/60 border border-purple-600/40 text-purple-300 px-2 py-1 rounded-lg transition-all font-semibold whitespace-nowrap"
+                        title="Enviar este lead para o Pipeline Kanban">
+                        → Pipeline
+                    </button>
+                    <button onclick="deleteLead('${l.id}')" class="text-red-400 hover:text-red-300 text-sm transition-colors" title="Deletar lead">🗑️</button>
+                </div>
+            </td>
         </tr>`).join('');
     document.getElementById('leadCount').textContent = leads.length;
 }
@@ -1285,6 +1294,74 @@ async function saveLead(e) {
     if (r) { showNotification('✅ Lead criado!'); closeLeadModal(); loadLeads(); }
     else showNotification('❌ Erro ao criar lead', true);
 }
+// ── Promover Lead → Pipeline ──────────────────────────────────────────────────
+async function promoteToPipeline(lead) {
+    // Garante que os estágios estão carregados
+    let stages = _kanbanData?.stages || [];
+    if (!stages.length) {
+        const board = await apiFetch('/crm/pipelines').catch(() => null);
+        stages = board?.stages || [];
+    }
+
+    if (!stages.length) {
+        showToast && showToast('Nenhum estágio encontrado no Pipeline. Acesse o Pipeline primeiro para criá-los.', true);
+        return;
+    }
+
+    // Mini-modal de seleção de estágio
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm';
+    overlay.innerHTML = `
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+            <h3 class="font-bold text-white mb-1">Enviar para o Pipeline</h3>
+            <p class="text-slate-500 text-xs mb-4">Escolha o estágio inicial para <strong class="text-white">${_esc(lead.name)}</strong></p>
+            <select id="promote-stage-select" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 mb-5">
+                ${stages.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+            </select>
+            <div class="flex gap-3">
+                <button id="promote-cancel" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg text-sm transition-all">Cancelar</button>
+                <button id="promote-confirm" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-2 rounded-lg text-sm font-semibold transition-all">Enviar →</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#promote-cancel').onclick  = () => overlay.remove();
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    overlay.querySelector('#promote-confirm').onclick = async () => {
+        const stageId = parseInt(overlay.querySelector('#promote-stage-select').value);
+        const btn = overlay.querySelector('#promote-confirm');
+        btn.textContent = 'Enviando...';
+        btn.disabled = true;
+
+        try {
+            const deal = await apiFetch('/crm/deals', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name:        lead.name,
+                    stage_id:    stageId,
+                    value:       lead.value || 0,
+                    contact_jid: lead.phone ? `${lead.phone}@s.whatsapp.net` : null,
+                }),
+            });
+            overlay.remove();
+            if (deal?.id) {
+                showToast && showToast(`✅ "${lead.name}" enviado para o Pipeline!`);
+                // Atualiza estado local do Kanban se já estava carregado
+                if (_kanbanData?.stages?.length) {
+                    const dest = _kanbanData.stages.find(s => s.id === stageId);
+                    if (dest) { dest.deals = dest.deals || []; dest.deals.unshift(deal); _renderKanban(); }
+                }
+            } else {
+                showToast && showToast('Erro ao criar deal no Pipeline', true);
+            }
+        } catch(_) {
+            showToast && showToast('Erro ao enviar para o Pipeline', true);
+            overlay.remove();
+        }
+    };
+}
+
 async function deleteLead(id) {
     if (!confirm('Deletar este lead?')) return;
     const r = await apiFetch(`/api/leads/${id}`, { method: 'DELETE' });
