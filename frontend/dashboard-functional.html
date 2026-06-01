@@ -743,6 +743,11 @@
                         <input id="dealJid" type="text" placeholder="5511999999999@s.whatsapp.net"
                             class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
                     </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Data de fechamento prevista</label>
+                        <input id="dealCloseDate" type="date"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
+                    </div>
                 </div>
                 <div class="flex gap-3 mt-6">
                     <button onclick="closeCreateDealModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm transition-all">Cancelar</button>
@@ -3007,21 +3012,30 @@ function _renderKanban() {
         return;
     }
     board.innerHTML = _kanbanData.stages.map((stage, i) => {
-        const dot = _STAGE_DOTS[i % _STAGE_DOTS.length];
-        const cards = (stage.deals || []).map(d => _dealCardHtml(d)).join('');
+        const dot   = _STAGE_DOTS[i % _STAGE_DOTS.length];
+        const deals = stage.deals || [];
+        const total = deals.reduce((s, d) => s + (d.value||0), 0);
+        const totalStr = total > 0
+            ? `<span class="text-[10px] text-green-400 font-semibold">R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:0})}</span>`
+            : '';
+        const cards = deals.map(d => _dealCardHtml(d)).join('');
+        const isLost = stage.name === 'Perdido';
         return `
         <div class="flex-shrink-0 w-72 bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col max-h-[78vh]"
-             data-stage="${stage.id}"
+             data-stage="${stage.id}" data-stage-name="${_esc(stage.name)}"
              ondragover="event.preventDefault();this.querySelector('.kanban-drop-zone').classList.add('ring-1','ring-purple-500/50')"
              ondragleave="this.querySelector('.kanban-drop-zone').classList.remove('ring-1','ring-purple-500/50')"
              ondrop="_kanbanDrop(event,${stage.id},this)">
-            <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-800 flex-shrink-0">
-                <span class="w-2 h-2 rounded-full ${dot}"></span>
-                <span class="font-semibold text-sm truncate flex-1">${_esc(stage.name)}</span>
-                <span class="text-xs bg-slate-800 text-slate-400 rounded-full px-2 py-0.5 flex-shrink-0">${(stage.deals||[]).length}</span>
+            <div class="px-4 py-3 border-b border-slate-800 flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full ${dot} flex-shrink-0"></span>
+                    <span class="font-semibold text-sm truncate flex-1">${_esc(stage.name)}</span>
+                    <span class="text-xs bg-slate-800 text-slate-400 rounded-full px-2 py-0.5 flex-shrink-0">${deals.length}</span>
+                </div>
+                ${totalStr ? `<div class="mt-1 pl-4">${totalStr}</div>` : ''}
             </div>
             <div class="kanban-drop-zone flex-1 overflow-y-auto p-3 space-y-2 min-h-[140px] rounded-b-xl transition-all">
-                ${cards || '<div class="text-center text-slate-700 text-xs py-8 pointer-events-none">Arraste um lead aqui</div>'}
+                ${cards || `<div class="text-center text-slate-700 text-xs py-8 pointer-events-none">${isLost?'Nenhum lead perdido':'Arraste um lead aqui'}</div>`}
             </div>
         </div>`;
     }).join('');
@@ -3032,11 +3046,17 @@ function _esc(s) {
 }
 
 function _dealCardHtml(d) {
-    const val = d.value > 0
+    const val  = d.value > 0
         ? `<span class="text-xs text-green-400 font-semibold">R$ ${Number(d.value).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`
         : '';
-    const wa = d.contact_jid
-        ? `<span class="text-[10px] text-purple-400 bg-purple-950/40 border border-purple-900/40 px-1.5 py-0.5 rounded">💬 WA</span>`
+    const wa   = d.contact_jid
+        ? `<span class="text-[10px] text-purple-400 bg-purple-950/40 border border-purple-900/40 px-1.5 py-0.5 rounded">💬</span>`
+        : '';
+    const prob = d.probability != null
+        ? `<span class="text-[10px] ${d.probability>=70?'text-green-400':d.probability>=40?'text-yellow-400':'text-red-400'}">${d.probability}%</span>`
+        : '';
+    const closeDate = d.close_date
+        ? `<span class="text-[10px] text-slate-500">📅 ${new Date(d.close_date+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</span>`
         : '';
     return `
     <div draggable="true"
@@ -3046,12 +3066,64 @@ function _dealCardHtml(d) {
          onclick="_kanbanCardClick(event,${d.id})"
          class="bg-slate-800/80 border border-slate-700 rounded-lg p-3 cursor-pointer hover:border-purple-500/50 transition-all group select-none">
         <div class="font-medium text-sm text-white mb-2 leading-snug">${_esc(d.name)}</div>
-        <div class="flex items-center justify-between gap-2">
-            ${val}${wa}
+        <div class="flex items-center flex-wrap gap-1.5">
+            ${val}${prob}${wa}${closeDate}
             <button onclick="event.stopPropagation();_deleteDeal(${d.id})"
                 class="ml-auto text-slate-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all text-xs leading-none" title="Remover">✕</button>
         </div>
     </div>`;
+}
+
+// Modal de motivo de perda
+function _askLostReason(dealId, stageId) {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center backdrop-blur-sm';
+    overlay.innerHTML = `
+        <div class="bg-slate-900 border border-red-900/50 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+            <h3 class="font-bold text-white mb-1">💔 Motivo da perda</h3>
+            <p class="text-slate-500 text-xs mb-4">Registre o motivo para análise futura (opcional)</p>
+            <select id="lostReasonSelect" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-500 mb-3">
+                <option value="">Selecione um motivo...</option>
+                <option>Preço elevado</option>
+                <option>Escolheu concorrente</option>
+                <option>Sem orçamento no momento</option>
+                <option>Sem interesse</option>
+                <option>Perdeu contato</option>
+                <option>Projeto cancelado</option>
+                <option>Timing errado</option>
+            </select>
+            <input id="lostReasonCustom" type="text" placeholder="Ou descreva o motivo..."
+                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-500 mb-4">
+            <div class="flex gap-3">
+                <button id="lostCancel" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg text-sm transition-all">Cancelar</button>
+                <button id="lostConfirm" class="flex-1 bg-red-700 hover:bg-red-600 py-2 rounded-lg text-sm font-semibold text-white transition-all">Confirmar perda</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#lostCancel').onclick = () => overlay.remove();
+    overlay.querySelector('#lostConfirm').onclick = async () => {
+        const reason = overlay.querySelector('#lostReasonCustom').value.trim()
+            || overlay.querySelector('#lostReasonSelect').value
+            || 'Não informado';
+        overlay.remove();
+        // Faz a movimentação com o motivo
+        let movedDeal = null;
+        _kanbanData.stages.forEach(s => {
+            const idx = (s.deals||[]).findIndex(d => d.id === dealId);
+            if (idx !== -1) movedDeal = s.deals.splice(idx,1)[0];
+        });
+        if (movedDeal) {
+            const dest = _kanbanData.stages.find(s => s.id === stageId);
+            if (dest) dest.deals.unshift(movedDeal);
+        }
+        _renderKanban();
+        try {
+            await apiFetch(`/crm/deals/${dealId}/move`, {
+                method: 'PUT',
+                body: JSON.stringify({ stage_id: stageId, lost_reason: reason }),
+            });
+        } catch(_) { showToast && showToast('Erro ao mover o deal', true); loadPipeline(); }
+    };
 }
 
 function _kanbanDragStart(e, dealId) {
@@ -3069,6 +3141,15 @@ async function _kanbanDrop(e, targetStageId, colEl) {
     e.preventDefault();
     colEl.querySelector('.kanban-drop-zone').classList.remove('ring-1','ring-purple-500/50');
     if (!_kanbanDragId || targetStageId === _kanbanDragSrc) return;
+
+    // Intercepta drop em "Perdido" para pedir motivo
+    const stageName = colEl.dataset.stageName || '';
+    if (stageName === 'Perdido') {
+        const dealId = _kanbanDragId;
+        _kanbanDragId = _kanbanDragSrc = null;
+        _askLostReason(dealId, targetStageId);
+        return;
+    }
 
     const dealId = _kanbanDragId;
     _kanbanDragId = _kanbanDragSrc = null;
@@ -3250,19 +3331,20 @@ function closeCreateDealModal() {
     document.getElementById('dealModal').classList.add('hidden');
 }
 async function submitCreateDeal() {
-    const name     = document.getElementById('dealName').value.trim();
-    const stage_id = parseInt(document.getElementById('dealStage').value);
-    const value    = parseFloat(document.getElementById('dealValue').value) || 0;
-    const jid      = document.getElementById('dealJid').value.trim() || null;
+    const name       = document.getElementById('dealName').value.trim();
+    const stage_id   = parseInt(document.getElementById('dealStage').value);
+    const value      = parseFloat(document.getElementById('dealValue').value) || 0;
+    const jid        = document.getElementById('dealJid').value.trim() || null;
+    const close_date = document.getElementById('dealCloseDate')?.value || null;
     if (!name) { showToast && showToast('Informe o nome do lead', true); return; }
     try {
         const res = await apiFetch('/crm/deals', {
             method: 'POST',
-            body: JSON.stringify({ name, stage_id, value, contact_jid: jid }),
+            body: JSON.stringify({ name, stage_id, value, contact_jid: jid, close_date }),
         });
         if (res && res.id) {
             const dest = _kanbanData.stages.find(s => s.id === stage_id);
-            if (dest) dest.deals.unshift({ id: res.id, name, value, contact_jid: jid, status: 'open' });
+            if (dest) dest.deals.unshift({ id: res.id, name, value, contact_jid: jid, close_date, status: 'open' });
             _renderKanban();
             closeCreateDealModal();
             showToast && showToast('Lead criado!');

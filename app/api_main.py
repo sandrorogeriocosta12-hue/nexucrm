@@ -2015,12 +2015,19 @@ def _ensure_kanban_tables():
                 contact_jid VARCHAR(255),
                 value       NUMERIC(12,2) DEFAULT 0.00,
                 status      VARCHAR(50) DEFAULT 'open',
+                probability INTEGER DEFAULT NULL,
+                close_date  DATE DEFAULT NULL,
+                lost_reason TEXT DEFAULT NULL,
                 created_at  TIMESTAMP DEFAULT NOW(),
                 updated_at  TIMESTAMP DEFAULT NOW()
             )
         """)
         cur.execute("CREATE INDEX IF NOT EXISTS deals_user_email_idx ON nexus.deals(user_email)")
         cur.execute("CREATE INDEX IF NOT EXISTS deals_stage_id_idx ON nexus.deals(stage_id)")
+        # Migração idempotente — adiciona colunas se ainda não existirem
+        for col, defn in [("probability","INTEGER DEFAULT NULL"),("close_date","DATE DEFAULT NULL"),("lost_reason","TEXT DEFAULT NULL")]:
+            try: cur.execute(f"ALTER TABLE nexus.deals ADD COLUMN IF NOT EXISTS {col} {defn}")
+            except Exception: pass
         cur.execute("""
             CREATE TABLE IF NOT EXISTS nexus.deal_activities (
                 id         SERIAL PRIMARY KEY,
@@ -2071,10 +2078,12 @@ class DealCreate(BaseModel):
     stage_id: int
     contact_jid: Optional[str] = None
     value: float = 0.0
+    close_date: Optional[str] = None
 
 
 class DealMove(BaseModel):
     stage_id: int
+    lost_reason: Optional[str] = None   # obrigatório quando destino é "Perdido"
 
 
 @app.get("/crm/pipelines")
@@ -2110,7 +2119,7 @@ async def get_kanban_board(current_user: dict = Depends(get_current_user)):
         stages = []
         for s in stages_rows:
             cur.execute("""
-                SELECT id, name, contact_jid, value, status, created_at, updated_at
+                SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, created_at, updated_at
                 FROM nexus.deals
                 WHERE stage_id = %s AND user_email = %s AND status = 'open'
                 ORDER BY updated_at DESC
@@ -2121,6 +2130,9 @@ async def get_kanban_board(current_user: dict = Depends(get_current_user)):
                 "contact_jid": d["contact_jid"],
                 "value":       float(d["value"] or 0),
                 "status":      d["status"],
+                "probability": d["probability"],
+                "close_date":  str(d["close_date"]) if d["close_date"] else None,
+                "lost_reason": d["lost_reason"],
                 "created_at":  d["created_at"].isoformat() if d["created_at"] else None,
                 "updated_at":  d["updated_at"].isoformat() if d["updated_at"] else None,
             } for d in cur.fetchall()]
@@ -2258,20 +2270,43 @@ async def move_deal(deal_id: int, payload: DealMove, current_user: dict = Depend
             raise HTTPException(status_code=404, detail="Estágio de destino não encontrado")
         stage_name = stage_row[0]
 
-        cur.execute("""
+        # Calcula probabilidade automática pela posição do estágio
+        cur.execute(
+            "SELECT position, COUNT(*) OVER() AS total FROM nexus.pipeline_stages WHERE id = %s AND user_email = %s",
+            (payload.stage_id, user_email)
+        )
+        pos_row = cur.fetchone()
+        auto_prob = None
+        if pos_row:
+            pos, total = pos_row
+            if stage_name in ("Ganho",): auto_prob = 100
+            elif stage_name in ("Perdido",): auto_prob = 0
+            else: auto_prob = min(90, int(((pos + 1) / max(total, 1)) * 100))
+
+        # Monta update com lost_reason se for "Perdido"
+        extra_sets = ", probability = %s" if auto_prob is not None else ""
+        extra_vals = [auto_prob] if auto_prob is not None else []
+        if payload.lost_reason and stage_name == "Perdido":
+            extra_sets += ", lost_reason = %s"
+            extra_vals.append(payload.lost_reason)
+
+        cur.execute(f"""
             UPDATE nexus.deals
-            SET stage_id = %s, updated_at = NOW()
+            SET stage_id = %s, updated_at = NOW(){extra_sets}
             WHERE id = %s AND user_email = %s
             RETURNING id, name, stage_id
-        """, (payload.stage_id, deal_id, user_email))
+        """, [payload.stage_id] + extra_vals + [deal_id, user_email])
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Deal não encontrado ou acesso negado")
 
+        activity_text = f"Movido para '{stage_name}' em {_dt.now().strftime('%d/%m/%Y %H:%M')}"
+        if payload.lost_reason:
+            activity_text += f" — Motivo: {payload.lost_reason}"
         cur.execute("""
             INSERT INTO nexus.deal_activities (deal_id, user_email, content)
             VALUES (%s, %s, %s)
-        """, (deal_id, user_email, f"Movido para '{stage_name}' em {_dt.now().strftime('%d/%m/%Y %H:%M')}"))
+        """, (deal_id, user_email, activity_text))
         con.commit()
 
         # Dispara automações em background — não bloqueia a resposta ao frontend
