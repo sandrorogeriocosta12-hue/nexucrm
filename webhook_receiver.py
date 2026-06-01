@@ -165,6 +165,207 @@ def _update_lead_from_entities(jid: str, entities: dict) -> None:
         logger.debug(f"Lead entity update: {e}")
 
 
+async def _detect_intent_and_act(
+    jid: str, push_name: str, user_message: str,
+    ai_reply: str, agent: dict, instance_name: str
+) -> None:
+    """
+    Classifica a intenção do lead após cada troca de mensagem.
+    Se atingir um estado de gatilho, age automaticamente:
+      - Cria/atualiza deal no Kanban
+      - Move para o estágio correto (o que dispara WhatsApp automático via api_main)
+    Roda 100% em background — nunca bloqueia o webhook.
+    """
+    import json as _json
+    client = _get_openai()
+    if not client:
+        return
+    try:
+        # Classifica intenção em uma chamada rápida
+        resp = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": (
+                    "Analise a última mensagem do cliente e classifique o estágio dele na jornada de compra. "
+                    'Responda SOMENTE com JSON: {"intent": "<valor>", "deal_name": "<nome sugerido>"}\n'
+                    "Valores possíveis para intent:\n"
+                    "  interesse_inicial   — cliente mostrou curiosidade mas não confirmou\n"
+                    "  lead_qualificado    — cliente confirmou interesse real e tem perfil\n"
+                    "  proposta_solicitada — cliente pediu proposta, preço ou condições\n"
+                    "  fechamento_proximo  — cliente sinalizou que quer fechar ou comprar agora\n"
+                    "  neutro              — conversa ainda não indica intenção clara"
+                )},
+                {"role": "user", "content": (
+                    f"Mensagem do cliente: {user_message}\n"
+                    f"Resposta da IA: {ai_reply}\n"
+                    f"Nome do cliente: {push_name or 'desconhecido'}"
+                )},
+            ],
+            response_format={"type": "json_object"},
+            max_tokens=60,
+        )
+        result = _json.loads(resp.choices[0].message.content)
+        intent    = result.get("intent", "neutro")
+        deal_name = result.get("deal_name") or push_name or jid.split("@")[0]
+
+        if intent == "neutro" or intent == "interesse_inicial":
+            return  # sem ação — não polui o Kanban com leads frios
+
+        logger.info(f"🎯 Intent detectado [{intent}] para {push_name} ({jid})")
+
+        # Mapeamento intent → nome do estágio no Kanban
+        _INTENT_STAGE = {
+            "lead_qualificado":    "Contato Feito",
+            "proposta_solicitada": "Proposta Enviada",
+            "fechamento_proximo":  "Negociação",
+        }
+        target_stage_name = _INTENT_STAGE.get(intent)
+        if not target_stage_name:
+            return
+
+        # Busca o user_email dono deste agente
+        con = _db_conn()
+        cur = con.cursor()
+        cur.execute(
+            "SELECT user_email FROM nexus.agents WHERE auto_respond = TRUE AND active = TRUE LIMIT 1"
+        )
+        row = cur.fetchone()
+        con.close()
+        if not row:
+            return
+        user_email = row[0]
+
+        await asyncio.to_thread(_upsert_deal_and_move, jid, deal_name, push_name, user_email, target_stage_name)
+
+    except Exception as e:
+        logger.debug(f"Intent detection error: {e}")
+
+
+def _upsert_deal_and_move(
+    jid: str, deal_name: str, push_name: str, user_email: str, target_stage_name: str
+) -> None:
+    """
+    Cria o deal no Kanban se não existe e move para o estágio alvo.
+    Usa nexus.deals + nexus.pipeline_stages (criados pelo _ensure_kanban_tables).
+    """
+    try:
+        import psycopg2
+        from datetime import datetime as _dt
+        con = psycopg2.connect(DATABASE_URL)
+        cur = con.cursor()
+
+        # Busca o estágio alvo do usuário
+        cur.execute("""
+            SELECT ps.id FROM nexus.pipeline_stages ps
+            JOIN nexus.pipelines p ON p.id = ps.pipeline_id
+            WHERE p.user_email = %s AND ps.name = %s
+            LIMIT 1
+        """, (user_email, target_stage_name))
+        stage_row = cur.fetchone()
+        if not stage_row:
+            con.close()
+            logger.debug(f"Estágio '{target_stage_name}' não encontrado para {user_email}")
+            return
+        target_stage_id = stage_row[0]
+
+        # Verifica se já existe deal para este JID
+        cur.execute(
+            "SELECT id, stage_id FROM nexus.deals WHERE contact_jid = %s AND user_email = %s AND status = 'open' LIMIT 1",
+            (jid, user_email)
+        )
+        existing = cur.fetchone()
+
+        if existing:
+            deal_id, current_stage_id = existing
+            if current_stage_id == target_stage_id:
+                con.close()
+                return  # já está no estágio certo
+            cur.execute(
+                "UPDATE nexus.deals SET stage_id = %s, updated_at = NOW() WHERE id = %s AND user_email = %s",
+                (target_stage_id, deal_id, user_email)
+            )
+        else:
+            # Cria deal novo
+            cur.execute("""
+                INSERT INTO nexus.deals (stage_id, user_email, name, contact_jid, status)
+                VALUES (%s, %s, %s, %s, 'open') RETURNING id
+            """, (target_stage_id, user_email, deal_name, jid))
+            deal_id = cur.fetchone()[0]
+
+        # Registra atividade
+        cur.execute("""
+            INSERT INTO nexus.deal_activities (deal_id, user_email, content)
+            VALUES (%s, %s, %s)
+        """, (deal_id, user_email,
+              f"[IA] Movido automaticamente para '{target_stage_name}' em {_dt.now().strftime('%d/%m/%Y %H:%M')} — intenção detectada na conversa"))
+        con.commit()
+        con.close()
+        logger.info(f"📋 Deal #{deal_id} ({deal_name}) → '{target_stage_name}' [{user_email}]")
+
+        # Dispara automação de WhatsApp do Kanban se o estágio tiver gatilho
+        # (ex: "Proposta Enviada" → mensagem automática via Evolution API)
+        _fire_stage_whatsapp(deal_id, target_stage_id, target_stage_name, user_email)
+
+    except Exception as e:
+        logger.warning(f"Deal upsert error: {e}")
+
+
+def _fire_stage_whatsapp(deal_id: int, stage_id: int, stage_name: str, user_email: str) -> None:
+    """Dispara WhatsApp automático se o estágio tiver gatilho configurado."""
+    import psycopg2, httpx as _httpx_sync
+    _STAGE_TRIGGERS = {
+        "Proposta Enviada": (
+            "Olá, *{deal_name}*! 🎉 Sua proposta está sendo preparada pelo nosso consultor. "
+            "Em breve entraremos em contato com todos os detalhes!"
+        ),
+        "Negociação": (
+            "Que ótimo, *{deal_name}*! Vejo que você está bem próximo de fechar. "
+            "Nosso time está pronto para dar o próximo passo com você. 🚀"
+        ),
+    }
+    msg_template = _STAGE_TRIGGERS.get(stage_name)
+    if not msg_template:
+        return
+    try:
+        con = psycopg2.connect(DATABASE_URL)
+        cur = con.cursor()
+        cur.execute(
+            "SELECT name, contact_jid FROM nexus.deals WHERE id = %s AND user_email = %s",
+            (deal_id, user_email)
+        )
+        row = cur.fetchone()
+        if not row or not row[1]:
+            con.close()
+            return
+        deal_name, contact_jid = row
+        cur.execute(
+            "SELECT instance_name FROM nexus.whatsapp_instances WHERE user_email = %s LIMIT 1",
+            (user_email,)
+        )
+        inst = cur.fetchone()
+        con.close()
+        if not inst:
+            return
+        instance_name = inst[0]
+        number  = contact_jid.split("@")[0] if "@" in contact_jid else contact_jid
+        message = msg_template.format(deal_name=deal_name)
+        evo_url = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+        evo_key = os.getenv("EVOLUTION_API_KEY", "")
+        import httpx
+        with httpx.Client(timeout=10) as hc:
+            r = hc.post(
+                f"{evo_url}/message/sendText/{instance_name}",
+                headers={"apikey": evo_key, "Content-Type": "application/json"},
+                json={"number": number, "text": message},
+            )
+        if r.status_code in (200, 201):
+            logger.info(f"[IA→WA] Mensagem automática enviada para {number} ({stage_name})")
+        else:
+            logger.warning(f"[IA→WA] Evolution {r.status_code}: {r.text[:150]}")
+    except Exception as e:
+        logger.debug(f"Stage WhatsApp fire error: {e}")
+
+
 async def _get_agent_cached() -> dict | None:
     """Retorna agente ativo com cache de 30s para evitar query a cada mensagem."""
     now = time.monotonic()
@@ -539,6 +740,11 @@ async def webhook_whatsapp(instance_name: str, request: Request):
         sent = await _send_whatsapp_text(instance_name, number, reply)
         if not sent:
             logger.error(f"❌ Falha ao enviar resposta para {number}")
+
+        # Detecção de intenção em background — cria/move deal no Kanban automaticamente
+        asyncio.create_task(
+            _detect_intent_and_act(jid, push_name, text, reply, agent, instance_name)
+        )
 
     return {"status": "ok"}
 
