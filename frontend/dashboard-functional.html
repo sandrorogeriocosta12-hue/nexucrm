@@ -3231,9 +3231,27 @@ async function wfOpen(id) {
             if (_df && wf.drawflow && wf.drawflow.drawflow) {
                 _df.clear();
                 _df.import(wf.drawflow);
+                // Atualiza HTML de todos os nós para injetar botão "?" e label atual
+                // (o JSON salvo pode ter HTML de versão anterior sem essas features)
+                _wfRefreshAllNodeHtml();
             }
         } catch(e) { console.error('wfOpen import error:', e); }
     });
+}
+
+// Refaz o HTML visual de todos os nós do canvas com base no WF_NODE_DEFS atual
+// Garante que botões ? e outros elementos novos apareçam em workflows salvos
+function _wfRefreshAllNodeHtml() {
+    if (!_df) return;
+    try {
+        const home = _df.drawflow?.drawflow?.Home?.data || {};
+        Object.values(home).forEach(node => {
+            const def = WF_NODE_DEFS[node.name];
+            if (!def) return;
+            const nodeEl = document.querySelector(`#node-${node.id} .drawflow_content_node`);
+            if (nodeEl) nodeEl.innerHTML = def.htmlFn(node.data || {});
+        });
+    } catch(e) { console.debug('_wfRefreshAllNodeHtml:', e); }
 }
 
 // ── Show/hide editor vs list ──────────────────────────
@@ -3370,35 +3388,7 @@ function wfOpenPanel(nodeId) {
         </div>
         <textarea id="np-instructions" rows="6" placeholder="Descreva como o agente deve se comportar..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none font-mono text-xs leading-relaxed">${data.instructions||''}</textarea>`;
 
-        // Carrega agentes reais de forma async após renderizar o HTML
-        (async () => {
-            const sel = document.getElementById('np-agent_id');
-            if (!sel) return;
-            try {
-                const agents = await apiFetch('/api/agents');
-                if (!agents || !agents.length) {
-                    sel.innerHTML = '<option value="">Nenhum agente cadastrado</option>';
-                    const hint = document.getElementById('np-agent-hint');
-                    if (hint) hint.innerHTML = '<a onclick="setActiveNav(document.querySelector(\'[data-tab=agents]\'),\'agents\')" class="text-purple-400 underline cursor-pointer">Criar agente na aba Agentes →</a>';
-                    return;
-                }
-                sel.innerHTML = '<option value="">— Nenhum (usar configuração manual) —</option>' +
-                    agents.map(a => `<option value="${a.id}" ${String(data.agent_id) === String(a.id) ? 'selected' : ''}>${a.name} (${a.type})</option>`).join('');
-                // Ao selecionar um agente real, preenche campos automaticamente
-                sel.addEventListener('change', () => {
-                    const chosen = agents.find(a => String(a.id) === sel.value);
-                    if (!chosen) return;
-                    const lbl = document.getElementById('np-label');
-                    const typ = document.getElementById('np-agent_type');
-                    const ins = document.getElementById('np-instructions');
-                    if (lbl && !lbl.value) lbl.value = chosen.name;
-                    if (typ && chosen.type) typ.value = chosen.type;
-                    if (ins && chosen.system_prompt) ins.value = chosen.system_prompt;
-                });
-            } catch(_) {
-                sel.innerHTML = '<option value="">Erro ao carregar agentes</option>';
-            }
-        })();
+        // agents loaded after innerHTML is set — see _wfLoadAgentsPanel() call below
     } else if (type === 'classify') {
         html = `
         <label class="text-slate-400 text-xs">Label</label>
@@ -3458,6 +3448,43 @@ function wfOpenPanel(nodeId) {
         <textarea id="np-message" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none">${data.message||''}</textarea>`;
     }
     document.getElementById('wf-panel-body').innerHTML = html;
+    // Após innerHTML: carrega agentes reais no painel do nó Agent
+    if (type === 'agent') _wfLoadAgentsPanel(data.agent_id);
+}
+
+// Carrega agentes da API e popula o select — chamado APÓS innerHTML ser inserido
+async function _wfLoadAgentsPanel(currentAgentId) {
+    const sel  = document.getElementById('np-agent_id');
+    const hint = document.getElementById('np-agent-hint');
+    if (!sel) return;
+    try {
+        const agents = await apiFetch('/api/agents');
+        if (!agents || !agents.length) {
+            sel.innerHTML = '<option value="">Nenhum agente cadastrado</option>';
+            if (hint) hint.innerHTML = '<a onclick="setActiveNav(document.querySelector(\'[data-tab=agents]\'),\'agents\')" class="text-purple-400 underline cursor-pointer">→ Criar agente na aba Agentes</a>';
+            return;
+        }
+        sel.innerHTML = '<option value="">— Usar configuração manual —</option>' +
+            agents.map(a =>
+                `<option value="${a.id}" ${String(currentAgentId) === String(a.id) ? 'selected' : ''}>
+                    ${a.name} · ${a.type}
+                </option>`
+            ).join('');
+        if (hint) hint.textContent = `${agents.length} agente(s) disponível(eis)`;
+        sel.addEventListener('change', () => {
+            const chosen = agents.find(a => String(a.id) === sel.value);
+            if (!chosen) return;
+            const lbl = document.getElementById('np-label');
+            const typ = document.getElementById('np-agent_type');
+            const ins = document.getElementById('np-instructions');
+            if (lbl) lbl.value = chosen.name || lbl.value;
+            if (typ && chosen.type) typ.value = chosen.type;
+            if (ins && chosen.system_prompt) ins.value = chosen.system_prompt;
+            else if (ins && chosen.instructions) ins.value = chosen.instructions;
+        });
+    } catch(_) {
+        sel.innerHTML = '<option value="">Erro ao carregar agentes</option>';
+    }
 }
 
 function wfClosePanel() {
