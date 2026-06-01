@@ -1012,18 +1012,164 @@ def _ensure_campaigns_table():
         cur = con.cursor()
         cur.execute("""
             CREATE TABLE IF NOT EXISTS nexus.campaigns (
-                id           VARCHAR(20)  PRIMARY KEY,
-                user_email   VARCHAR(255) NOT NULL,
-                name         VARCHAR(255) NOT NULL DEFAULT '',
-                description  TEXT         DEFAULT '',
-                budget       NUMERIC(12,2) DEFAULT 0,
-                status       VARCHAR(50)  DEFAULT 'active',
-                created_at   TIMESTAMP    DEFAULT NOW()
+                id                  VARCHAR(20)  PRIMARY KEY,
+                user_email          VARCHAR(255) NOT NULL,
+                name                VARCHAR(255) NOT NULL DEFAULT '',
+                description         TEXT         DEFAULT '',
+                budget              NUMERIC(12,2) DEFAULT 0,
+                status              VARCHAR(50)  DEFAULT 'draft',
+                message_template    TEXT         DEFAULT '',
+                instance_name       VARCHAR(255) DEFAULT '',
+                target_type         VARCHAR(50)  DEFAULT 'all_contacts',
+                target_stage_id     INTEGER,
+                target_manual_jids  TEXT         DEFAULT '',
+                sent_count          INTEGER      DEFAULT 0,
+                failed_count        INTEGER      DEFAULT 0,
+                total_count         INTEGER      DEFAULT 0,
+                scheduled_at        TIMESTAMP,
+                created_at          TIMESTAMP    DEFAULT NOW()
             )
         """)
         cur.execute("CREATE INDEX IF NOT EXISTS campaigns_user_email_idx ON nexus.campaigns(user_email)")
+        # Migra tabelas existentes sem as novas colunas (idempotente)
+        for col, defn in [
+            ("message_template",   "TEXT DEFAULT ''"),
+            ("instance_name",      "VARCHAR(255) DEFAULT ''"),
+            ("target_type",        "VARCHAR(50) DEFAULT 'all_contacts'"),
+            ("target_stage_id",    "INTEGER"),
+            ("target_manual_jids", "TEXT DEFAULT ''"),
+            ("sent_count",         "INTEGER DEFAULT 0"),
+            ("failed_count",       "INTEGER DEFAULT 0"),
+            ("total_count",        "INTEGER DEFAULT 0"),
+            ("scheduled_at",       "TIMESTAMP"),
+        ]:
+            try:
+                cur.execute(f"ALTER TABLE nexus.campaigns ADD COLUMN IF NOT EXISTS {col} {defn}")
+            except Exception:
+                pass
     finally:
         con.close()
+
+
+# ── Motor de Disparo de Campanhas ──────────────────────────────────────────────
+import random as _random
+
+_campaign_tasks: dict[str, asyncio.Task] = {}   # campaign_id → Task em execução
+_campaign_stop:  set[str]                = set() # campaign_ids pausados/cancelados
+
+
+async def _run_campaign(campaign_id: str, user_email: str) -> None:
+    """Processa o disparo de uma campanha com delay antibanimento (15-30s)."""
+    import httpx as _hx
+    evo_url = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+    evo_key = os.getenv("EVOLUTION_API_KEY", "")
+
+    try:
+        con = _crm_conn()
+        cur = con.cursor()
+        cur.execute(
+            "SELECT name, message_template, instance_name, target_type, target_stage_id, target_manual_jids "
+            "FROM nexus.campaigns WHERE id = %s AND user_email = %s",
+            (campaign_id, user_email)
+        )
+        camp = cur.fetchone()
+        con.close()
+        if not camp:
+            return
+        c_name, template, instance, target_type, stage_id, manual_jids = camp
+
+        # Resolve lista de JIDs alvo
+        jids: list[str] = []
+        con2 = _crm_conn()
+        cur2 = con2.cursor()
+        if target_type == "all_contacts":
+            cur2.execute(
+                "SELECT COALESCE(whatsapp_jid, CONCAT(phone,'@s.whatsapp.net')) FROM nexus.contacts "
+                "WHERE user_email = %s AND (whatsapp_jid IS NOT NULL OR phone IS NOT NULL)",
+                (user_email,)
+            )
+            jids = [r[0] for r in cur2.fetchall() if r[0] and "@" in r[0]]
+        elif target_type == "kanban_stage" and stage_id:
+            cur2.execute(
+                "SELECT contact_jid FROM nexus.deals WHERE stage_id = %s AND user_email = %s AND contact_jid IS NOT NULL",
+                (stage_id, user_email)
+            )
+            jids = [r[0] for r in cur2.fetchall() if r[0]]
+        elif target_type == "manual" and manual_jids:
+            jids = [j.strip() for j in manual_jids.splitlines() if j.strip() and "@" in j]
+
+        # Busca contatos para personalizar {{nome}}
+        cur2.execute(
+            "SELECT COALESCE(whatsapp_jid,''), COALESCE(phone,''), name FROM nexus.contacts WHERE user_email = %s",
+            (user_email,)
+        )
+        name_map = {}
+        for wjid, phone, cname in cur2.fetchall():
+            if wjid: name_map[wjid] = cname
+            if phone: name_map[phone + "@s.whatsapp.net"] = cname
+        con2.close()
+
+        total = len(jids)
+        # Atualiza total e muda status para 'running'
+        con3 = _crm_conn()
+        cur3 = con3.cursor()
+        cur3.execute(
+            "UPDATE nexus.campaigns SET total_count=%s, sent_count=0, failed_count=0, status='running' WHERE id=%s AND user_email=%s",
+            (total, campaign_id, user_email)
+        )
+        con3.commit(); con3.close()
+
+        logger.info(f"📢 Campanha [{c_name}] iniciada: {total} destinatários via [{instance}]")
+
+        async with _hx.AsyncClient(timeout=15) as client:
+            for jid in jids:
+                if campaign_id in _campaign_stop:
+                    break
+                contact_name = name_map.get(jid, "Cliente")
+                number = jid.split("@")[0]
+                msg = template.replace("{{nome}}", contact_name).replace("{{name}}", contact_name)
+                status_update = "sent_count = sent_count + 1"
+                try:
+                    r = await client.post(
+                        f"{evo_url}/message/sendText/{instance}",
+                        headers={"apikey": evo_key, "Content-Type": "application/json"},
+                        json={"number": number, "text": msg},
+                    )
+                    if r.status_code not in (200, 201):
+                        status_update = "failed_count = failed_count + 1"
+                        logger.warning(f"[Campanha] falha {jid}: {r.status_code}")
+                except Exception as e:
+                    status_update = "failed_count = failed_count + 1"
+                    logger.warning(f"[Campanha] erro {jid}: {e}")
+
+                con4 = _crm_conn()
+                cur4 = con4.cursor()
+                cur4.execute(
+                    f"UPDATE nexus.campaigns SET {status_update} WHERE id=%s AND user_email=%s",
+                    (campaign_id, user_email)
+                )
+                con4.commit(); con4.close()
+
+                # Delay antibanimento: 15-30s aleatório
+                delay = _random.uniform(15, 30)
+                await asyncio.sleep(delay)
+
+        # Finaliza
+        final_status = "paused" if campaign_id in _campaign_stop else "finished"
+        _campaign_stop.discard(campaign_id)
+        _campaign_tasks.pop(campaign_id, None)
+        con5 = _crm_conn()
+        cur5 = con5.cursor()
+        cur5.execute(
+            "UPDATE nexus.campaigns SET status=%s WHERE id=%s AND user_email=%s",
+            (final_status, campaign_id, user_email)
+        )
+        con5.commit(); con5.close()
+        logger.info(f"📢 Campanha [{c_name}] finalizada com status '{final_status}'")
+
+    except Exception as e:
+        logger.error(f"[Campanha] erro fatal {campaign_id}: {e}")
+        _campaign_tasks.pop(campaign_id, None)
 
 
 @app.get("/campaigns")
@@ -1074,6 +1220,104 @@ async def delete_campaign(campaign_id: str, current_user: dict = Depends(get_cur
     finally:
         con.close()
     return {"deleted": campaign_id}
+
+
+class CampaignUpdate(BaseModel):
+    name:               Optional[str]   = None
+    description:        Optional[str]   = None
+    message_template:   Optional[str]   = None
+    instance_name:      Optional[str]   = None
+    target_type:        Optional[str]   = None
+    target_stage_id:    Optional[int]   = None
+    target_manual_jids: Optional[str]   = None
+
+
+@app.put("/campaigns/{campaign_id}")
+async def update_campaign(campaign_id: str, payload: CampaignUpdate, current_user: dict = Depends(get_current_user)):
+    user_email = current_user["email"]
+    fields = {k: v for k, v in payload.dict().items() if v is not None}
+    if not fields:
+        raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+    set_clause = ", ".join(f"{k} = %s" for k in fields)
+    con = _crm_conn()
+    try:
+        cur = con.cursor()
+        cur.execute(
+            f"UPDATE nexus.campaigns SET {set_clause} WHERE id = %s AND user_email = %s RETURNING id",
+            list(fields.values()) + [campaign_id, user_email]
+        )
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Campanha não encontrada")
+        con.commit()
+        return {"updated": campaign_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        con.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
+
+
+@app.post("/campaigns/{campaign_id}/start")
+async def start_campaign(campaign_id: str, current_user: dict = Depends(get_current_user)):
+    user_email = current_user["email"]
+    if campaign_id in _campaign_tasks and not _campaign_tasks[campaign_id].done():
+        raise HTTPException(status_code=409, detail="Campanha já está em execução")
+    con = _crm_conn()
+    try:
+        cur = con.cursor()
+        cur.execute(
+            "SELECT message_template, instance_name FROM nexus.campaigns WHERE id=%s AND user_email=%s",
+            (campaign_id, user_email)
+        )
+        row = cur.fetchone()
+        con.close()
+        if not row:
+            raise HTTPException(status_code=404, detail="Campanha não encontrada")
+        if not row[0] or not row[0].strip():
+            raise HTTPException(status_code=400, detail="Defina a mensagem da campanha antes de disparar")
+        if not row[1] or not row[1].strip():
+            raise HTTPException(status_code=400, detail="Selecione a instância WhatsApp antes de disparar")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    _campaign_stop.discard(campaign_id)
+    task = asyncio.create_task(_run_campaign(campaign_id, user_email))
+    _campaign_tasks[campaign_id] = task
+    return {"started": campaign_id}
+
+
+@app.post("/campaigns/{campaign_id}/pause")
+async def pause_campaign(campaign_id: str, current_user: dict = Depends(get_current_user)):
+    user_email = current_user["email"]
+    _campaign_stop.add(campaign_id)
+    task = _campaign_tasks.get(campaign_id)
+    if task and not task.done():
+        return {"paused": campaign_id, "message": "Campanha será pausada após a mensagem atual"}
+    return {"paused": campaign_id, "message": "Campanha não estava em execução"}
+
+
+@app.get("/campaigns/{campaign_id}/stats")
+async def get_campaign_stats(campaign_id: str, current_user: dict = Depends(get_current_user)):
+    import psycopg2.extras
+    user_email = current_user["email"]
+    con = _crm_conn()
+    try:
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            "SELECT id, name, status, sent_count, failed_count, total_count FROM nexus.campaigns WHERE id=%s AND user_email=%s",
+            (campaign_id, user_email)
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Campanha não encontrada")
+        data = dict(row)
+        data["running"] = campaign_id in _campaign_tasks and not _campaign_tasks[campaign_id].done()
+        return data
+    finally:
+        con.close()
 
 
 # ===== Contacts Routes =====
