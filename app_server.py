@@ -140,7 +140,7 @@ async def frontend_app():
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    return _serve_html("dashboard-functional.html")
+    return _serve_html("home.html")
 
 @app.get("/_old_root", response_class=HTMLResponse)
 async def root_old():
@@ -313,7 +313,15 @@ app.mount("/", StaticFiles(directory=frontend_path), name="frontend")
 @app.on_event("startup")
 async def startup_event():
     logger.info("🚀 Nexus CRM iniciando...")
-    
+
+    # Inicializar banco de dados
+    try:
+        from app.db_users import init_db
+        init_db()
+        logger.info("✅ Banco de dados inicializado")
+    except Exception as e:
+        logger.warning(f"⚠️  DB não disponível, usando fallback em memória: {e}")
+
     # Verificar Evolution API
     import httpx
     try:

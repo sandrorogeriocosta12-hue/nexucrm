@@ -1,456 +1,612 @@
 """
-🎯 WEBHOOK LISTENER SYSTEM - Nexus CRM
-Recebe mensagens em tempo real de 4 canais e processa automaticamente
+Nexus CRM — Webhook Receiver
+Recebe mensagens do WhatsApp (Evolution API), Telegram, Instagram e Email.
+Para WhatsApp: se o agente tiver auto_respond=True, chama OpenAI e responde automaticamente.
 """
 
 from fastapi import APIRouter, Request, HTTPException
-from typing import Dict, Any, Optional
+from typing import Dict
 import logging
-import json
-from datetime import datetime
+import os
+import asyncio
+import time
+import httpx
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
+# Histórico de conversa por JID (em memória — últimas 20 mensagens por contato)
+_conversation_history: Dict[str, list] = defaultdict(list)
 
-# ═══════════════════════════════════════════════════════════════════════
-# 📱 WEBHOOK: WhatsApp (Evolution API)
-# ═══════════════════════════════════════════════════════════════════════
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "vexus_evolution_key_change_me")
+OPENAI_API_KEY    = os.getenv("OPENAI_API_KEY", "")
+DATABASE_URL      = os.getenv("DATABASE_URL", "postgresql://vexus:vexus_password_123@localhost/vexus_crm")
+# Banco da Evolution API (vexus."Chat", vexus."Message", vexus."Contact")
+EVO_DB_URL        = os.getenv("EVOLUTION_DB_URL", "postgresql://vexus:vexus_password_123@localhost/vexus_crm")
+
+# ── Persistent HTTP client (reused across all requests — no per-call overhead) ──
+_http: httpx.AsyncClient | None = None
+
+def _get_http() -> httpx.AsyncClient:
+    global _http
+    if _http is None or _http.is_closed:
+        _http = httpx.AsyncClient(timeout=15)
+    return _http
+
+# ── AsyncOpenAI client (non-blocking — won't stall the event loop) ─────────────
+_openai_client = None
+
+def _get_openai():
+    global _openai_client
+    if _openai_client is None and OPENAI_API_KEY:
+        from openai import AsyncOpenAI
+        _openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+    return _openai_client
+
+# ── Agent cache (30s TTL — avoids a DB query on every incoming message) ─────────
+_agent_cache: dict = {"ts": 0.0, "agent": None}
+
+# ── Context summarization — compressed history per JID ───────────────────────────
+_context_cache: dict = {}          # jid -> summary string
+_msg_counts: dict = defaultdict(int)  # jid -> total messages received
+_doc_context_cache: dict = {}      # jid -> extracted PDF text (consumed once)
+
+
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+
+def _db_conn():
+    import psycopg2
+    return psycopg2.connect(DATABASE_URL)
+
+
+def _get_auto_respond_agent() -> dict | None:
+    """Retorna o agente com auto_respond=True vinculado a esta instância, ou None."""
+    try:
+        import psycopg2.extras
+        con = _db_conn()
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # Qualquer agente ativo + auto_respond ligado serve; usa atendimento como padrão
+        cur.execute("""
+            SELECT a.* FROM nexus.agents a
+            WHERE a.auto_respond = TRUE AND a.active = TRUE
+            ORDER BY CASE a.type WHEN 'atendimento' THEN 1 WHEN 'vendas' THEN 2 ELSE 3 END
+            LIMIT 1
+        """)
+        row = cur.fetchone()
+        con.close()
+        return dict(row) if row else None
+    except Exception as e:
+        logger.warning(f"⚠️  Não foi possível buscar agente: {e}")
+        return None
+
+
+async def _update_context_summary(jid: str) -> None:
+    """Comprime o histórico da conversa em ~150 palavras e armazena no cache."""
+    client = _get_openai()
+    history = _conversation_history.get(jid, [])
+    if not client or len(history) < 6:
+        return
+    try:
+        text = "\n".join([
+            f"{'Cliente' if m['role']=='user' else 'IA'}: {m['content'][:300]}"
+            for m in history[-20:]
+        ])
+        resp = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Resuma a conversa em no máximo 150 palavras. Capture: intenção do cliente, informações pessoais, estágio do atendimento, objeções mencionadas."},
+                {"role": "user", "content": text},
+            ],
+            max_tokens=200,
+        )
+        summary = resp.choices[0].message.content.strip()
+        _context_cache[jid] = summary
+        logger.debug(f"🧠 Contexto sintetizado para {jid}: {summary[:80]}...")
+    except Exception as e:
+        logger.debug(f"Context summary error: {e}")
+
+
+async def _extract_lead_entities(jid: str, user_message: str) -> None:
+    """Extrai dados estruturados da mensagem e enriquece o lead no PostgreSQL."""
+    import json
+    client = _get_openai()
+    if not client:
+        return
+    try:
+        resp = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": 'Extraia dados do cliente. Responda SOMENTE com JSON: {"nome": null, "telefone": null, "interesse": null, "objecao": null}. Use null se não encontrar.'},
+                {"role": "user", "content": user_message},
+            ],
+            response_format={"type": "json_object"},
+            max_tokens=80,
+        )
+        data = json.loads(resp.choices[0].message.content)
+        if any(v for v in data.values() if v):
+            await asyncio.to_thread(_update_lead_from_entities, jid, data)
+    except Exception as e:
+        logger.debug(f"Entity extraction: {e}")
+
+
+def _update_lead_from_entities(jid: str, entities: dict) -> None:
+    """Atualiza o perfil do lead com entidades extraídas pela IA."""
+    try:
+        number = jid.split("@")[0]
+        con = _db_conn()
+        cur = con.cursor()
+        cur.execute("SELECT id FROM nexus.leads WHERE phone = %s LIMIT 1", (number,))
+        row = cur.fetchone()
+        if not row:
+            con.close()
+            return
+        lead_id = row[0]
+        parts, vals = [], []
+        if entities.get("nome"):
+            parts.append("name = COALESCE(NULLIF(name, ''), %s)")
+            vals.append(entities["nome"])
+        notes_append = []
+        if entities.get("interesse"):
+            notes_append.append(f"[IA] Interesse: {entities['interesse']}")
+        if entities.get("objecao"):
+            notes_append.append(f"[IA] Objeção: {entities['objecao']}")
+        if notes_append:
+            parts.append("notes = CONCAT(COALESCE(notes,''), %s)")
+            vals.append("\n" + "\n".join(notes_append))
+        if parts:
+            vals.append(lead_id)
+            cur.execute(f"UPDATE nexus.leads SET {', '.join(parts)} WHERE id = %s", vals)
+            con.commit()
+            logger.info(f"✅ Lead #{lead_id} enriquecido automaticamente")
+        con.close()
+    except Exception as e:
+        logger.debug(f"Lead entity update: {e}")
+
+
+async def _get_agent_cached() -> dict | None:
+    """Retorna agente ativo com cache de 30s para evitar query a cada mensagem."""
+    now = time.monotonic()
+    if now - _agent_cache["ts"] < 30:
+        return _agent_cache["agent"]
+    agent = await asyncio.to_thread(_get_auto_respond_agent)
+    _agent_cache["ts"] = now
+    _agent_cache["agent"] = agent
+    return agent
+
+
+async def _call_openai(agent: dict, jid: str, user_message: str,
+                      image_url: str | None = None) -> str | None:
+    """Chama OpenAI de forma totalmente async. Suporta visão (image_url) quando fornecido."""
+    client = _get_openai()
+    if not client:
+        return None
+    try:
+        custom = (agent.get("system_prompt") or "").strip()
+        if custom:
+            system_prompt = custom + "\n\nVocê responde via WhatsApp. Seja breve e natural."
+        else:
+            system_prompt = (
+                f"{agent.get('persona', 'Assistente cordial')}\n\n"
+                f"{agent.get('instructions', 'Responda de forma clara e objetiva.')}\n\n"
+                "Você responde via WhatsApp. Seja breve e natural. Responda sempre em português."
+            )
+
+        # Injeta contexto de documentos PDF processados em background
+        doc_ctx = _doc_context_cache.get(jid, "")
+
+        summary = _context_cache.get(jid, "")
+        history = _conversation_history[jid][-6:]
+        messages: list = [{"role": "system", "content": system_prompt}]
+        if summary:
+            messages.append({"role": "system", "content": f"Contexto anterior:\n{summary}"})
+        if doc_ctx:
+            messages.append({"role": "system", "content": f"Documento enviado pelo cliente:\n{doc_ctx}"})
+            _doc_context_cache.pop(jid, None)  # usar apenas uma vez
+        messages.extend(history)
+
+        # Monta conteúdo do usuário — multimodal se houver imagem
+        if image_url:
+            model = "gpt-4o"  # vision requer gpt-4o ou superior
+            user_content: list = []
+            if user_message and user_message != "[Foto recebida]":
+                user_content.append({"type": "text", "text": user_message})
+            user_content.append({
+                "type": "image_url",
+                "image_url": {"url": image_url, "detail": "low"},
+            })
+            messages.append({"role": "user", "content": user_content})
+        else:
+            model = agent.get("model", "gpt-4o-mini")
+            messages.append({"role": "user", "content": user_message})
+
+        response = await client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=300,
+            temperature=0.7,
+        )
+        reply = response.choices[0].message.content.strip()
+
+        _conversation_history[jid].append({"role": "user", "content": user_message})
+        _conversation_history[jid].append({"role": "assistant", "content": reply})
+        _conversation_history[jid] = _conversation_history[jid][-40:]
+        return reply
+    except Exception as e:
+        logger.error(f"❌ OpenAI error: {e}")
+        return None
+
+
+async def _process_pdf_background(jid: str, pdf_url: str, filename: str) -> None:
+    """Downloads a PDF from Evolution API media URL and extracts text into _doc_context_cache."""
+    try:
+        resp = await _get_http().get(pdf_url, follow_redirects=True)
+        if resp.status_code != 200:
+            return
+        pdf_bytes = resp.content
+        text_parts: list[str] = []
+        try:
+            import io
+            try:
+                import pypdf
+                reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+                for page in reader.pages[:10]:  # cap at 10 pages
+                    t = page.extract_text()
+                    if t:
+                        text_parts.append(t.strip())
+            except ImportError:
+                try:
+                    import pdfplumber
+                    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+                        for page in pdf.pages[:10]:
+                            t = page.extract_text()
+                            if t:
+                                text_parts.append(t.strip())
+                except ImportError:
+                    logger.debug("PDF parsing skipped — install pypdf or pdfplumber")
+                    return
+        except Exception as ex:
+            logger.debug(f"PDF parse error: {ex}")
+            return
+        if text_parts:
+            extracted = "\n\n".join(text_parts)[:3000]
+            _doc_context_cache[jid] = f"[{filename}]\n{extracted}"
+            logger.info(f"📄 PDF extraído para {jid}: {len(extracted)} chars")
+    except Exception as e:
+        logger.debug(f"PDF background error: {e}")
+
+
+def _save_chat_name(jid: str, name: str) -> None:
+    """Persists pushName into vexus.Chat.name if currently empty (best-effort)."""
+    if not name:
+        return
+    try:
+        con = _db_conn()
+        cur = con.cursor()
+        cur.execute("""
+            UPDATE vexus."Chat" SET name = %s
+            WHERE "remoteJid" = %s AND (name IS NULL OR name = '')
+        """, (name, jid))
+        con.commit()
+        con.close()
+    except Exception as e:
+        logger.debug(f"Chat name save: {e}")
+
+
+def _resolve_instance_id(instance_name: str) -> str | None:
+    """Resolve o UUID da instância pelo nome consultando vexus.Instance."""
+    try:
+        import psycopg2 as _pg2
+        con = _pg2.connect(EVO_DB_URL)
+        cur = con.cursor()
+        cur.execute('SELECT id FROM vexus."Instance" WHERE name = %s LIMIT 1', (instance_name,))
+        row = cur.fetchone()
+        con.close()
+        return row[0] if row else None
+    except Exception:
+        return None
+
+
+# Cache de instance_name → instanceId para não ir ao banco a cada mensagem
+_instance_id_cache: dict[str, str] = {}
+
+
+def _upsert_chat(jid: str, name: str, instance_name: str = "") -> None:
+    """Cria ou atualiza registro na vexus.Chat para que o contato apareça no inbox."""
+    if not jid:
+        return
+    try:
+        import uuid, psycopg2 as _pg2
+
+        # Resolve instanceId dinamicamente — sem hardcode
+        instance_id = None
+        if instance_name:
+            if instance_name not in _instance_id_cache:
+                _instance_id_cache[instance_name] = _resolve_instance_id(instance_name) or ""
+            instance_id = _instance_id_cache[instance_name] or None
+
+        con = _pg2.connect(EVO_DB_URL)
+        cur = con.cursor()
+        if instance_id:
+            cur.execute(
+                'UPDATE vexus."Chat" SET "updatedAt" = NOW(), "unreadMessages" = "unreadMessages" + 1 '
+                'WHERE "remoteJid" = %s AND "instanceId" = %s',
+                (jid, instance_id)
+            )
+        else:
+            cur.execute(
+                'UPDATE vexus."Chat" SET "updatedAt" = NOW(), "unreadMessages" = "unreadMessages" + 1 '
+                'WHERE "remoteJid" = %s',
+                (jid,)
+            )
+        if cur.rowcount == 0 and instance_id:
+            cur.execute(
+                'INSERT INTO vexus."Chat" (id, "remoteJid", "instanceId", "unreadMessages", "createdAt", "updatedAt", name) '
+                'VALUES (%s, %s, %s, 1, NOW(), NOW(), %s) ON CONFLICT DO NOTHING',
+                (str(uuid.uuid4()), jid, instance_id, name or None)
+            )
+        con.commit()
+        con.close()
+    except Exception as e:
+        logger.warning(f"Chat upsert failed for {jid}: {e}")
+
+
+def _upsert_contact(jid: str, name: str) -> None:
+    """Upsert pushName into vexus.Contact so @lid JIDs get a name for the inbox JOIN."""
+    if not name or not jid:
+        return
+    try:
+        con = _db_conn()
+        cur = con.cursor()
+        cur.execute("""
+            INSERT INTO vexus."Contact" ("remoteJid", "pushName", "updatedAt")
+            VALUES (%s, %s, NOW())
+            ON CONFLICT ("remoteJid") DO UPDATE
+              SET "pushName" = EXCLUDED."pushName",
+                  "updatedAt" = NOW()
+            WHERE vexus."Contact"."pushName" IS NULL
+               OR vexus."Contact"."pushName" = ''
+        """, (jid, name))
+        con.commit()
+        con.close()
+    except Exception as e:
+        logger.debug(f"Contact upsert: {e}")
+
+
+def _save_message(direction: str, contact_jid: str, contact_name: str, content: str, agent_type: str):
+    """Persiste mensagem na tabela nexus.messages (best-effort, nunca quebra o webhook)."""
+    try:
+        import psycopg2
+        con = psycopg2.connect(DATABASE_URL)
+        cur = con.cursor()
+        # Descobre user_email pelo agente ativo (ou usa 'system' como fallback)
+        cur.execute("""
+            SELECT user_email FROM nexus.agents
+            WHERE auto_respond = TRUE AND active = TRUE LIMIT 1
+        """)
+        row = cur.fetchone()
+        user_email = row[0] if row else "system"
+        cur.execute("""
+            INSERT INTO nexus.messages (user_email, direction, channel, contact_jid, contact_name, content, agent_type)
+            VALUES (%s, %s, 'whatsapp', %s, %s, %s, %s)
+        """, (user_email, direction, contact_jid, contact_name, content, agent_type))
+        con.commit()
+        con.close()
+    except Exception as e:
+        logger.warning(f"⚠️  Não foi possível salvar mensagem: {e}")
+
+
+async def _send_whatsapp_text(instance_name: str, number: str, text: str) -> bool:
+    """Envia mensagem de texto via Evolution API usando cliente HTTP persistente."""
+    url = f"{EVOLUTION_API_URL}/message/sendText/{instance_name}"
+    headers = {"apikey": EVOLUTION_API_KEY, "Content-Type": "application/json"}
+    payload = {"number": number, "text": text}
+    try:
+        resp = await _get_http().post(url, headers=headers, json=payload)
+        ok = resp.status_code in (200, 201)
+        if ok:
+            logger.info(f"✅ WA enviado para {number}")
+        else:
+            logger.warning(f"⚠️  Evolution API {resp.status_code}: {resp.text[:200]}")
+        return ok
+    except Exception as e:
+        logger.error(f"❌ Erro ao enviar WA: {e}")
+        return False
+
+
+# ─── WhatsApp Webhook ──────────────────────────────────────────────────────────
 
 @router.post("/webhooks/whatsapp/{instance_name}")
 async def webhook_whatsapp(instance_name: str, request: Request):
     """
-    WhatsApp Webhook - Escuta mensagens da Evolution API
-    
-    URL: https://api.nexuscrm.tech/webhooks/whatsapp/{instance_name}
-    
-    Example payload:
-    {
-        "event": "messages.upsert",
-        "data": {
-            "instanceName": "nexus_victor",
-            "messages": [{
-                "key": {...},
-                "messageTimestamp": 1680000000,
-                "pushName": "Victor",
-                "from": "5511987654321",
-                "senderId": "5511987654321",
-                "text": "Olá, preciso de informações sobre o seu produto",
-                "type": "text"
-            }]
-        }
-    }
+    Recebe eventos da Evolution API.
+    Formato v2:  { "event": "messages.upsert", "instance": "...", "data": { "key": {...}, "message": {...} } }
+    Também suporta o formato legado com data.messages[].
     """
     try:
         payload = await request.json()
-        
-        # Extrair informações da mensagem
-        if payload.get("event") == "messages.upsert":
-            messages = payload.get("data", {}).get("messages", [])
-            
-            for msg in messages:
-                # Verificar se é mensagem recebida (não enviada)
-                if msg.get("key", {}).get("fromMe"):
-                    continue
-                
-                message_data = {
-                    "channel": "whatsapp",
-                    "instance_name": instance_name,
-                    "sender": msg.get("from", ""),
-                    "sender_name": msg.get("pushName", "Unknown"),
-                    "message_text": msg.get("text", ""),
-                    "message_type": msg.get("type", "text"),
-                    "timestamp": msg.get("messageTimestamp"),
-                    "received_at": datetime.now().isoformat(),
-                }
-                
-                logger.info(f"🟢 WhatsApp recebido: {message_data}")
-                
-                # PROCESSAR: Passar para AI + Database
-                await process_incoming_message(message_data)
-        
-        return {"status": "ok"}
-    
-    except Exception as e:
-        logger.error(f"❌ Erro webhook WhatsApp: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        return {"status": "ok"}  # corpo vazio/inválido — não quebrar
+
+    event = payload.get("event", "")
+
+    # Só processa mensagens recebidas
+    if event not in ("messages.upsert", "message.upsert"):
+        return {"status": "ok", "event": event}
+
+    data = payload.get("data", {})
+
+    # Suporte a ambos os formatos (objeto único ou lista)
+    if isinstance(data, list):
+        msgs = data
+    elif "messages" in data:
+        msgs = data["messages"]
+    else:
+        msgs = [data]
+
+    for msg in msgs:
+        key = msg.get("key", {})
+
+        # Ignora mensagens enviadas pelo próprio bot
+        if key.get("fromMe"):
+            continue
+
+        jid = key.get("remoteJid", "")
+        # Ignora grupos
+        if jid.endswith("@g.us"):
+            continue
+
+        # Extrai número limpo (sem @s.whatsapp.net)
+        number = jid.split("@")[0] if "@" in jid else jid
+
+        push_name = msg.get("pushName", "")
+
+        # Extrai texto e mídia
+        raw_msg  = msg.get("message", {})
+        img_msg  = raw_msg.get("imageMessage")
+        doc_msg  = raw_msg.get("documentMessage")
+        vid_msg  = raw_msg.get("videoMessage")
+
+        text = (
+            raw_msg.get("conversation")
+            or raw_msg.get("extendedTextMessage", {}).get("text")
+            or msg.get("text")
+            or msg.get("body")
+            or ""
+        ).strip()
+
+        # Detecta imagem: usa legenda como texto, marca para vision
+        image_url: str | None = None
+        if img_msg:
+            text      = (img_msg.get("caption") or text or "").strip()
+            image_url = img_msg.get("mediaUrl") or img_msg.get("url") or img_msg.get("jpegThumbnail") or ""
+            if not text:
+                text = "[Foto recebida]"
+            logger.info(f"📸 WA [{instance_name}] imagem de {push_name} ({number}): caption={text[:60]}")
+
+        # Detecta documento PDF: extrai texto em background para injetar no contexto
+        elif doc_msg:
+            doc_caption = doc_msg.get("caption") or doc_msg.get("fileName") or "documento"
+            pdf_url     = doc_msg.get("mediaUrl") or doc_msg.get("url") or ""
+            if pdf_url:
+                asyncio.create_task(_process_pdf_background(jid, pdf_url, doc_caption))
+            text = text or f"[Documento recebido: {doc_caption}]"
+            logger.info(f"📄 WA [{instance_name}] doc de {push_name} ({number}): {doc_caption}")
+
+        elif vid_msg:
+            text = (vid_msg.get("caption") or text or "[Vídeo recebido]").strip()
+
+        if not text and not image_url:
+            continue  # sticker ou mídia sem conteúdo útil
+
+        logger.info(f"📥 WA [{instance_name}] de {push_name} ({number}): {text[:80]}")
+
+        # Garante que o chat existe no inbox e salva nome/contato
+        asyncio.create_task(asyncio.to_thread(_upsert_chat, jid, push_name, instance_name))
+        if push_name:
+            asyncio.create_task(asyncio.to_thread(_save_chat_name, jid, push_name))
+            asyncio.create_task(asyncio.to_thread(_upsert_contact, jid, push_name))
+
+        # Salva em background — não bloqueia a resposta ao webhook
+        asyncio.create_task(asyncio.to_thread(_save_message, "in", jid, push_name, text, ""))
+
+        # Contagem e triggers de inteligência em background
+        _msg_counts[jid] += 1
+        if _msg_counts[jid] % 10 == 0:
+            asyncio.create_task(_update_context_summary(jid))
+        if len(text) > 25:
+            asyncio.create_task(_extract_lead_entities(jid, text))
+
+        # Busca agente via cache (evita query ao banco a cada mensagem)
+        agent = await _get_agent_cached()
+        if not agent:
+            logger.info(f"ℹ️  Nenhum agente com auto_respond ativo — mensagem registrada")
+            continue
+
+        logger.info(f"🤖 Agente [{agent['name']}] respondendo para {number}...")
+
+        # Gera resposta com OpenAI (passa image_url para visão multimodal)
+        reply = await _call_openai(agent, jid, text, image_url=image_url)
+        if not reply:
+            logger.warning(f"⚠️  IA não retornou resposta para {number}")
+            continue
+
+        logger.info(f"💬 Resposta IA → {number}: {reply[:100]}")
+        asyncio.create_task(asyncio.to_thread(_save_message, "out", jid, push_name, reply, agent["type"]))
+
+        # Envia via Evolution API
+        sent = await _send_whatsapp_text(instance_name, number, reply)
+        if not sent:
+            logger.error(f"❌ Falha ao enviar resposta para {number}")
+
+    return {"status": "ok"}
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# 🤖 WEBHOOK: Telegram Bot
-# ═══════════════════════════════════════════════════════════════════════
+# ─── Telegram Webhook ──────────────────────────────────────────────────────────
 
 @router.post("/webhooks/telegram/{chat_id}")
 async def webhook_telegram(chat_id: str, request: Request):
-    """
-    Telegram Webhook - Escuta updates do bot
-    
-    URL: https://api.nexuscrm.tech/webhooks/telegram/{chat_id}
-    
-    Example payload (Telegram setWebhook retorna este formato):
-    {
-        "update_id": 123456789,
-        "message": {
-            "message_id": 1,
-            "date": 1680000000,
-            "chat": {
-                "id": 12345678,
-                "first_name": "Victor",
-                "type": "private"
-            },
-            "text": "Olá, preciso de uma cotação"
-        }
-    }
-    """
     try:
         payload = await request.json()
-        
-        if "message" in payload:
-            msg = payload["message"]
-            
-            # Ignorar se for comando
-            if msg.get("text", "").startswith("/"):
-                return {"status": "command_ignored"}
-            
-            message_data = {
-                "channel": "telegram",
-                "chat_id": chat_id,
-                "sender": str(msg.get("chat", {}).get("id", "")),
-                "sender_name": msg.get("chat", {}).get("first_name", "Unknown"),
-                "message_text": msg.get("text", ""),
-                "message_type": "text",
-                "timestamp": msg.get("date"),
-                "received_at": datetime.now().isoformat(),
-            }
-            
-            logger.info(f"🤖 Telegram recebido: {message_data}")
-            
-            # PROCESSAR: Passar para AI + Database
-            await process_incoming_message(message_data)
-        
+    except Exception:
         return {"status": "ok"}
-    
-    except Exception as e:
-        logger.error(f"❌ Erro webhook Telegram: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+
+    if "message" in payload:
+        msg = payload["message"]
+        if not msg.get("text", "").startswith("/"):
+            logger.info(f"🤖 Telegram [{chat_id}] de {msg.get('chat',{}).get('first_name','?')}: {msg.get('text','')[:80]}")
+    return {"status": "ok"}
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# 📸 WEBHOOK: Instagram (Meta Webhooks)
-# ═══════════════════════════════════════════════════════════════════════
-
-@router.post("/webhooks/instagram")
-async def webhook_instagram_meta(request: Request):
-    """
-    Instagram Webhook - Meta oficial
-    
-    Registrar em: Facebook App > Webhooks
-    Callback URL: https://api.nexuscrm.tech/webhooks/instagram
-    Verify Token: seu_token_de_verificacao
-    
-    Meta envia payloads assim:
-    {
-        "entry": [{
-            "changes": [{
-                "value": {
-                    "messages": [{
-                        "from": "1234567890",
-                        "id": "m_message_id",
-                        "timestamp": "1680000000",
-                        "text": "Olá, quero saber sobre preços"
-                    }]
-                }
-            }]
-        }]
-    }
-    """
-    try:
-        payload = await request.json()
-        
-        # Meta usa estrutura "entry > changes > value > messages"
-        for entry in payload.get("entry", []):
-            for change in entry.get("changes", []):
-                messages = change.get("value", {}).get("messages", [])
-                
-                for msg in messages:
-                    message_data = {
-                        "channel": "instagram",
-                        "sender": msg.get("from", ""),
-                        "sender_name": msg.get("from", "Unknown"),  # Instagram não retorna nome
-                        "message_text": msg.get("text", ""),
-                        "message_type": "text",
-                        "timestamp": msg.get("timestamp"),
-                        "received_at": datetime.now().isoformat(),
-                    }
-                    
-                    logger.info(f"📸 Instagram recebido: {message_data}")
-                    
-                    # PROCESSAR: Passar para AI + Database
-                    await process_incoming_message(message_data)
-        
-        return {"status": "ok"}
-    
-    except Exception as e:
-        logger.error(f"❌ Erro webhook Instagram: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# 📧 WEBHOOK: Email (SendGrid)
-# ═══════════════════════════════════════════════════════════════════════
-
-@router.post("/webhooks/email")
-async def webhook_email_sendgrid(request: Request):
-    """
-    Email Webhook - SendGrid
-    
-    Registrar em: https://app.sendgrid.com > Settings > Mail Send
-    URL: https://api.nexuscrm.tech/webhooks/email
-    
-    SendGrid envia payload assim:
-    {
-        "event": "processed",
-        "email": "cliente@example.com",
-        "timestamp": 1680000000,
-        "subject": "Cotação solicitada"
-    }
-    
-    NOTA: SendGrid normalmente envia como x-www-form-urlencoded
-    """
-    try:
-        # Tentar JSON primeiro
-        try:
-            payload = await request.json()
-        except:
-            # Se não for JSON, tentar form-data (padrão SendGrid)
-            payload = await request.form()
-            payload = dict(payload)
-        
-        message_data = {
-            "channel": "email",
-            "sender": payload.get("email", ""),
-            "sender_name": payload.get("email", "Unknown"),
-            "message_text": payload.get("subject", ""),
-            "message_type": "email",
-            "timestamp": payload.get("timestamp"),
-            "received_at": datetime.now().isoformat(),
-            "raw_payload": payload,
-        }
-        
-        logger.info(f"📧 Email recebido: {message_data}")
-        
-        # PROCESSAR: Passar para AI + Database
-        await process_incoming_message(message_data)
-        
-        return {"status": "ok"}
-    
-    except Exception as e:
-        logger.error(f"❌ Erro webhook Email: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# 🧠 PROCESSAMENTO CENTRAL (AI + Banco de Dados)
-# ═══════════════════════════════════════════════════════════════════════
-
-async def process_incoming_message(message_data: Dict[str, Any]):
-    """Processa mensagem de qualquer canal.
-
-    Objetivo (agora):
-    - Persistir a mensagem no banco (sem quebrar o webhook)
-    - Rodar um score de IA (mock) para registro/log
-    - Retornar sempre sucesso HTTP para o provedor, mesmo se IA/DB falharem
-    """
-    from vexus_crm.database import get_db
-    from vexus_crm.models import Message
-
-    ai_score: float = 0.0
-    try:
-        logger.info(f"⚙️  Processando mensagem: {message_data}")
-
-        channel = message_data.get("channel")
-        sender = message_data.get("sender")
-        message_text = message_data.get("message_text", "")
-        received_at = message_data.get("received_at")
-
-        # Contact/Lead: se não existir, gravamos contact_id como sender
-        contact_id = sender or "unknown"
-        user_id = "system"
-
-        # Persistir no banco
-        # IMPORTANTE: get_db() retorna um generator, então usamos next()
-        db_gen = get_db()
-        db = next(db_gen)
-        try:
-            msg_obj = Message(
-                user_id=user_id,
-                contact_id=contact_id,
-                channel=str(channel),
-                direction="incoming",
-                message_text=message_text,
-                external_message_id=message_data.get("external_message_id"),
-            )
-            db.add(msg_obj)
-            db.commit()
-            logger.info(f"✅ Mensagem salva no banco (id={msg_obj.id})")
-        finally:
-            # fecha generator
-            try:
-                next(db_gen)
-            except StopIteration:
-                pass
-
-        # IA (mock)
-        ai_score = await get_ai_prediction(message_data)
-        logger.info(f"🧠 Score AI: {ai_score}")
-
-        # Não dispara resposta real por enquanto (conforme solicitado)
-        # if ai_score > 0.8:
-        #     await send_auto_response(...)
-
-        return {"processed": True, "score": ai_score}
-
-    except Exception as e:
-        # Não deixar o webhook quebrar
-        logger.exception(f"❌ Erro ao processar webhook (não deve causar 500): {str(e)}")
-        return {"processed": False, "score": ai_score, "error": str(e)}
-
-
-async def get_ai_prediction(message_data: Dict[str, Any]) -> float:
-    """
-    Chama AI Engine para fazer predição
-    Retorna score 0-100
-    """
-    try:
-        # MOCK: Simular predição
-        # Em produção, chamar NexusLearningEngine.predict()
-        
-        text = message_data.get("message_text", "")
-        
-        # Features simples para demo
-        engagement_score = len(text) / 100  # Mais texto = mais engajado
-        
-        # Palavras-chave para intenção
-        intent_keywords = ["comprar", "preço", "cotação", "informação", "contrato"]
-        intention_score = 0.5
-        if any(kw in text.lower() for kw in intent_keywords):
-            intention_score = 0.8
-        
-        # Score final
-        final_score = (engagement_score * 0.3 + intention_score * 0.7) * 100
-        return min(final_score, 100)
-    
-    except Exception as e:
-        logger.error(f"❌ Erro AI: {str(e)}")
-        return 50  # Default
-
-
-async def send_auto_response(channel: str, sender: str, ai_score: float):
-    """
-    Envia resposta automática para leads qualificados
-    """
-    try:
-        if channel == "whatsapp":
-            # Chamar Evolution API
-            response_text = f"Olá! 👋 Recebemos sua mensagem e já estamos analisando. Um de nossos especialistas entrará em contato em breve!"
-            # POST /api/send/whatsapp/{instance_name}
-            logger.info(f"📱 Enviando WhatsApp para {sender}")
-        
-        elif channel == "telegram":
-            # Chamar Telegram API
-            response_text = "Obrigado pelo contato! Responderemos em breve."
-            # POST /api/send/telegram/{chat_id}
-            logger.info(f"🤖 Enviando Telegram para {sender}")
-        
-        elif channel == "instagram":
-            # Chamar Meta API
-            response_text = "Muito obrigado! Vamos responder em quelques minutos."
-            # POST /api/send/instagram/{user_id}
-            logger.info(f"📸 Enviando Instagram para {sender}")
-        
-        elif channel == "email":
-            # Chamar SendGrid
-            response_text = "Recebemos seu email. Obrigado!"
-            # POST /api/send/email/{email}
-            logger.info(f"📧 Enviando Email para {sender}")
-    
-    except Exception as e:
-        logger.error(f"❌ Erro ao enviar resposta: {str(e)}")
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# 🔐 WEBHOOK VERIFICATION (Para Meta e outros)
-# ═══════════════════════════════════════════════════════════════════════
+# ─── Instagram Webhook ─────────────────────────────────────────────────────────
 
 @router.get("/webhooks/instagram")
-async def verify_webhook_instagram(request: Request):
-    """
-    GET request usado por Meta para verificar que o webhook é legítimo
-    
-    Meta faz:
-    GET https://api.nexuscrm.tech/webhooks/instagram?
-        hub.mode=subscribe&
-        hub.challenge=YOUR_CHALLENGE_TOKEN&
-        hub.verify_token=YOUR_VERIFY_TOKEN
-    
-    Você deve retornar o hub.challenge
-    """
+async def verify_instagram(request: Request):
+    """Verificação do webhook pela Meta."""
+    mode      = request.query_params.get("hub.mode")
+    challenge = request.query_params.get("hub.challenge")
+    token     = request.query_params.get("hub.verify_token")
+    verify    = os.getenv("INSTAGRAM_VERIFY_TOKEN", "nexus_verify_token")
+    if mode == "subscribe" and token == verify:
+        logger.info("✅ Webhook Instagram verificado")
+        return int(challenge)
+    raise HTTPException(status_code=403, detail="Token inválido")
+
+
+@router.post("/webhooks/instagram")
+async def webhook_instagram(request: Request):
     try:
-        mode = request.query_params.get("hub.mode")
-        challenge = request.query_params.get("hub.challenge")
-        verify_token = request.query_params.get("hub.verify_token")
-        
-        # Comparar token (armazenar em .env)
-        INSTAGRAM_VERIFY_TOKEN = "seu_verify_token_aqui"
-        
-        if mode == "subscribe" and verify_token == INSTAGRAM_VERIFY_TOKEN:
-            logger.info("✅ Webhook Instagram verificado pela Meta")
-            return int(challenge)
-        else:
-            logger.warning("❌ Token de verificação inválido")
-            raise HTTPException(status_code=403, detail="Invalid token")
-    
-    except Exception as e:
-        logger.error(f"❌ Erro na verificação: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        payload = await request.json()
+    except Exception:
+        return {"status": "ok"}
+    for entry in payload.get("entry", []):
+        for change in entry.get("changes", []):
+            for msg in change.get("value", {}).get("messages", []):
+                logger.info(f"📸 Instagram de {msg.get('from','?')}: {msg.get('text','')[:80]}")
+    return {"status": "ok"}
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# 📊 MONITOR: Ver todos os webhooks em tempo real
-# ═══════════════════════════════════════════════════════════════════════
+# ─── Email Webhook ─────────────────────────────────────────────────────────────
 
-webhook_log = []  # Histórico simples (em produção, usar DB)
+@router.post("/webhooks/email")
+async def webhook_email(request: Request):
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = dict(await request.form())
+    logger.info(f"📧 Email de {payload.get('email','?')}: {payload.get('subject','')[:80]}")
+    return {"status": "ok"}
 
-@router.post("/api/webhooks/log")
-async def log_webhook_event(event: Dict[str, Any]):
-    """
-    Endpoint para logar todos os eventos de webhook
-    Útil para debugar
-    """
-    webhook_log.append({
-        "timestamp": datetime.now().isoformat(),
-        "event": event
-    })
-    return {"logged": True}
 
+# ─── Monitor (últimas mensagens recebidas) ────────────────────────────────────
+
+_recent_events: list = []
 
 @router.get("/api/webhooks/recent")
-async def get_recent_webhooks(limit: int = 10):
-    """
-    GET /api/webhooks/recent
-    Retorna os últimos N eventos de webhook
-    """
-    return {
-        "total": len(webhook_log),
-        "recent": webhook_log[-limit:]
-    }
+async def get_recent_webhooks(limit: int = 20):
+    return {"total": len(_recent_events), "recent": _recent_events[-limit:]}
 
 
 def create_webhook_router():
     return router
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)

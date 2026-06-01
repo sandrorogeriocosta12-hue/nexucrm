@@ -215,14 +215,46 @@ def template_verify_email(verify_link: str) -> str:
 
 
 def template_password_reset(reset_link: str) -> str:
-    """Template para redefinição de senha"""
-    return f"""<html><body style="font-family: sans-serif;">
-<div style="max-width: 500px; margin: 0 auto; padding: 20px;">
-<h1 style="color: #4f46e5;">Redefinir sua senha</h1>
-<p>Clique para redefinir:</p>
-<a href="{reset_link}" style="background: #4f46e5; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; margin: 20px 0;">Redefinir Senha</a>
-<p style="color: #666; font-size: 14px;">Este link expira em 1 hora.</p>
-</div></body></html>"""
+    """Template HTML profissional para redefinição de senha."""
+    return f"""<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f172a;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <div style="max-width:520px;margin:40px auto;background:#1e1b4b;border-radius:16px;overflow:hidden;border:1px solid #3730a3;">
+    <div style="background:linear-gradient(135deg,#6d28d9,#7c3aed);padding:32px 36px;">
+      <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Nexus IA</h1>
+      <p style="margin:6px 0 0;color:#c4b5fd;font-size:13px;">Sistema de Automação Inteligente</p>
+    </div>
+    <div style="padding:36px;">
+      <h2 style="color:#e2e8f0;font-size:18px;font-weight:600;margin:0 0 16px;">Olá,</h2>
+      <p style="color:#94a3b8;font-size:14px;line-height:1.7;margin:0 0 14px;">
+        Recebemos uma solicitação para redefinir a senha da sua conta no
+        <strong style="color:#c4b5fd;">Nexus CRM</strong>.
+      </p>
+      <p style="color:#94a3b8;font-size:14px;line-height:1.7;margin:0 0 28px;">
+        Para escolher uma nova senha e restabelecer o seu acesso, clique no botão abaixo.
+        Por motivos de segurança, este link é
+        <strong style="color:#fbbf24;">válido por 1 hora</strong>.
+      </p>
+      <div style="text-align:center;margin:0 0 32px;">
+        <a href="{reset_link}"
+           style="background:#6d28d9;color:#fff;padding:14px 32px;text-decoration:none;
+                  border-radius:8px;font-weight:700;font-size:15px;display:inline-block;">
+          Redefinir Minha Senha
+        </a>
+      </div>
+      <p style="color:#64748b;font-size:13px;line-height:1.6;font-style:italic;margin:0;">
+        Se você não solicitou essa alteração, nenhuma ação é necessária e sua senha atual continuará segura.
+      </p>
+    </div>
+    <div style="padding:20px 36px;border-top:1px solid #2d2d4a;">
+      <p style="margin:0;color:#475569;font-size:12px;line-height:1.6;">
+        Equipe de Segurança Nexus IA<br>Campos dos Goytacazes, RJ
+      </p>
+    </div>
+  </div>
+</body>
+</html>"""
 
 
 def template_invite(company_name: str, invite_link: str) -> str:

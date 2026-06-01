@@ -5,7 +5,7 @@ Autorização de "um clique" para WhatsApp (QR Code), Instagram (OAuth), Telegra
 FORCE REBUILD: 2024-01-15 21:00 UTC - Emergency cache bust
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request, status
 from pydantic import BaseModel
 from typing import Optional
 import httpx
@@ -19,6 +19,24 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from io import BytesIO
 from pathlib import Path
+
+
+async def _require_auth(request: Request) -> dict:
+    """Extrai e valida o token JWT da requisição."""
+    from app.core.auth import verify_token
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+    if not token:
+        token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    try:
+        data = verify_token(token)
+        return {"email": data.email, "user_id": data.user_id}
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 try:
     import qrcode
@@ -172,68 +190,94 @@ async def generate_whatsapp_qrcode(req: WhatsAppQRCodeRequest):
     Sistema fica "listening" no webhook
     Done! ✅
     """
-    print("🚨🚨🚨 EMERGENCY DEBUG: generate_whatsapp_qrcode called - VERSION 2024-01-15 🚨🚨🚨")
     try:
-        logger.info("🔍 DEBUG: Starting WhatsApp QR generation")
         EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
         EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "seu_api_key")
-        logger.info(f"🔍 DEBUG: EVOLUTION_API_URL={EVOLUTION_API_URL}, EVOLUTION_API_KEY={'*' * len(EVOLUTION_API_KEY) if EVOLUTION_API_KEY else 'None'}")
-
         use_real_evolution = await _evolution_api_health_check()
-        logger.info(f"🔍 DEBUG: use_real_evolution={use_real_evolution}")
 
         if use_real_evolution:
             try:
                 async with httpx.AsyncClient(timeout=30) as client:
-                    response = await client.post(
+                    headers = {"apikey": EVOLUTION_API_KEY}
+                    qrcode_url = None
+
+                    # 1) Verifica estado atual da instância
+                    state_resp = await client.get(
+                        f"{EVOLUTION_API_URL}/instance/connectionstate/{req.instance_name}",
+                        headers=headers,
+                    )
+                    if state_resp.status_code == 200:
+                        current_state = state_resp.json().get("instance", {}).get("state", "")
+                        if current_state == "open":
+                            # Já conectado — retorna sucesso direto
+                            return {
+                                "status": "connected",
+                                "message": "WhatsApp já está conectado!",
+                                "qrcode_url": "",
+                                "instance_name": req.instance_name,
+                            }
+                        # Se está em "connecting" (preso após scan falho), deleta e recria
+                        if current_state == "connecting":
+                            logger.info(f"🗑️ Instância {req.instance_name} presa em 'connecting' — deletando para recriar")
+                            await client.delete(
+                                f"{EVOLUTION_API_URL}/instance/delete/{req.instance_name}",
+                                headers=headers,
+                            )
+                            import asyncio
+                            await asyncio.sleep(1)  # aguarda deleção
+
+                    # 2) Cria nova instância (ou recria após deleção)
+                    create_resp = await client.post(
                         f"{EVOLUTION_API_URL}/instance/create",
-                        headers={"apikey": EVOLUTION_API_KEY},
+                        headers=headers,
                         json={
                             "instanceName": req.instance_name,
                             "qrcode": True,
                             "integration": "WHATSAPP-BAILEYS",
                             "webhook": {
-                                "url": f"{os.getenv('API_BASE_URL', 'http://localhost:8080')}/webhooks/whatsapp/{req.instance_name}",
+                                "url": f"{os.getenv('API_BASE_URL', 'http://localhost:8000')}/webhooks/whatsapp/{req.instance_name}",
                                 "events": ["MESSAGES_UPSERT", "CONNECTION_UPDATE", "QRCODE_UPDATED"]
                             }
                         }
                     )
+                    create_result = create_resp.json()
 
-                result = response.json()
-                if response.status_code not in (200, 201):
-                    raise Exception(f"Evolution API error {response.status_code}: {result}")
+                    if create_resp.status_code in (200, 201):
+                        qrcode_data = create_result.get("qrcode", {})
+                        qrcode_url = qrcode_data.get("base64") or qrcode_data.get("imageUrl", "")
 
-                # Evolution API v2 retorna qrcode.base64 (não imageUrl)
-                qrcode_data = result.get("qrcode", {})
-                qrcode_url = qrcode_data.get("base64") or qrcode_data.get("imageUrl", "")
-                if not qrcode_url:
-                    raise Exception("Evolution API retornou QR Code vazio")
+                    if not qrcode_url:
+                        # 3) Instância existente e não presa — usa /connect para pegar QR fresco
+                        logger.info(f"🔄 Buscando QR da instância existente: {req.instance_name}")
+                        connect_resp = await client.get(
+                            f"{EVOLUTION_API_URL}/instance/connect/{req.instance_name}",
+                            headers=headers,
+                        )
+                        if connect_resp.status_code == 200:
+                            connect_result = connect_resp.json()
+                            qrcode_url = connect_result.get("base64") or connect_result.get("qrcode", {}).get("base64", "")
 
-                logger.info(f"✅ QR Code gerado para {req.instance_name}")
-                return {
-                    "status": "pending",
-                    "message": "Escaneie o QR Code com seu WhatsApp",
-                    "qrcode_url": qrcode_url,
-                    "instance_name": req.instance_name,
-                    "instruction": "1. Aponte a câmera do seu celular para o código\n2. Escaneie com o WhatsApp\n3. Aguarde conexão (leva ~10 segundos)"
-                }
+                    if not qrcode_url:
+                        raise Exception("Evolution API não retornou QR Code")
+
+                    logger.info(f"✅ QR Code obtido para {req.instance_name}")
+                    return {
+                        "status": "pending",
+                        "message": "Escaneie o QR Code com seu WhatsApp",
+                        "qrcode_url": qrcode_url,
+                        "instance_name": req.instance_name,
+                        "instruction": "1. Aponte a câmera do seu celular para o código\n2. Escaneie com o WhatsApp\n3. Aguarde conexão (leva ~10 segundos)"
+                    }
             except Exception as e:
                 logger.warning(f"⚠️ Evolution API falhou ao gerar QR Code: {str(e)}")
                 raise HTTPException(
                     status_code=503,
-                    detail=(
-                        "Evolution API indisponível ou inacessível. "
-                        "Verifique EVOLUTION_API_URL, EVOLUTION_API_KEY e se o serviço está rodando."
-                    )
+                    detail=f"Erro ao gerar QR Code: {str(e)}"
                 )
 
-        logger.info("🔍 DEBUG: Raising 503 because Evolution API is not available")
         raise HTTPException(
             status_code=503,
-            detail=(
-                "Evolution API não está configurada corretamente ou não está acessível. "
-                "Verifique EVOLUTION_API_URL e EVOLUTION_API_KEY no .env e se o serviço está rodando."
-            )
+            detail="Evolution API não está configurada. Verifique EVOLUTION_API_URL e EVOLUTION_API_KEY."
         )
     except HTTPException:
         raise
@@ -280,12 +324,19 @@ async def check_whatsapp_status(instance_name: str):
                 raise Exception(f"Evolution API retornou {response.status_code}")
 
             result = response.json()
-            connection_state = result.get("connectionState", "DISCONNECTED")
+            # Evolution API returns {"instance": {"state": "open"}} when connected
+            instance_info = result.get("instance", {})
+            connection_state = (
+                instance_info.get("state")
+                or result.get("connectionState")
+                or "DISCONNECTED"
+            )
+            is_connected = connection_state in ("open", "CONNECTED")
 
             return {
-                "status": "connected" if connection_state == "CONNECTED" else "waiting",
+                "status": "connected" if is_connected else "waiting",
                 "state": connection_state,
-                "message": "WhatsApp conectado!" if connection_state == "CONNECTED" else "Aguardando QR Code..."
+                "message": "WhatsApp conectado!" if is_connected else "Aguardando QR Code..."
             }
     except Exception as e:
         logger.warning(f"⚠️ Erro ao verificar status do WhatsApp: {str(e)}")
@@ -294,6 +345,118 @@ async def check_whatsapp_status(instance_name: str):
             "state": "DISCONNECTED",
             "message": "Serviço WhatsApp temporariamente indisponível. Tente novamente mais tarde."
         }
+
+
+@router.post("/integrations/whatsapp/disconnect/{instance_name}")
+async def disconnect_whatsapp(instance_name: str, current_user: dict = Depends(_require_auth)):
+    """Desconecta (logout) uma instância WhatsApp da Evolution API."""
+    EVO_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+    EVO_KEY = os.getenv("EVOLUTION_API_KEY", "")
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.delete(
+                f"{EVO_URL}/instance/logout/{instance_name}",
+                headers={"apikey": EVO_KEY}
+            )
+        # Atualiza status no banco
+        try:
+            import psycopg2
+            DB = os.getenv("DATABASE_URL", "postgresql://vexus:vexus_password_123@localhost/vexus_crm")
+            con = psycopg2.connect(DB)
+            cur = con.cursor()
+            cur.execute("UPDATE nexus.whatsapp_instances SET status='disconnected' WHERE instance_name=%s", (instance_name,))
+            con.commit(); con.close()
+        except Exception:
+            pass
+        return {"status": "disconnected", "message": "WhatsApp desconectado com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/integrations/whatsapp/instances")
+async def list_whatsapp_instances(user_email: str = "", current_user: dict = Depends(_require_auth)):
+    """Lista as instâncias WhatsApp do usuário autenticado — isolado por JWT."""
+    # Ignora user_email do query param: sempre usa o email do token JWT
+    _email = current_user.get("email", "")
+    try:
+        import psycopg2, psycopg2.extras
+        DB = os.getenv("DATABASE_URL", "postgresql://vexus:vexus_password_123@localhost/vexus_crm")
+        con = psycopg2.connect(DB)
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        if _email:
+            cur.execute("SELECT * FROM nexus.whatsapp_instances WHERE user_email=%s ORDER BY id", (_email,))
+        else:
+            cur.execute("SELECT * FROM nexus.whatsapp_instances WHERE 1=0")  # sem email = resultado vazio
+        rows = [dict(r) for r in cur.fetchall()]
+        con.close()
+
+        # Enriquece com estado real da Evolution API
+        EVO_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+        EVO_KEY = os.getenv("EVOLUTION_API_KEY", "")
+        async with httpx.AsyncClient(timeout=10) as client:
+            for inst in rows:
+                try:
+                    r = await client.get(f"{EVO_URL}/instance/connectionstate/{inst['instance_name']}", headers={"apikey": EVO_KEY})
+                    state = r.json().get("instance", {}).get("state", "unknown") if r.status_code == 200 else "unknown"
+                    inst["live_status"] = "connected" if state == "open" else state
+                except Exception:
+                    inst["live_status"] = inst.get("status", "unknown")
+        return {"instances": rows}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class NewInstanceRequest(BaseModel):
+    user_email: str
+    instance_name: str
+
+
+@router.post("/integrations/whatsapp/instances")
+async def create_whatsapp_instance(req: NewInstanceRequest, current_user: dict = Depends(_require_auth)):
+    """Cria/registra nova instância WhatsApp para o usuário (Multi-Zap)."""
+    try:
+        import psycopg2
+        DB = os.getenv("DATABASE_URL", "postgresql://vexus:vexus_password_123@localhost/vexus_crm")
+        con = psycopg2.connect(DB)
+        cur = con.cursor()
+        cur.execute("""
+            INSERT INTO nexus.whatsapp_instances (user_email, instance_name, status)
+            VALUES (%s, %s, 'pending')
+            ON CONFLICT (user_email, instance_name) DO NOTHING
+        """, (req.user_email, req.instance_name))
+        con.commit(); con.close()
+        return {"status": "created", "instance_name": req.instance_name}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/integrations/whatsapp/instances/{instance_name}")
+async def delete_whatsapp_instance(instance_name: str, current_user: dict = Depends(_require_auth)):
+    """Remove completamente uma instância WhatsApp: faz logout, deleta na Evolution e remove do banco."""
+    EVO_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+    EVO_KEY = os.getenv("EVOLUTION_API_KEY", "")
+    async with httpx.AsyncClient(timeout=15) as client:
+        try:
+            await client.delete(f"{EVO_URL}/instance/logout/{instance_name}", headers={"apikey": EVO_KEY})
+        except Exception:
+            pass
+        try:
+            await client.delete(f"{EVO_URL}/instance/delete/{instance_name}", headers={"apikey": EVO_KEY})
+        except Exception:
+            pass
+    try:
+        import psycopg2
+        DB = os.getenv("DATABASE_URL", "postgresql://vexus:vexus_password_123@localhost/vexus_crm")
+        con = psycopg2.connect(DB)
+        cur = con.cursor()
+        cur.execute(
+            "DELETE FROM nexus.whatsapp_instances WHERE instance_name=%s AND user_email=%s",
+            (instance_name, current_user.get("email", ""))
+        )
+        con.commit(); con.close()
+    except Exception:
+        pass
+    return {"status": "deleted", "instance_name": instance_name}
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -469,7 +632,7 @@ async def connect_telegram(req: TelegramBotRequest):
             bot_id = bot_data.get("id")
             
             # 2️⃣ Registrar webhook
-            webhook_url = f"{os.getenv('API_BASE_URL', 'http://localhost:8080')}/webhooks/telegram/{req.client_id}"
+            webhook_url = f"{os.getenv('API_BASE_URL', 'http://localhost:8000')}/webhooks/telegram/{req.client_id}"
             
             webhook_response = await client.post(
                 f"{TELEGRAM_API_URL}/bot{req.bot_token}/setWebhook",
@@ -671,7 +834,7 @@ class EmailConfigRequest(BaseModel):
 
 
 @router.get("/integrations/email/status")
-async def email_status():
+async def email_status(current_user: dict = Depends(_require_auth)):
     return _get_email_status()
 
 

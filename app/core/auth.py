@@ -10,7 +10,7 @@ from pydantic import BaseModel
 # Configuration
 SECRET_KEY = "vexus-secret-key-change-in-production"  # Change in production!
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 horas
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 # Password hashing

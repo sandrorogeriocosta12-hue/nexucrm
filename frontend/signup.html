@@ -13,79 +13,185 @@
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
         input, select { outline: none; }
         input:focus, select:focus { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
-        .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.75rem 1.25rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600; z-index: 9999; animation: slideIn 0.3s ease; }
-        .toast.ok  { background: #064e3b; border: 1px solid #10b981; color: #6ee7b7; }
-        .toast.err { background: #4c0519; border: 1px solid #f43f5e; color: #fda4af; }
-        @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        select option { background: #1e293b; }
+        .step { display: none; }
+        .step.active { display: block; }
+        .progress-bar { transition: width 0.4s ease; }
+        .plan-card { border: 2px solid transparent; transition: all 0.2s; cursor: pointer; }
+        .plan-card:hover { border-color: rgba(124,58,237,0.5); background: rgba(124,58,237,0.05); }
+        .plan-card.selected { border-color: #7c3aed; background: rgba(124,58,237,0.1); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-box { background: #0f172a; border: 1px solid rgba(124,58,237,0.3); border-radius: 1rem; max-width: 640px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; }
+        .modal-body { overflow-y: auto; flex: 1; padding: 1.5rem; line-height: 1.7; color: #cbd5e1; font-size: 0.875rem; }
+        .modal-body h2 { color: white; font-size: 1rem; font-weight: 700; margin: 1rem 0 0.4rem; }
+        .modal-body p, .modal-body li { margin-bottom: 0.5rem; }
+        .modal-body ul { padding-left: 1.25rem; list-style: disc; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 py-10">
 
-    <!-- Background glows -->
-    <div class="fixed inset-0 pointer-events-none overflow-hidden">
-        <div class="absolute -top-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl"></div>
+<!-- Background glows -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden">
+    <div class="absolute -top-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl"></div>
+</div>
+
+<!-- Terms Modal -->
+<div id="termsModal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('termsModal')">
+    <div class="modal-box">
+        <div class="flex items-center justify-between p-4 border-b border-slate-800">
+            <h3 class="text-white font-bold text-base">Termos de Serviço</h3>
+            <button onclick="closeModal('termsModal')" class="text-slate-400 hover:text-white text-xl leading-none">×</button>
+        </div>
+        <div class="modal-body">
+            <h2>1. Aceitação dos Termos</h2>
+            <p>Ao criar uma conta no Nexus CRM, você concorda com estes Termos de Serviço. Leia com atenção antes de prosseguir.</p>
+            <h2>2. Descrição do Serviço</h2>
+            <p>O Nexus CRM é uma plataforma de gestão de relacionamento com clientes que inclui automação via WhatsApp, agentes de IA, funil de vendas e ferramentas de comunicação omnichannel.</p>
+            <h2>3. Período de Testes (Trial)</h2>
+            <p>Novos usuários têm acesso gratuito por <strong style="color:#a78bfa">15 dias</strong>. Após esse período, é necessário assinar um plano pago para continuar usando o serviço. Nenhuma cobrança é feita durante o trial.</p>
+            <h2>4. Uso Aceitável</h2>
+            <ul>
+                <li>Não utilize a plataforma para envio de spam ou mensagens não solicitadas em massa.</li>
+                <li>Respeite as políticas de uso do WhatsApp Business API.</li>
+                <li>Não tente contornar ou hackear sistemas de segurança.</li>
+            </ul>
+            <h2>5. Dados e Privacidade</h2>
+            <p>Seus dados são armazenados com segurança em servidores brasileiros. Não vendemos informações pessoais a terceiros. Consulte nossa Política de Privacidade para detalhes completos.</p>
+            <h2>6. Cancelamento</h2>
+            <p>Você pode cancelar sua assinatura a qualquer momento. O acesso permanece ativo até o fim do período pago.</p>
+            <h2>7. Limitação de Responsabilidade</h2>
+            <p>O Nexus CRM não se responsabiliza por perdas de dados causadas por uso indevido ou falhas de terceiros (como Meta/WhatsApp). Recomendamos exportar backups periodicamente.</p>
+            <h2>8. Alterações</h2>
+            <p>Podemos atualizar estes termos com aviso prévio de 15 dias por e-mail.</p>
+            <p class="mt-4 text-slate-500">Última atualização: Maio de 2026. Nexus IA — Campos dos Goytacazes, RJ.</p>
+        </div>
+        <div class="p-4 border-t border-slate-800 flex justify-end gap-3">
+            <button onclick="closeModal('termsModal')" class="px-5 py-2 rounded-xl text-slate-400 hover:text-white text-sm">Fechar</button>
+            <button onclick="acceptTerms()" class="btn-primary px-5 py-2 rounded-xl text-white font-semibold text-sm">Li e Aceito</button>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Modal -->
+<div id="privacyModal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('privacyModal')">
+    <div class="modal-box">
+        <div class="flex items-center justify-between p-4 border-b border-slate-800">
+            <h3 class="text-white font-bold text-base">Política de Privacidade</h3>
+            <button onclick="closeModal('privacyModal')" class="text-slate-400 hover:text-white text-xl leading-none">×</button>
+        </div>
+        <div class="modal-body">
+            <h2>1. Dados que Coletamos</h2>
+            <ul>
+                <li><strong>Cadastro:</strong> nome, e-mail, empresa, perfil de uso.</li>
+                <li><strong>Conversas:</strong> mensagens trocadas pelo WhatsApp integrado à plataforma.</li>
+                <li><strong>Uso:</strong> logs de acesso, ações no painel, para fins de segurança e melhoria.</li>
+            </ul>
+            <h2>2. Como Usamos seus Dados</h2>
+            <ul>
+                <li>Operação e manutenção da plataforma.</li>
+                <li>Treinamento dos agentes de IA com os dados do seu negócio (somente com sua autorização).</li>
+                <li>Comunicações transacionais (avisos de cobrança, suporte).</li>
+            </ul>
+            <h2>3. Compartilhamento</h2>
+            <p>Não vendemos seus dados. Podemos compartilhar com prestadores de serviço (hosting, pagamentos) apenas o necessário para operar a plataforma.</p>
+            <h2>4. Armazenamento</h2>
+            <p>Dados armazenados em servidores no Brasil (Locaweb). Backups cifrados a cada 24 horas. Retenção: 30 dias após cancelamento.</p>
+            <h2>5. Seus Direitos (LGPD)</h2>
+            <ul>
+                <li>Solicitar acesso, correção ou exclusão dos seus dados.</li>
+                <li>Revogar consentimento a qualquer momento.</li>
+                <li>Portabilidade de dados mediante solicitação.</li>
+            </ul>
+            <p>Contato: <strong style="color:#a78bfa">nexuscrmia@gmail.com</strong></p>
+            <h2>6. Cookies</h2>
+            <p>Usamos apenas cookies essenciais para autenticação (HttpOnly, sem rastreamento de terceiros).</p>
+            <p class="mt-4 text-slate-500">Última atualização: Maio de 2026. Nexus IA — Campos dos Goytacazes, RJ.</p>
+        </div>
+        <div class="p-4 border-t border-slate-800 flex justify-end gap-3">
+            <button onclick="closeModal('privacyModal')" class="px-5 py-2 rounded-xl text-slate-400 hover:text-white text-sm">Fechar</button>
+            <button onclick="acceptTerms()" class="btn-primary px-5 py-2 rounded-xl text-white font-semibold text-sm">Li e Aceito</button>
+        </div>
+    </div>
+</div>
+
+<div class="relative w-full max-w-lg">
+    <!-- Logo -->
+    <div class="flex flex-col items-center gap-3 mb-6">
+        <a href="/" class="inline-flex flex-col items-center gap-2">
+            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-purple-500/30">N</div>
+            <span class="text-white font-bold">Nexus CRM</span>
+        </a>
     </div>
 
-    <div class="relative w-full max-w-md">
-        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+    <!-- Progress bar -->
+    <div class="mb-4 px-1">
+        <div class="flex items-center justify-between mb-2">
+            <div id="stepLabel" class="text-xs font-semibold text-purple-400 uppercase tracking-wide">Passo 1 de 3 — Credenciais</div>
+            <div class="text-xs text-slate-500" id="stepCounter">33%</div>
+        </div>
+        <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div id="progressBar" class="progress-bar h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style="width:33%"></div>
+        </div>
+    </div>
 
-            <!-- Logo -->
-            <div class="flex flex-col items-center gap-3 mb-8">
-                <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-purple-500/30">N</div>
-                <div class="text-center">
-                    <h1 class="text-lg font-bold text-white">Nexus CRM</h1>
-                    <p class="text-slate-500 text-sm">Gestão inteligente de relacionamentos</p>
-                </div>
-            </div>
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
 
+        <!-- Error box (shared) -->
+        <div id="errorBox" class="hidden bg-red-950/50 border border-red-800/50 text-red-300 text-sm rounded-xl px-4 py-3 mb-5"></div>
+
+        <!-- ═══ STEP 1: Credentials ═══ -->
+        <div id="step1" class="step active">
             <h2 class="text-2xl font-bold text-white text-center mb-1">Criar sua conta</h2>
-            <p class="text-slate-400 text-sm text-center mb-6">Comece gratuitamente, sem cartão</p>
+            <p class="text-slate-400 text-sm text-center mb-6">Comece gratuitamente · 15 dias sem cobrança</p>
 
-            <!-- Error / Success boxes -->
-            <div id="errorBox"   class="hidden bg-red-950/50 border border-red-800/50 text-red-300 text-sm rounded-xl px-4 py-3 mb-5"></div>
-            <div id="successBox" class="hidden bg-green-950/50 border border-green-800/50 text-green-300 text-sm rounded-xl px-4 py-3 mb-5"></div>
-
-            <form id="signupForm" class="space-y-4">
+            <div class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Nome</label>
-                        <input type="text" id="firstName" placeholder="João" required
+                        <input type="text" id="firstName" placeholder="João" autocomplete="given-name"
                             class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm transition-all">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Sobrenome</label>
-                        <input type="text" id="lastName" placeholder="Silva" required
+                        <input type="text" id="lastName" placeholder="Silva" autocomplete="family-name"
                             class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm transition-all">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">E-mail</label>
-                    <input type="email" id="email" placeholder="voce@empresa.com" required
+                    <input type="email" id="email" placeholder="voce@empresa.com" autocomplete="email"
                         class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm transition-all">
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Empresa <span class="text-slate-600 normal-case font-normal">(opcional)</span></label>
-                    <input type="text" id="company" placeholder="Sua Empresa Ltda"
+                    <input type="text" id="company" placeholder="Sua Empresa Ltda" autocomplete="organization"
                         class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm transition-all">
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Senha</label>
                     <div class="relative">
-                        <input type="password" id="password" placeholder="Mínimo 6 caracteres" required
+                        <input type="password" id="password" placeholder="Mínimo 8 caracteres"
+                            oninput="checkPwdReqs(this.value)" autocomplete="new-password"
                             class="w-full px-4 py-3 pr-12 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm transition-all">
                         <button type="button" onclick="togglePwd('password','tp1')" id="tp1"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors px-1 text-base">👁️</button>
+                    </div>
+                    <div id="pwd-reqs" class="hidden mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
+                        <div id="req-len"   class="flex items-center gap-1 text-xs text-slate-500"><span id="ri-len">○</span> Mín. 8 caracteres</div>
+                        <div id="req-upper" class="flex items-center gap-1 text-xs text-slate-500"><span id="ri-upper">○</span> 1 maiúscula</div>
+                        <div id="req-num"   class="flex items-center gap-1 text-xs text-slate-500"><span id="ri-num">○</span> 1 número</div>
+                        <div id="req-spec"  class="flex items-center gap-1 text-xs text-slate-500"><span id="ri-spec">○</span> 1 especial (@#$%...)</div>
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Confirmar Senha</label>
                     <div class="relative">
-                        <input type="password" id="confirmPassword" placeholder="Repita a senha" required
+                        <input type="password" id="confirmPassword" placeholder="Repita a senha" autocomplete="new-password"
                             class="w-full px-4 py-3 pr-12 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm transition-all">
                         <button type="button" onclick="togglePwd('confirmPassword','tp2')" id="tp2"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors px-1 text-base">👁️</button>
@@ -93,27 +199,320 @@
                 </div>
 
                 <div class="flex items-start gap-3 pt-1">
-                    <input type="checkbox" id="terms" required class="mt-0.5 w-4 h-4 accent-purple-500 flex-shrink-0">
+                    <input type="checkbox" id="terms" class="mt-0.5 w-4 h-4 accent-purple-500 flex-shrink-0">
                     <label for="terms" class="text-sm text-slate-400">
-                        Concordo com os <a href="/terms" target="_blank" class="text-purple-400 hover:text-purple-300">Termos de Serviço</a>
-                        e <a href="/privacy" target="_blank" class="text-purple-400 hover:text-purple-300">Política de Privacidade</a>
+                        Concordo com os
+                        <button type="button" onclick="openModal('termsModal')" class="text-purple-400 hover:text-purple-300 underline">Termos de Serviço</button>
+                        e
+                        <button type="button" onclick="openModal('privacyModal')" class="text-purple-400 hover:text-purple-300 underline">Política de Privacidade</button>
                     </label>
                 </div>
 
-                <button type="submit" id="submitBtn" class="btn-primary w-full py-3 rounded-xl font-bold text-white text-sm mt-2">
-                    Criar Conta Gratuitamente
+                <button type="button" onclick="goStep2()" class="btn-primary w-full py-3 rounded-xl font-bold text-white text-sm">
+                    Continuar →
                 </button>
-            </form>
-
-            <p class="text-center text-slate-400 text-sm mt-6">
-                Já tem uma conta? <a href="/login" class="text-purple-400 hover:text-purple-300 font-semibold transition-colors">Fazer login</a>
-            </p>
+            </div>
         </div>
+
+        <!-- ═══ STEP 2: AI Questionnaire ═══ -->
+        <div id="step2" class="step">
+            <h2 class="text-xl font-bold text-white mb-1">Personalize sua IA</h2>
+            <p class="text-slate-400 text-sm mb-6">Esses dados configuram automaticamente o agente de atendimento para o seu negócio.</p>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Ramo de Atuação</label>
+                    <select id="ramo_empresa"
+                        class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm transition-all appearance-none cursor-pointer">
+                        <option value="">Selecione o setor da empresa...</option>
+                        <option value="saude">🏥 Saúde e Bem-estar</option>
+                        <option value="estetica">💅 Estética e Beleza</option>
+                        <option value="vendas_varejo">🛒 Vendas e Varejo</option>
+                        <option value="educacao">📚 Educação e Cursos</option>
+                        <option value="imoveis">🏠 Imóveis e Construtoras</option>
+                        <option value="juridico">⚖️ Jurídico e Advocacia</option>
+                        <option value="tecnologia">💻 Tecnologia e Software</option>
+                        <option value="financeiro">💰 Financeiro e Contabilidade</option>
+                        <option value="alimentacao">🍽️ Alimentação e Delivery</option>
+                        <option value="servicos">🔧 Serviços Gerais</option>
+                        <option value="outros">📋 Outros</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Objetivo Principal da IA</label>
+                    <select id="objetivo_ia"
+                        class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm transition-all appearance-none cursor-pointer">
+                        <option value="">Qual o foco do robô?</option>
+                        <option value="atendimento_suporte">💬 Atendimento e Suporte ao Cliente</option>
+                        <option value="vendas_agendamentos">📅 Vendas e Agendamentos</option>
+                        <option value="triagem_roteamento">🔀 Triagem e Roteamento de Leads</option>
+                        <option value="cobranca_followup">💳 Cobrança e Follow-up</option>
+                        <option value="qualificacao_leads">🎯 Qualificação de Leads</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Tom de Voz do Robô</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="tom" value="formal" class="sr-only peer">
+                            <div class="peer-checked:border-purple-500 peer-checked:bg-purple-500/10 border-2 border-slate-700 rounded-xl p-3 text-center transition-all hover:border-slate-600">
+                                <div class="text-xl mb-1">🎩</div>
+                                <div class="text-xs font-semibold text-white">Formal</div>
+                                <div class="text-[10px] text-slate-500">e Técnico</div>
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="tom" value="amigavel" class="sr-only peer" checked>
+                            <div class="peer-checked:border-purple-500 peer-checked:bg-purple-500/10 border-2 border-slate-700 rounded-xl p-3 text-center transition-all hover:border-slate-600">
+                                <div class="text-xl mb-1">😊</div>
+                                <div class="text-xs font-semibold text-white">Amigável</div>
+                                <div class="text-[10px] text-slate-500">e Descontraído</div>
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="tom" value="comercial" class="sr-only peer">
+                            <div class="peer-checked:border-purple-500 peer-checked:bg-purple-500/10 border-2 border-slate-700 rounded-xl p-3 text-center transition-all hover:border-slate-600">
+                                <div class="text-xl mb-1">📈</div>
+                                <div class="text-xs font-semibold text-white">Comercial</div>
+                                <div class="text-[10px] text-slate-500">e Direto</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="goStep(1)" class="flex-1 py-3 rounded-xl text-slate-400 border border-slate-700 hover:border-slate-600 text-sm transition-all">
+                        ← Voltar
+                    </button>
+                    <button type="button" onclick="goStep3()" class="flex-1 btn-primary py-3 rounded-xl font-bold text-white text-sm">
+                        Continuar →
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ STEP 3: Plan ═══ -->
+        <div id="step3" class="step">
+            <h2 class="text-xl font-bold text-white mb-1">Escolha seu plano</h2>
+            <p class="text-slate-400 text-sm mb-5">15 dias de teste gratuito. Nenhuma cobrança hoje.</p>
+
+            <!-- Trial banner -->
+            <div class="bg-green-900/20 border border-green-700/40 rounded-xl px-4 py-3 mb-5 flex items-center gap-3">
+                <div class="text-2xl">🎁</div>
+                <div>
+                    <div class="text-green-400 font-bold text-sm">15 dias grátis incluídos</div>
+                    <div class="text-green-600 text-xs">Cancele antes do vencimento e não paga nada. Sem pegadinhas.</div>
+                </div>
+            </div>
+
+            <!-- Plans -->
+            <div class="space-y-3 mb-5" id="planCards">
+                <div class="plan-card rounded-xl p-4" data-plan="starter" onclick="selectPlan(this)">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 bg-blue-500/20 rounded-lg flex items-center justify-center text-lg">🚀</div>
+                            <div>
+                                <div class="text-white font-bold text-sm">Starter</div>
+                                <div class="text-slate-500 text-xs">1 agente · 1.000 msgs/mês</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">R$97<span class="text-slate-500 text-xs font-normal">/mês</span></div>
+                            <div class="text-green-400 text-xs">15 dias grátis</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plan-card selected rounded-xl p-4" data-plan="pro" onclick="selectPlan(this)">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 bg-purple-500/20 rounded-lg flex items-center justify-center text-lg">⚡</div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-white font-bold text-sm">Pro</span>
+                                    <span class="bg-purple-500/20 text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded-full">POPULAR</span>
+                                </div>
+                                <div class="text-slate-500 text-xs">3 agentes · 10.000 msgs/mês</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">R$197<span class="text-slate-500 text-xs font-normal">/mês</span></div>
+                            <div class="text-green-400 text-xs">15 dias grátis</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plan-card rounded-xl p-4" data-plan="enterprise" onclick="selectPlan(this)">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 bg-yellow-500/20 rounded-lg flex items-center justify-center text-lg">🏆</div>
+                            <div>
+                                <div class="text-white font-bold text-sm">Enterprise</div>
+                                <div class="text-slate-500 text-xs">Ilimitado · Suporte dedicado</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">R$497<span class="text-slate-500 text-xs font-normal">/mês</span></div>
+                            <div class="text-green-400 text-xs">15 dias grátis</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guarantee -->
+            <p class="text-center text-slate-500 text-xs mb-5">
+                🔒 Dados protegidos · Cancele quando quiser · Sem fidelidade
+            </p>
+
+            <div id="successBox" class="hidden bg-green-950/50 border border-green-800/50 text-green-300 text-sm rounded-xl px-4 py-3 mb-4"></div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="goStep(2)" class="flex-shrink-0 px-5 py-3 rounded-xl text-slate-400 border border-slate-700 hover:border-slate-600 text-sm transition-all">
+                    ← Voltar
+                </button>
+                <button type="button" id="submitBtn" onclick="submitSignup()" class="flex-1 btn-primary py-3 rounded-xl font-bold text-white text-sm">
+                    Começar Trial Gratuito 🚀
+                </button>
+            </div>
+        </div>
+
+        <p class="text-center text-slate-400 text-sm mt-6">
+            Já tem uma conta? <a href="/login" class="text-purple-400 hover:text-purple-300 font-semibold transition-colors">Fazer login</a>
+        </p>
     </div>
+</div>
 
 <script>
 const API = window.location.origin;
+let _selectedPlan = 'pro';
 
+// ── Progress ──────────────────────────────────────────────
+const STEPS = [
+    { label: 'Credenciais', pct: 33 },
+    { label: 'Perfil da IA', pct: 66 },
+    { label: 'Plano & Trial', pct: 100 },
+];
+
+function goStep(n) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`step${n}`).classList.add('active');
+    const s = STEPS[n - 1];
+    document.getElementById('stepLabel').textContent = `Passo ${n} de 3 — ${s.label}`;
+    document.getElementById('stepCounter').textContent = s.pct + '%';
+    document.getElementById('progressBar').style.width = s.pct + '%';
+    document.getElementById('errorBox').classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Step 1 validation ─────────────────────────────────────
+function goStep2() {
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName  = document.getElementById('lastName').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const password  = document.getElementById('password').value;
+    const confirm   = document.getElementById('confirmPassword').value;
+    const terms     = document.getElementById('terms').checked;
+
+    if (!firstName || !lastName) return showError('Informe seu nome e sobrenome.');
+    if (!email || !email.includes('@')) return showError('Informe um e-mail válido.');
+    if (!isPwdStrong(password)) return showError('A senha precisa ter mín. 8 caracteres, 1 maiúscula, 1 número e 1 especial.');
+    if (password !== confirm) return showError('As senhas não coincidem.');
+    if (!terms) return showError('Aceite os Termos de Serviço para continuar.');
+    goStep(2);
+}
+
+// ── Step 2 validation ─────────────────────────────────────
+function goStep3() {
+    const ramo = document.getElementById('ramo_empresa').value;
+    const obj  = document.getElementById('objetivo_ia').value;
+    if (!ramo) return showError('Selecione o ramo de atuação da empresa.');
+    if (!obj)  return showError('Selecione o objetivo principal da IA.');
+    goStep(3);
+}
+
+// ── Plan selection ────────────────────────────────────────
+function selectPlan(card) {
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    _selectedPlan = card.dataset.plan;
+}
+
+// ── Submit (Step 3) ───────────────────────────────────────
+async function submitSignup() {
+    const btn = document.getElementById('submitBtn');
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName  = document.getElementById('lastName').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const company   = document.getElementById('company').value.trim();
+    const password  = document.getElementById('password').value;
+    const ramo      = document.getElementById('ramo_empresa').value;
+    const obj       = document.getElementById('objetivo_ia').value;
+    const tom       = document.querySelector('input[name="tom"]:checked')?.value || 'amigavel';
+
+    btn.disabled = true;
+    btn.textContent = 'Criando conta...';
+
+    try {
+        const res = await fetch(`${API}/api/auth/signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                name: `${firstName} ${lastName}`.trim(),
+                email,
+                password,
+                company,
+                ramo_empresa: ramo,
+                objetivo_ia: obj,
+                tom_de_voz: tom,
+                plan: 'trial',
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Erro ao criar conta');
+
+        if (data.access_token) localStorage.setItem('nexus_token', data.access_token);
+        localStorage.setItem('user_email', email);
+        localStorage.setItem('user_name', `${firstName} ${lastName}`.trim());
+        if (company) localStorage.setItem('user_company', company);
+        localStorage.setItem('selected_plan', _selectedPlan);
+
+        document.getElementById('successBox').textContent = '✅ Conta criada! Redirecionando para o painel...';
+        document.getElementById('successBox').classList.remove('hidden');
+        btn.textContent = 'Entrando...';
+
+        setTimeout(() => { window.location.href = '/'; }, 1200);
+    } catch (err) {
+        showError(err.message || 'Erro ao criar conta. Tente novamente.');
+        btn.disabled = false;
+        btn.textContent = 'Começar Trial Gratuito 🚀';
+    }
+}
+
+// ── Modals ────────────────────────────────────────────────
+function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = '';
+}
+function acceptTerms() {
+    document.getElementById('terms').checked = true;
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+        document.body.style.overflow = '';
+    }
+});
+
+// ── Password helpers ──────────────────────────────────────
 function togglePwd(inputId, btnId) {
     const input = document.getElementById(inputId);
     const btn   = document.getElementById(btnId);
@@ -122,79 +521,26 @@ function togglePwd(inputId, btnId) {
     btn.textContent = show ? '🙈' : '👁️';
 }
 
-document.getElementById('signupForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName  = document.getElementById('lastName').value.trim();
-    const email     = document.getElementById('email').value.trim();
-    const company   = document.getElementById('company').value.trim();
-    const password  = document.getElementById('password').value;
-    const confirm   = document.getElementById('confirmPassword').value;
-    const btn       = document.getElementById('submitBtn');
-    const errBox    = document.getElementById('errorBox');
-    const okBox     = document.getElementById('successBox');
+function isPwdStrong(v) {
+    return v.length >= 8 && /[A-Z]/.test(v) && /[0-9]/.test(v) && /[^A-Za-z0-9]/.test(v);
+}
 
-    errBox.classList.add('hidden');
-    okBox.classList.add('hidden');
+function checkPwdReqs(v) {
+    const box = document.getElementById('pwd-reqs');
+    if (!v) { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    [['ri-len', v.length >= 8], ['ri-upper', /[A-Z]/.test(v)], ['ri-num', /[0-9]/.test(v)], ['ri-spec', /[^A-Za-z0-9]/.test(v)]].forEach(([id, ok]) => {
+        const el = document.getElementById(id);
+        el.textContent = ok ? '✓' : '○';
+        el.parentElement.style.color = ok ? '#22c55e' : '';
+    });
+}
 
-    if (password !== confirm) {
-        errBox.textContent = 'As senhas não coincidem';
-        errBox.classList.remove('hidden');
-        return;
-    }
-    if (password.length < 6) {
-        errBox.textContent = 'Senha deve ter pelo menos 6 caracteres';
-        errBox.classList.remove('hidden');
-        return;
-    }
-
-    const fullName = `${firstName} ${lastName}`.trim();
-    btn.disabled = true;
-    btn.textContent = 'Criando conta...';
-
-    try {
-        const res  = await fetch(`${API}/api/auth/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ name: fullName, email, password, company })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Erro ao criar conta');
-
-        // Salvar dados para o dashboard
-        if (data.access_token) {
-            localStorage.setItem('nexus_token', data.access_token);
-        }
-        localStorage.setItem('user_email', email);
-        localStorage.setItem('user_name',  fullName);
-        if (company) localStorage.setItem('user_company', company);
-
-        const plan = new URLSearchParams(window.location.search).get('plan')
-                     || localStorage.getItem('selected_plan') || '';
-        if (plan) localStorage.setItem('selected_plan', plan);
-
-        okBox.textContent = '✅ Conta criada! Redirecionando...';
-        okBox.classList.remove('hidden');
-        toast('✅ Conta criada com sucesso!', 'ok');
-
-        setTimeout(() => {
-            window.location.href = plan ? '/payment' : '/';
-        }, 1200);
-    } catch (err) {
-        errBox.textContent = err.message || 'Erro ao criar conta. Tente novamente.';
-        errBox.classList.remove('hidden');
-        btn.disabled = false;
-        btn.textContent = 'Criar Conta Gratuitamente';
-    }
-});
-
-function toast(msg, type) {
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+function showError(msg) {
+    const el = document.getElementById('errorBox');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 </script>
 </body>

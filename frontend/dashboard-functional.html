@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexus CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
@@ -74,6 +76,38 @@
 
         .page-fade { animation: pageFade 0.25s ease-in; }
         @keyframes pageFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Temperature slider */
+        input[type=range] { -webkit-appearance: none; appearance: none; outline: none; height: 6px; border-radius: 3px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+        input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; cursor: pointer; border: none; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    /* ── Drawflow dark theme ── */
+    #drawflow { background-color: #020617; }
+    .drawflow { background: transparent !important; }
+    .drawflow .drawflow-node { background: #1e293b; border: 1px solid #334155; border-radius: 12px; color: #e2e8f0; min-width: 160px; padding: 0; }
+    .drawflow .drawflow-node.selected { border-color: #a855f7; box-shadow: 0 0 0 2px rgba(168,85,247,0.3); }
+    .drawflow .drawflow-node .title-box { padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 11px 11px 0 0; }
+    .drawflow .drawflow-node .box { padding: 8px 14px; font-size: 12px; color: #94a3b8; min-height: 32px; }
+    .drawflow .drawflow-node.node-start .title-box      { background: linear-gradient(135deg,#059669,#10b981); color:#fff; }
+    .drawflow .drawflow-node.node-agent .title-box      { background: linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; }
+    .drawflow .drawflow-node.node-condition .title-box  { background: linear-gradient(135deg,#d97706,#f59e0b); color:#fff; }
+    .drawflow .drawflow-node.node-classify .title-box   { background: linear-gradient(135deg,#0891b2,#06b6d4); color:#fff; }
+    .drawflow .drawflow-node.node-filesearch .title-box { background: linear-gradient(135deg,#0d9488,#14b8a6); color:#fff; }
+    .drawflow .drawflow-node.node-guardrails .title-box { background: linear-gradient(135deg,#c2410c,#ea580c); color:#fff; }
+    .drawflow .drawflow-node.node-action .title-box     { background: linear-gradient(135deg,#2563eb,#3b82f6); color:#fff; }
+    .drawflow .drawflow-node.node-end .title-box        { background: linear-gradient(135deg,#dc2626,#ef4444); color:#fff; }
+    .drawflow .connection .main-path { stroke: #a855f7; stroke-width: 2.5; transition: stroke 0.15s; }
+    .drawflow .connection:hover .main-path { stroke: #ef4444; stroke-width: 4; cursor: pointer; }
+    .drawflow .connection:hover { cursor: pointer; }
+    .drawflow .connection.selected .main-path { stroke: #f97316; stroke-width: 3.5; }
+    .drawflow-delete { background: #ef4444; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; }
+    .drawflow .input, .drawflow .output { background: #a855f7; border: 2px solid #7c3aed; width: 13px; height: 13px; }
+    .wf-help-btn { position:absolute; top:6px; right:8px; width:16px; height:16px; border-radius:50%; background:rgba(255,255,255,0.15); color:#cbd5e1; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; cursor:pointer; line-height:1; z-index:10; }
+    .wf-help-btn:hover { background:rgba(168,85,247,0.5); color:#fff; }
+    .drawflow .drawflow-node .title-box { position:relative; }
+    /* modo tesoura: cursor crosshair sobre conexões */
+    #drawflow.scissors-active .connection { cursor: crosshair !important; }
+    #drawflow.scissors-active .connection .main-path { stroke: #fbbf24; stroke-width: 3; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white min-h-screen flex">
@@ -81,23 +115,49 @@
 <!-- ══════════════════════════════════════════════════
      SIDEBAR
 ══════════════════════════════════════════════════ -->
-<nav class="w-16 bg-slate-950/90 border-r border-slate-800 flex flex-col items-center py-5 space-y-2 flex-shrink-0 sticky top-0 h-screen backdrop-blur-sm">
+<nav class="w-20 bg-slate-950/90 border-r border-slate-800 flex flex-col items-center py-5 gap-1 flex-shrink-0 sticky top-0 h-screen backdrop-blur-sm overflow-y-auto">
     <!-- Logo -->
-    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center font-bold text-white text-lg mb-3 cursor-pointer hover:scale-110 transition-transform shadow-lg shadow-purple-500/30" title="Nexus CRM">N</div>
+    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center font-bold text-white text-lg mb-4 cursor-pointer hover:scale-110 transition-transform shadow-lg shadow-purple-500/30" title="Nexus CRM">N</div>
 
-    <!-- Nav buttons -->
-    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl active" data-tab="dashboard" title="Dashboard" onclick="setActiveNav(this,'dashboard')">📊</button>
-    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="leads" title="Leads" onclick="setActiveNav(this,'leads')">📈</button>
-    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="campaigns" title="Campanhas" onclick="setActiveNav(this,'campaigns')">📢</button>
-    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="contacts" title="Contatos" onclick="setActiveNav(this,'contacts')">👥</button>
-    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="agents" title="Agentes IA" onclick="setActiveNav(this,'agents')">🤖</button>
-    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="integrations" title="Integrações" onclick="setActiveNav(this,'integrations')">🔗</button>
-    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="pipeline" title="Pipeline" onclick="window.open('/pipeline-nexus.html','_self')">📋</button>
+    <!-- Nav buttons com labels -->
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all active" data-tab="dashboard" onclick="setActiveNav(this,'dashboard')">
+        <span class="text-lg">📊</span><span class="text-[9px] font-semibold leading-none">Dashboard</span>
+    </button>
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="leads" onclick="setActiveNav(this,'leads')">
+        <span class="text-lg">📈</span><span class="text-[9px] font-semibold leading-none">Leads</span>
+    </button>
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="campaigns" onclick="setActiveNav(this,'campaigns')">
+        <span class="text-lg">📢</span><span class="text-[9px] font-semibold leading-none">Campanhas</span>
+    </button>
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="contacts" onclick="setActiveNav(this,'contacts')">
+        <span class="text-lg">👥</span><span class="text-[9px] font-semibold leading-none">Contatos</span>
+    </button>
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="pipeline" onclick="setActiveNav(this,'pipeline')">
+        <span class="text-lg">📋</span><span class="text-[9px] font-semibold leading-none">Pipeline</span>
+    </button>
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="agents" onclick="setActiveNav(this,'agents')">
+        <span class="text-lg">🤖</span><span class="text-[9px] font-semibold leading-none">Agentes</span>
+    </button>
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="inbox" onclick="setActiveNav(this,'inbox')">
+        <span class="text-lg">💬</span>
+        <span class="text-[9px] font-semibold leading-none">Mensagens</span>
+        <span id="inboxBadge" class="hidden absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center"></span>
+    </button>
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="workflows" onclick="setActiveNav(this,'workflows')">
+        <span class="text-lg">⚡</span><span class="text-[9px] font-semibold leading-none">Workflows</span>
+    </button>
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="integrations" onclick="setActiveNav(this,'integrations')">
+        <span class="text-lg">🔗</span><span class="text-[9px] font-semibold leading-none">Integrações</span>
+    </button>
 
     <div class="flex-1"></div>
 
-    <button class="nav-btn w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all text-xl" data-tab="settings" title="Configurações" onclick="setActiveNav(this,'settings')">⚙️</button>
-    <button class="w-12 h-12 flex items-center justify-center rounded-xl text-gray-400 hover:bg-red-900/50 hover:text-red-400 transition-all text-xl" title="Sair" onclick="logout()">🚪</button>
+    <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="settings" onclick="setActiveNav(this,'settings')">
+        <span class="text-lg">⚙️</span><span class="text-[9px] font-semibold leading-none">Config</span>
+    </button>
+    <button class="w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-red-900/50 hover:text-red-400 transition-all" onclick="logout()">
+        <span class="text-lg">🚪</span><span class="text-[9px] font-semibold leading-none">Sair</span>
+    </button>
 </nav>
 
 <!-- ══════════════════════════════════════════════════
@@ -108,6 +168,11 @@
     <!-- HEADER -->
     <header class="h-16 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-6 sticky top-0 z-30 backdrop-blur-sm flex-shrink-0">
         <div class="flex items-center gap-3">
+            <button id="backBtn" onclick="setActiveNav(document.querySelector('[data-tab=dashboard]'),'dashboard')"
+                class="hidden items-center gap-1.5 text-slate-400 hover:text-white text-sm font-medium transition-all mr-1 group">
+                <span class="group-hover:-translate-x-0.5 transition-transform inline-block">←</span>
+                <span>Voltar</span>
+            </button>
             <h1 id="pageTitle" class="text-xl font-bold gradient-text">Dashboard</h1>
             <span id="pageSubtitle" class="text-sm text-slate-500 hidden md:block">Visão geral do sistema</span>
         </div>
@@ -125,46 +190,43 @@
 
         <!-- ── DASHBOARD OVERVIEW ────────────────────── -->
         <section id="sec-dashboard" class="page-fade">
+            <!-- Trial banner — hidden until loadTrialBanner() fills it -->
+            <div id="trialBanner" class="hidden mb-5 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border"></div>
+
             <!-- Metrics -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <div class="dashboard-card">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-slate-400 text-sm font-medium">Leads</span>
-                        <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400">📈</div>
-                    </div>
-                    <div class="metric-value" id="leadCount">—</div>
-                    <div class="text-slate-500 text-xs mt-1">Cadastrados no CRM</div>
-                    <div class="mt-2 text-green-400 text-xs">↗ +12% este mês</div>
-                </div>
-                <div class="dashboard-card">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-slate-400 text-sm font-medium">Campanhas</span>
-                        <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center text-green-400">📢</div>
-                    </div>
-                    <div class="metric-value" id="campaignCount">—</div>
-                    <div class="text-slate-500 text-xs mt-1">Campanhas ativas</div>
-                    <div class="mt-2 text-green-400 text-xs">↗ +8% este mês</div>
-                </div>
-                <div class="dashboard-card">
-                    <div class="flex items-center justify-between mb-3">
                         <span class="text-slate-400 text-sm font-medium">Contatos</span>
-                        <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400">👥</div>
+                        <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400">👥</div>
                     </div>
                     <div class="metric-value" id="contactCount">—</div>
-                    <div class="text-slate-500 text-xs mt-1">Total de contatos</div>
-                    <div class="mt-2 text-green-400 text-xs">↗ +15% este mês</div>
+                    <div class="text-slate-500 text-xs mt-1" id="contactSource">Carregando...</div>
                 </div>
                 <div class="dashboard-card">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-slate-400 text-sm font-medium">Sistema</span>
+                        <span class="text-slate-400 text-sm font-medium">Msgs IA Enviadas</span>
+                        <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center text-green-400">🤖</div>
+                    </div>
+                    <div class="metric-value" id="msgSentCount">—</div>
+                    <div class="text-slate-500 text-xs mt-1" id="msgReceivedLabel">Carregando...</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-slate-400 text-sm font-medium">Funil Kanban</span>
+                        <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400">📋</div>
+                    </div>
+                    <div class="metric-value" id="pipelineCount">—</div>
+                    <div class="text-slate-500 text-xs mt-1" id="conversionLabel">Carregando...</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-slate-400 text-sm font-medium">Plano / Status</span>
                         <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center text-orange-400">⚡</div>
                     </div>
-                    <div class="text-2xl font-bold text-green-400" id="systemStatus">—</div>
-                    <div class="text-slate-500 text-xs mt-1" id="systemHealth">Verificando...</div>
-                    <div class="mt-2 flex items-center gap-1">
-                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        <span class="text-green-400 text-xs">100% uptime</span>
-                    </div>
+                    <div class="text-2xl font-bold" id="planBadge">—</div>
+                    <div class="text-slate-500 text-xs mt-1" id="planLabel">Carregando...</div>
+                    <div class="mt-2" id="upgradeBtn"></div>
                 </div>
             </div>
 
@@ -180,12 +242,12 @@
                     <div class="font-semibold text-sm group-hover:text-green-400 transition-colors">Campanhas</div>
                     <div class="text-slate-500 text-xs">Criar e gerenciar</div>
                 </button>
-                <button onclick="window.open('/integrations-ui','_self')" class="bg-slate-800/60 border border-slate-700 hover:border-blue-500 rounded-xl p-4 text-left transition-all hover:bg-slate-800 group">
+                <button onclick="setActiveNav(document.querySelector('[data-tab=integrations]'),'integrations')" class="bg-slate-800/60 border border-slate-700 hover:border-blue-500 rounded-xl p-4 text-left transition-all hover:bg-slate-800 group">
                     <div class="text-2xl mb-2">🔗</div>
                     <div class="font-semibold text-sm group-hover:text-blue-400 transition-colors">Integrações</div>
                     <div class="text-slate-500 text-xs">WhatsApp, Telegram...</div>
                 </button>
-                <button onclick="window.open('/pipeline-nexus.html','_self')" class="bg-slate-800/60 border border-slate-700 hover:border-pink-500 rounded-xl p-4 text-left transition-all hover:bg-slate-800 group">
+                <button onclick="setActiveNav(document.querySelector('[data-tab=pipeline]'),'pipeline')" class="bg-slate-800/60 border border-slate-700 hover:border-pink-500 rounded-xl p-4 text-left transition-all hover:bg-slate-800 group">
                     <div class="text-2xl mb-2">📋</div>
                     <div class="font-semibold text-sm group-hover:text-pink-400 transition-colors">Pipeline Kanban</div>
                     <div class="text-slate-500 text-xs">Visualizar funil</div>
@@ -258,7 +320,10 @@
                     <h2 class="text-xl font-bold">Gerenciador de Contatos</h2>
                     <p class="text-slate-500 text-sm mt-1">Base de contatos e relacionamentos</p>
                 </div>
-                <button onclick="openContactModal()" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-5 py-2 rounded-lg font-semibold text-sm transition-all shadow-lg shadow-blue-500/20">+ Novo Contato</button>
+                <div class="flex gap-2">
+                    <button onclick="importWhatsAppContacts()" id="importWaBtn" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow-lg shadow-green-500/20">📱 Importar WhatsApp</button>
+                    <button onclick="openContactModal()" class="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 px-5 py-2 rounded-lg font-semibold text-sm transition-all shadow-lg shadow-blue-500/20">+ Novo Contato</button>
+                </div>
             </div>
             <div class="bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden">
                 <div class="overflow-x-auto">
@@ -281,6 +346,63 @@
             </div>
         </section>
 
+        <!-- ── WORKFLOWS ──────────────────────────── -->
+        <section id="sec-workflows" class="hidden page-fade" style="height:calc(100vh - 4rem); display:none; flex-direction:column; padding:0;">
+
+            <!-- Toolbar do Workflow -->
+            <div id="wf-toolbar" class="flex items-center gap-3 px-5 py-3 border-b border-slate-800 bg-slate-900/80 flex-shrink-0">
+                <!-- Lista de workflows -->
+                <div id="wf-list-view" class="flex items-center gap-3 w-full">
+                    <h2 class="font-bold text-white text-lg">⚡ Workflows</h2>
+                    <div id="wf-chips" class="flex gap-2 flex-wrap flex-1"></div>
+                    <button onclick="wfNew()" class="ml-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+                        + Novo Workflow
+                    </button>
+                </div>
+                <!-- Editor toolbar (hidden when no workflow open) -->
+                <div id="wf-editor-toolbar" class="hidden items-center gap-3 w-full">
+                    <button onclick="wfBackToList()" class="text-slate-400 hover:text-white text-sm flex items-center gap-1">← Voltar</button>
+                    <input id="wf-name-input" type="text" placeholder="Nome do workflow"
+                        class="bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 w-48">
+                    <span id="wf-saved-badge" class="text-xs text-slate-500 hidden">● salvo</span>
+                    <div class="flex-1"></div>
+                    <button onclick="wfAddNode('start')"      class="wf-add-btn bg-emerald-600/20 border border-emerald-600/50 text-emerald-400 hover:bg-emerald-600/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold">▶ Start</button>
+                    <button onclick="wfAddNode('agent')"      class="wf-add-btn bg-purple-600/20 border border-purple-600/50 text-purple-400 hover:bg-purple-600/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold">🤖 Agente</button>
+                    <button onclick="wfAddNode('classify')"   class="wf-add-btn bg-cyan-600/20 border border-cyan-600/50 text-cyan-400 hover:bg-cyan-600/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold">🏷 Classificar</button>
+                    <button onclick="wfAddNode('file_search')" class="wf-add-btn bg-teal-600/20 border border-teal-600/50 text-teal-400 hover:bg-teal-600/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold">📂 File Search</button>
+                    <button onclick="wfAddNode('condition')"  class="wf-add-btn bg-amber-600/20 border border-amber-600/50 text-amber-400 hover:bg-amber-600/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold">⚡ If/Else</button>
+                    <button onclick="wfAddNode('guardrails')" class="wf-add-btn bg-orange-600/20 border border-orange-600/50 text-orange-400 hover:bg-orange-600/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold">🛡 Guardrails</button>
+                    <button onclick="wfAddNode('action')"     class="wf-add-btn bg-blue-600/20 border border-blue-600/50 text-blue-400 hover:bg-blue-600/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold">📤 Ação</button>
+                    <button onclick="wfAddNode('end')"        class="wf-add-btn bg-red-600/20 border border-red-600/50 text-red-400 hover:bg-red-600/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold">⏹ End</button>
+                    <button id="wf-scissors-btn" onclick="wfToggleScissors()" title="Ativar modo tesoura para cortar conexões" class="wf-add-btn bg-red-900/20 border border-red-700/40 text-red-400 hover:bg-red-700/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all">✂ Cortar</button>
+                    <div class="w-px h-6 bg-slate-700"></div>
+                    <button onclick="wfTestRun()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5">▷ Testar</button>
+                    <button onclick="wfSave()" class="bg-purple-600 hover:bg-purple-700 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all">💾 Salvar</button>
+                    <button id="wf-activate-btn" onclick="wfActivate()" class="bg-emerald-600 hover:bg-emerald-700 px-4 py-1.5 rounded-lg text-sm font-semibold transition-all hidden">🚀 Ativar</button>
+                </div>
+            </div>
+
+            <!-- Corpo: canvas + config panel -->
+            <div class="flex flex-1 min-h-0">
+
+                <!-- Canvas Drawflow -->
+                <div id="drawflow" class="flex-1 min-w-0 bg-slate-950" style="background-image: radial-gradient(circle, #334155 1px, transparent 1px); background-size: 28px 28px;"></div>
+
+                <!-- Config panel direito -->
+                <div id="wf-config-panel" class="hidden w-72 border-l border-slate-800 bg-slate-900 flex-col overflow-y-auto flex-shrink-0">
+                    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                        <span id="wf-panel-title" class="font-semibold text-sm text-white">Configurar Nó</span>
+                        <button onclick="wfClosePanel()" class="text-slate-500 hover:text-white text-xs">✕</button>
+                    </div>
+                    <div id="wf-panel-body" class="p-4 space-y-4 text-sm"></div>
+                    <div class="p-4 border-t border-slate-800 flex gap-2">
+                        <button onclick="wfSaveNodeConfig()" class="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg font-semibold text-sm transition-all">Aplicar</button>
+                        <button onclick="wfDeleteSelectedNode()" class="bg-red-600/20 border border-red-600/50 text-red-400 hover:bg-red-600/30 px-3 py-2 rounded-lg text-sm">🗑</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ── INTEGRATIONS ──────────────────────────── -->
         <section id="sec-integrations" class="hidden page-fade">
             <div class="mb-6">
@@ -289,24 +411,35 @@
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl">
 
-                <!-- WhatsApp -->
-                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
-                    <div class="flex items-center justify-between mb-5">
-                        <div class="flex items-center gap-3">
-                            <div class="w-11 h-11 bg-green-500/15 rounded-xl flex items-center justify-center text-2xl">📱</div>
+                <!-- WhatsApp Multi-Zap -->
+                <div class="lg:col-span-2 rounded-2xl overflow-hidden border border-green-900/40 shadow-xl shadow-green-950/20">
+                    <!-- Header verde -->
+                    <div class="bg-gradient-to-r from-green-900/60 to-emerald-900/40 px-6 py-5 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-green-500/20 border border-green-500/30 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-green-900/30">
+                                <svg viewBox="0 0 24 24" class="w-7 h-7 fill-green-400"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.849L.057 23.945l6.244-1.637A11.935 11.935 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 01-4.988-1.361l-.358-.213-3.706.972.988-3.609-.234-.371A9.797 9.797 0 012.182 12C2.182 6.573 6.573 2.182 12 2.182S21.818 6.573 21.818 12 17.427 21.818 12 21.818z"/></svg>
+                            </div>
                             <div>
-                                <div class="font-bold">WhatsApp</div>
-                                <div class="text-xs text-slate-500">via Evolution API</div>
+                                <div class="font-bold text-white text-base">WhatsApp Business</div>
+                                <div class="text-xs text-green-400/70">Multi-número via Evolution API</div>
                             </div>
                         </div>
-                        <span id="wa-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-900/50 text-red-300 border border-red-700/50">Desconectado</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="checkWhatsAppStatus()" class="bg-slate-800/60 hover:bg-slate-700/80 border border-slate-700/50 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 transition-all flex items-center gap-1.5">
+                                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-current"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                                Atualizar
+                            </button>
+                            <button onclick="addNewWhatsAppInstance()" class="bg-green-600 hover:bg-green-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all shadow-lg shadow-green-900/30 flex items-center gap-1.5">
+                                <span class="text-base leading-none">+</span> Adicionar Número
+                            </button>
+                        </div>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-xs text-slate-400 mb-1.5">Nome da Instância</label>
-                        <input type="text" id="waInstanceName" value="nexus_main" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <!-- Lista de instâncias -->
+                    <div class="bg-slate-900/50 p-4">
+                        <div id="waInstancesList" class="space-y-3">
+                            <div class="text-slate-500 text-sm text-center py-4">Carregando...</div>
+                        </div>
                     </div>
-                    <button onclick="generateWhatsAppQR()" id="wa-btn" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all">📱 Gerar QR Code</button>
-                    <button onclick="checkWhatsAppStatus()" class="ml-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">🔄 Verificar</button>
                 </div>
 
                 <!-- Telegram -->
@@ -436,15 +569,141 @@
             </div>
         </section>
 
-        <!-- ── AGENTS ─────────────────────────────────── -->
-        <section id="sec-agents" class="hidden page-fade">
-            <div class="mb-6">
-                <h2 class="text-xl font-bold">Agentes de IA</h2>
-                <p class="text-slate-500 text-sm mt-1">Configuração dos robôs de atendimento inteligente</p>
+        <!-- ── PIPELINE ──────────────────────────────── -->
+        <section id="sec-pipeline" class="hidden page-fade">
+            <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+                <div>
+                    <h2 class="text-xl font-bold">Pipeline de Vendas</h2>
+                    <p class="text-slate-500 text-sm mt-1">Arraste os cards para mover leads e disparar automações no WhatsApp</p>
+                </div>
+                <button onclick="openCreateDealModal()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-xl text-sm font-semibold transition-all">+ Novo Lead</button>
             </div>
-            <div id="agentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="dashboard-card animate-pulse"><div class="h-4 bg-slate-700 rounded mb-2 w-3/4"></div><div class="h-3 bg-slate-700 rounded w-1/2"></div></div>
-                <div class="dashboard-card animate-pulse"><div class="h-4 bg-slate-700 rounded mb-2 w-3/4"></div><div class="h-3 bg-slate-700 rounded w-1/2"></div></div>
+            <div id="pipelineBoard" class="flex gap-3 overflow-x-auto pb-4 items-start select-none">
+                <div class="flex items-center justify-center w-full py-16 text-slate-600 text-sm animate-pulse">Carregando funil...</div>
+            </div>
+        </section>
+
+        <!-- Modal: Criar Novo Deal -->
+        <div id="dealModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm" onclick="if(event.target===this)closeCreateDealModal()">
+            <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-lg font-bold">Novo Lead no Funil</h3>
+                    <button onclick="closeCreateDealModal()" class="text-slate-500 hover:text-white text-xl leading-none">&times;</button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Nome do Lead *</label>
+                        <input id="dealName" type="text" placeholder="Ex: João Silva — Plano Pro"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Estágio inicial</label>
+                        <select id="dealStage" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
+                            <!-- populado pelo JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Valor (R$)</label>
+                        <input id="dealValue" type="number" min="0" step="0.01" placeholder="0,00"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">JID do WhatsApp (opcional)</label>
+                        <input id="dealJid" type="text" placeholder="5511999999999@s.whatsapp.net"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeCreateDealModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm transition-all">Cancelar</button>
+                    <button onclick="submitCreateDeal()" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all">Criar Lead</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── AGENTS ─────────────────────────────────── -->
+        <!-- ── INBOX ─────────────────────────────────── -->
+        <section id="sec-inbox" class="hidden page-fade" style="height:calc(100vh - 5rem); display:none;">
+            <div class="flex h-full gap-0 rounded-2xl overflow-hidden border border-slate-800">
+
+                <!-- Painel esquerdo: lista de conversas -->
+                <div class="w-80 flex-shrink-0 flex flex-col bg-slate-900 border-r border-slate-800">
+                    <!-- Header + busca -->
+                    <div class="p-4 border-b border-slate-800">
+                        <div class="flex items-center justify-between mb-3">
+                            <h2 class="font-bold text-white">Mensagens</h2>
+                            <span id="inboxTotalChats" class="text-xs text-slate-500"></span>
+                        </div>
+                        <input id="inboxSearch" type="text" placeholder="Buscar conversa..." oninput="debouncedFilterChats(this.value)"
+                            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <!-- Lista -->
+                    <div id="chatList" class="flex-1 overflow-y-auto">
+                        <div class="p-4 text-center text-slate-500 text-sm">Carregando conversas...</div>
+                    </div>
+                </div>
+
+                <!-- Painel direito: chat aberto -->
+                <div class="flex-1 flex flex-col bg-slate-950 min-w-0">
+                    <!-- Header do chat -->
+                    <div id="chatHeader" class="px-4 py-3 border-b border-slate-800 flex items-center gap-3 bg-slate-900/80 backdrop-blur-sm">
+                        <div class="relative flex-shrink-0">
+                            <div id="chatAvatar" class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center font-bold text-white text-sm overflow-hidden">?</div>
+                            <span id="chatOnlineDot" class="hidden absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-slate-900"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div id="chatName" class="font-semibold text-white text-sm truncate">Selecione uma conversa</div>
+                            <div id="chatStatus" class="text-xs text-slate-500 truncate">←</div>
+                        </div>
+                        <button onclick="openContactFromChat()" id="chatContactBtn" class="hidden text-slate-500 hover:text-purple-400 transition-colors p-1.5 rounded-lg hover:bg-slate-800" title="Ver contato">
+                            <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                        </button>
+                    </div>
+                    <!-- Mensagens -->
+                    <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-1.5"
+                        style="background: radial-gradient(ellipse at top, #0f172a, #020617)">
+                        <div class="text-center text-slate-600 text-sm py-16">Clique em uma conversa para abrir</div>
+                    </div>
+                    <!-- Input de resposta manual -->
+                    <div class="px-4 py-3 border-t border-slate-800 bg-slate-900 flex gap-2">
+                        <input id="manualReplyInput" type="text" placeholder="Responder manualmente..." onkeydown="if(event.key==='Enter')sendManualReply()"
+                            class="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <button onclick="sendManualReply()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-agents" class="hidden page-fade">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold">Robôs de Atendimento</h2>
+                    <p class="text-slate-500 text-sm mt-1">Configure a personalidade e comportamento da sua IA</p>
+                </div>
+                <button onclick="document.getElementById('onboardingModal').classList.remove('hidden')"
+                    class="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2">
+                    ✨ Gerar com IA
+                </button>
+            </div>
+
+            <!-- Layout: seletor esquerda + editor direita -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+                <!-- Coluna esquerda: lista de agentes -->
+                <div class="space-y-3" id="agentsList">
+                    <!-- preenchido pelo JS -->
+                    <div class="animate-pulse bg-slate-900/60 border border-slate-800 rounded-xl p-4 h-24"></div>
+                    <div class="animate-pulse bg-slate-900/60 border border-slate-800 rounded-xl p-4 h-24"></div>
+                    <div class="animate-pulse bg-slate-900/60 border border-slate-800 rounded-xl p-4 h-24"></div>
+                </div>
+
+                <!-- Coluna direita: editor + chat de teste -->
+                <div class="lg:col-span-2 space-y-4" id="agentEditor">
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-8 text-center text-slate-500">
+                        <div class="text-4xl mb-3">🤖</div>
+                        <p class="text-sm">Selecione um agente ao lado para configurar</p>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -484,11 +743,11 @@
                     <h3 class="text-base font-bold mb-4 text-yellow-400 flex items-center gap-2">🔗 Integrações Rápidas</h3>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-lg"><span class="text-sm">📱 WhatsApp API</span><span id="whatsappStatus" class="text-red-400 text-xs font-semibold">Não conectado</span></div>
-                        <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-lg"><span class="text-sm">📘 Facebook/Meta</span><button onclick="connectIntegration('facebook')" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-xs font-semibold transition">Conectar</button></div>
-                        <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-lg"><span class="text-sm">📸 Instagram</span><button onclick="connectIntegration('instagram')" class="bg-pink-600 hover:bg-pink-700 px-3 py-1 rounded text-xs font-semibold transition">Conectar</button></div>
-                        <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-lg"><span class="text-sm">📧 Email (SendGrid)</span><button onclick="connectIntegration('gmail')" class="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-xs font-semibold transition">Conectar</button></div>
+                        <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-lg"><span class="text-sm">📘 Facebook/Meta</span><button onclick="setActiveNav(document.querySelector('[data-tab=integrations]'),'integrations')" class="bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1 rounded text-xs font-semibold transition">Configurar</button></div>
+                        <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-lg"><span class="text-sm">📸 Instagram</span><button onclick="setActiveNav(document.querySelector('[data-tab=integrations]'),'integrations')" class="bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1 rounded text-xs font-semibold transition">Configurar</button></div>
+                        <div class="flex items-center justify-between p-3 bg-slate-800/60 rounded-lg"><span class="text-sm">📧 Email (SMTP)</span><button onclick="setActiveNav(document.querySelector('[data-tab=integrations]'),'integrations')" class="bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1 rounded text-xs font-semibold transition">Configurar</button></div>
                     </div>
-                    <button onclick="window.open('/integrations-ui','_self')" class="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-5 py-2 rounded-lg font-semibold text-sm transition-all">🚀 Gerenciar Integrações</button>
+                    <button onclick="setActiveNav(document.querySelector('[data-tab=integrations]'),'integrations')" class="mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-5 py-2 rounded-lg font-semibold text-sm transition-all">🔗 Ir para Integrações</button>
                 </div>
 
                 <!-- Preferences -->
@@ -572,6 +831,138 @@
     </div>
 </div>
 
+<!-- Onboarding Modal -->
+<div id="onboardingModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+    <div class="bg-slate-900 border border-purple-700/50 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-7 py-5 border-b border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-xl">🤖</div>
+                <div>
+                    <h2 class="text-lg font-bold text-white">Configure seus Agentes de IA</h2>
+                    <p class="text-slate-400 text-xs mt-0.5">Responda 4 perguntas e seus agentes estarão prontos em segundos</p>
+                </div>
+            </div>
+        </div>
+        <form onsubmit="submitOnboarding(event)" class="p-7 space-y-5">
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Nome da sua empresa</label>
+                <input type="text" id="obCompany" placeholder="Ex: Clínica Saúde Total" required
+                    class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Setor / Nicho de mercado</label>
+                <input type="text" id="obNiche" placeholder="Ex: Saúde, Imóveis, Moda, Tecnologia..." required
+                    class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Tom de voz da sua marca</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="ob-option flex items-center gap-2 p-3 rounded-xl border border-slate-700 cursor-pointer hover:border-purple-500 transition-all">
+                        <input type="radio" name="obTone" value="amigavel" checked class="accent-purple-500">
+                        <span class="text-sm">😊 Amigável</span>
+                    </label>
+                    <label class="ob-option flex items-center gap-2 p-3 rounded-xl border border-slate-700 cursor-pointer hover:border-purple-500 transition-all">
+                        <input type="radio" name="obTone" value="formal" class="accent-purple-500">
+                        <span class="text-sm">🎩 Formal</span>
+                    </label>
+                    <label class="ob-option flex items-center gap-2 p-3 rounded-xl border border-slate-700 cursor-pointer hover:border-purple-500 transition-all">
+                        <input type="radio" name="obTone" value="vendedor" class="accent-purple-500">
+                        <span class="text-sm">🔥 Persuasivo</span>
+                    </label>
+                    <label class="ob-option flex items-center gap-2 p-3 rounded-xl border border-slate-700 cursor-pointer hover:border-purple-500 transition-all">
+                        <input type="radio" name="obTone" value="tecnico" class="accent-purple-500">
+                        <span class="text-sm">⚙️ Técnico</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wide">Objetivo principal da IA</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="ob-option flex items-center gap-2 p-3 rounded-xl border border-slate-700 cursor-pointer hover:border-purple-500 transition-all">
+                        <input type="radio" name="obGoal" value="atendimento" checked class="accent-purple-500">
+                        <span class="text-sm">🎧 Atendimento</span>
+                    </label>
+                    <label class="ob-option flex items-center gap-2 p-3 rounded-xl border border-slate-700 cursor-pointer hover:border-purple-500 transition-all">
+                        <input type="radio" name="obGoal" value="vendas" class="accent-purple-500">
+                        <span class="text-sm">💼 Vender</span>
+                    </label>
+                    <label class="ob-option flex items-center gap-2 p-3 rounded-xl border border-slate-700 cursor-pointer hover:border-purple-500 transition-all">
+                        <input type="radio" name="obGoal" value="suporte" class="accent-purple-500">
+                        <span class="text-sm">🔧 Suporte</span>
+                    </label>
+                    <label class="ob-option flex items-center gap-2 p-3 rounded-xl border border-slate-700 cursor-pointer hover:border-purple-500 transition-all">
+                        <input type="radio" name="obGoal" value="agendamento" class="accent-purple-500">
+                        <span class="text-sm">📅 Agendamento</span>
+                    </label>
+                </div>
+            </div>
+            <div id="obPreview" class="hidden bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+                <p class="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wide">Preview do prompt gerado:</p>
+                <p id="obPreviewText" class="text-xs text-slate-300 leading-relaxed"></p>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="previewOnboarding()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-semibold text-sm transition-all">👁️ Visualizar</button>
+                <button type="submit" id="obSubmitBtn" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-3 rounded-xl font-bold text-sm transition-all">🚀 Configurar Agentes</button>
+            </div>
+            <p class="text-center text-xs text-slate-500">Você poderá editar o prompt de cada agente individualmente depois</p>
+        </form>
+    </div>
+</div>
+
+<!-- Agent Config Modal -->
+<div id="agentConfigModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-slate-700 p-7 rounded-2xl max-w-lg w-full shadow-2xl">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-purple-400">⚙️ Configurar Agente</h2>
+            <button onclick="closeAgentConfig()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+        <form onsubmit="saveAgentConfig(event)" class="space-y-4">
+            <input type="hidden" id="agentConfigId">
+            <div><label class="block text-xs text-slate-400 mb-1.5">Nome do Agente</label>
+                <input type="text" id="agentConfigName" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" required></div>
+            <div><label class="block text-xs text-slate-400 mb-1.5">Persona (quem é o agente?)</label>
+                <input type="text" id="agentConfigPersona" placeholder="Ex: Assistente cordial de atendimento" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"></div>
+            <div><label class="block text-xs text-slate-400 mb-1.5">Instruções (como ele deve agir?)</label>
+                <textarea id="agentConfigInstructions" rows="4" placeholder="Ex: Responda de forma educada. Se não souber algo, diga que vai verificar." class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm resize-none"></textarea></div>
+            <div><label class="block text-xs text-slate-400 mb-1.5">Modelo de IA</label>
+                <select id="agentConfigModel" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
+                    <option value="gpt-4o-mini">GPT-4o Mini (rápido e econômico)</option>
+                    <option value="gpt-4o">GPT-4o (mais inteligente)</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                </select></div>
+            <div>
+                <label class="block text-xs text-slate-400 mb-1.5">Prompt completo do sistema <span class="text-slate-600">(gerado pelo onboarding, editável)</span></label>
+                <textarea id="agentConfigSystemPrompt" rows="5" placeholder="Deixe vazio para usar persona+instruções acima..." class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm resize-none font-mono"></textarea>
+                <p class="text-xs text-slate-600 mt-1">Se preenchido, este prompt tem prioridade sobre persona e instruções.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <input type="checkbox" id="agentConfigAutoRespond" class="w-4 h-4 accent-purple-500">
+                <label for="agentConfigAutoRespond" class="text-sm text-slate-300">Resposta automática no WhatsApp</label>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-2.5 rounded-lg font-semibold text-sm transition-all">Salvar</button>
+                <button type="button" onclick="closeAgentConfig()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2.5 rounded-lg font-semibold text-sm transition-all">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Agent Chat Modal -->
+<div id="agentChatModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl flex flex-col" style="height:520px">
+        <div class="flex items-center justify-between p-5 border-b border-slate-800">
+            <h2 id="agentChatTitle" class="text-lg font-bold text-purple-400"></h2>
+            <button onclick="closeAgentChat()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+        <div id="agentChatMessages" class="flex-1 overflow-y-auto p-4 space-y-1"></div>
+        <div class="p-4 border-t border-slate-800 flex gap-2">
+            <input id="agentChatInput" type="text" placeholder="Digite uma mensagem..." onkeydown="if(event.key==='Enter')sendAgentMessage()"
+                class="flex-1 px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
+            <button onclick="sendAgentMessage()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all">Enviar</button>
+        </div>
+    </div>
+</div>
+
 <!-- Contact Modal -->
 <div id="contactModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <div class="bg-slate-900 border border-slate-700 p-7 rounded-2xl max-w-md w-full shadow-2xl">
@@ -581,9 +972,9 @@
         </div>
         <form onsubmit="saveContact(event)" class="space-y-4">
             <div><label class="block text-xs text-slate-400 mb-1.5">Nome *</label><input type="text" id="contactName" placeholder="Maria Santos" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required></div>
-            <div><label class="block text-xs text-slate-400 mb-1.5">Email *</label><input type="email" id="contactEmail" placeholder="maria@email.com" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required></div>
+            <div><label class="block text-xs text-slate-400 mb-1.5">Email <span class="text-slate-600">(opcional)</span></label><input type="email" id="contactEmail" placeholder="maria@email.com" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"></div>
             <div><label class="block text-xs text-slate-400 mb-1.5">Telefone</label><input type="tel" id="contactPhone" placeholder="(11) 99999-9999" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"></div>
-            <div><label class="block text-xs text-slate-400 mb-1.5">Empresa *</label><input type="text" id="contactCompany" placeholder="Tech Corp" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required></div>
+            <div><label class="block text-xs text-slate-400 mb-1.5">Empresa <span class="text-slate-600">(opcional)</span></label><input type="text" id="contactCompany" placeholder="Tech Corp" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"></div>
             <div><label class="block text-xs text-slate-400 mb-1.5">Cargo</label><input type="text" id="contactTitle" placeholder="Diretor" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"></div>
             <div class="flex gap-3 pt-2">
                 <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 py-2.5 rounded-lg font-semibold text-sm transition-all">Salvar</button>
@@ -594,24 +985,35 @@
 </div>
 
 <!-- WhatsApp QR Modal -->
-<div id="waQrModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-slate-900 border border-slate-700 p-7 rounded-2xl max-w-sm w-full shadow-2xl text-center">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-bold text-green-400">📱 Conectar WhatsApp</h2>
-            <button onclick="closeWaModal()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+<div id="waQrModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-green-900/50 rounded-2xl max-w-sm w-full shadow-2xl shadow-green-950/30 overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-green-900/60 to-emerald-900/40 px-5 py-4 flex items-center justify-between border-b border-green-900/40">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-green-500/20 rounded-xl flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" class="w-5 h-5 fill-green-400"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.849L.057 23.945l6.244-1.637A11.935 11.935 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 01-4.988-1.361l-.358-.213-3.706.972.988-3.609-.234-.371A9.797 9.797 0 012.182 12C2.182 6.573 6.573 2.182 12 2.182S21.818 6.573 21.818 12 17.427 21.818 12 21.818z"/></svg>
+                </div>
+                <span class="font-bold text-white">Conectar WhatsApp</span>
+            </div>
+            <button onclick="closeWaModal()" class="text-slate-500 hover:text-white w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-700 transition-all text-lg leading-none">&times;</button>
         </div>
-        <p class="text-slate-400 text-sm mb-4" id="waQrInstruction">Gerando QR Code...</p>
-        <div id="waQrContainer" class="flex items-center justify-center min-h-[200px]">
-            <div class="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full"></div>
-        </div>
-        <div id="waQrSteps" class="hidden mt-4 bg-slate-800/60 rounded-lg p-3 text-xs text-slate-400 text-left leading-5">
-            1. Abra o WhatsApp no seu celular<br>
-            2. Toque em <strong class="text-white">⋮ Menu → Aparelhos Conectados</strong><br>
-            3. Toque em <strong class="text-white">Conectar um aparelho</strong><br>
-            4. Aponte a câmera para o QR Code acima
-        </div>
-        <div id="waConnectedMsg" class="hidden mt-4 bg-green-900/30 border border-green-700/50 rounded-lg p-3 text-green-400 text-sm font-semibold">
-            ✅ WhatsApp conectado com sucesso!
+        <!-- Body -->
+        <div class="p-6 text-center">
+            <p class="text-slate-400 text-sm mb-5" id="waQrInstruction">Verificando status...</p>
+            <div id="waQrContainer" class="flex items-center justify-center min-h-[220px]">
+                <div class="animate-spin w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full"></div>
+            </div>
+            <div id="waQrSteps" class="hidden mt-5 bg-slate-800/70 border border-slate-700/50 rounded-xl p-4 text-xs text-slate-400 text-left space-y-2">
+                <div class="flex items-start gap-2"><span class="w-5 h-5 bg-green-600 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span><span>Abra o WhatsApp no celular</span></div>
+                <div class="flex items-start gap-2"><span class="w-5 h-5 bg-green-600 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span><span>Toque em <strong class="text-white">⋮ Menu → Aparelhos Conectados</strong></span></div>
+                <div class="flex items-start gap-2"><span class="w-5 h-5 bg-green-600 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span><span>Toque em <strong class="text-white">Conectar um aparelho</strong></span></div>
+                <div class="flex items-start gap-2"><span class="w-5 h-5 bg-green-600 rounded-full text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">4</span><span>Aponte a câmera para o QR Code acima</span></div>
+            </div>
+            <div id="waConnectedMsg" class="hidden mt-5 bg-green-900/30 border border-green-700/50 rounded-xl p-4">
+                <div class="text-4xl mb-2">✅</div>
+                <p class="text-green-400 font-bold text-sm">WhatsApp conectado com sucesso!</p>
+                <p class="text-slate-500 text-xs mt-1">Fechando automaticamente...</p>
+            </div>
         </div>
     </div>
 </div>
@@ -628,7 +1030,9 @@ const PAGE_META = {
     leads:        { title: 'Leads',        subtitle: 'Gerenciamento de prospects' },
     campaigns:    { title: 'Campanhas',    subtitle: 'Marketing e automações' },
     contacts:     { title: 'Contatos',     subtitle: 'Base de relacionamentos' },
+    pipeline:     { title: 'Pipeline',     subtitle: 'Funil de vendas Kanban' },
     agents:       { title: 'Agentes IA',   subtitle: 'Robôs de atendimento' },
+    inbox:        { title: 'Mensagens',    subtitle: 'Histórico de conversas do WhatsApp' },
     integrations: { title: 'Integrações',  subtitle: 'Conecte seus canais de comunicação' },
     settings:     { title: 'Configurações',subtitle: 'Conta e preferências' },
 };
@@ -638,20 +1042,47 @@ function setActiveNav(btn, tab) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
 
-    document.querySelectorAll('section[id^="sec-"]').forEach(s => s.classList.add('hidden'));
+    document.querySelectorAll('section[id^="sec-"]').forEach(s => {
+        s.classList.add('hidden');
+        s.style.display = '';
+    });
     const sec = document.getElementById('sec-' + tab);
-    if (sec) { sec.classList.remove('hidden'); sec.classList.add('page-fade'); }
+    if (sec) {
+        sec.classList.remove('hidden');
+        sec.classList.add('page-fade');
+        // Inbox precisa de display:flex para o layout funcionar
+        if (tab === 'inbox') sec.style.display = 'flex';
+    }
 
     const meta = PAGE_META[tab] || {};
     document.getElementById('pageTitle').textContent = meta.title || tab;
     document.getElementById('pageSubtitle').textContent = meta.subtitle || '';
 
+    // Botão Voltar: visível em todas as tabs exceto dashboard
+    const backBtn = document.getElementById('backBtn');
+    if (tab === 'dashboard') {
+        backBtn.classList.add('hidden'); backBtn.classList.remove('flex');
+    } else {
+        backBtn.classList.remove('hidden'); backBtn.classList.add('flex');
+    }
+
     if (tab === 'leads') loadLeads();
     if (tab === 'campaigns') loadCampaigns();
     if (tab === 'contacts') loadContacts();
+    if (tab === 'pipeline') loadPipeline();
     if (tab === 'agents') loadAgents();
+    if (tab === 'workflows') {
+        sec.style.display = 'flex';
+        // Garante que o browser pintou o flex antes de inicializar o Drawflow
+        requestAnimationFrame(() => {
+            if (!_df) initDrawflow();
+            loadWorkflowList();
+            _loadUserProfile();
+        });
+    }
     if (tab === 'integrations') loadIntegrationsStatus();
-    if (tab === 'settings') { loadUserSettings(); loadPlanInfo(); }
+    if (tab === 'settings') { loadUserSettings(); loadPlanInfo(); loadWhatsAppInstances(); }
+    if (tab === 'inbox') loadInbox();
 }
 
 // ─── API helper ──────────────────────────────────────
@@ -663,7 +1094,18 @@ async function apiFetch(endpoint, options = {}) {
     };
     try {
         const res = await fetch(API_BASE + endpoint, { ...options, headers });
-        if (res.status === 401) { authToken = null; localStorage.removeItem('nexus_token'); return null; }
+        if (res.status === 401) {
+            authToken = null;
+            localStorage.removeItem('nexus_token');
+            localStorage.removeItem('access_token');
+            // Mostra aviso antes de redirecionar
+            const t = document.createElement('div');
+            t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#dc2626;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.4)';
+            t.textContent = '⚠️ Sessão expirada. Redirecionando para o login...';
+            document.body.appendChild(t);
+            setTimeout(() => { window.location.href = '/login'; }, 2000);
+            return null;
+        }
         return res.json();
     } catch(e) { console.error('API:', endpoint, e); return null; }
 }
@@ -831,38 +1273,976 @@ async function deleteContact(id) {
     else showNotification('❌ Erro', true);
 }
 
+async function importWhatsAppContacts() {
+    const btn = document.getElementById('importWaBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Importando...';
+    try {
+        const r = await apiFetch('/api/contacts/import-whatsapp', { method: 'POST' });
+        if (r && r.imported !== undefined) {
+            showNotification(`✅ ${r.imported} contatos importados do WhatsApp!`);
+            loadContacts();
+        } else {
+            showNotification('❌ Erro ao importar contatos', true);
+        }
+    } catch(e) {
+        showNotification('❌ Erro ao importar contatos', true);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📱 Importar WhatsApp';
+    }
+}
+
+// ─── Onboarding ──────────────────────────────────────
+function _obValues() {
+    return {
+        company_name: document.getElementById('obCompany').value.trim(),
+        niche:        document.getElementById('obNiche').value.trim(),
+        tone:         document.querySelector('input[name="obTone"]:checked')?.value || 'amigavel',
+        goal:         document.querySelector('input[name="obGoal"]:checked')?.value || 'atendimento',
+    };
+}
+
+function previewOnboarding() {
+    const v = _obValues();
+    if (!v.company_name || !v.niche) { showNotification('Preencha empresa e nicho primeiro', true); return; }
+    const toneMap = { formal:'Use linguagem formal e profissional.', amigavel:'Use linguagem amigável e próxima.', tecnico:'Use linguagem técnica e precisa.', vendedor:'Use linguagem entusiasmada, focada em benefícios.' };
+    const goalMap = { atendimento:'Resolva dúvidas e garanta a satisfação do cliente.', vendas:'Apresente soluções e conduza o cliente para a compra.', suporte:'Resolva problemas técnicos passo a passo.', agendamento:'Colete informações e agende atendimentos.' };
+    const preview = `Você é o assistente virtual da empresa ${v.company_name}, atuando no setor de ${v.niche}.\n\n${toneMap[v.tone]}\n\n${goalMap[v.goal]}\n\nResponda sempre em português. Seja breve e direto nas mensagens de WhatsApp.`;
+    document.getElementById('obPreviewText').textContent = preview;
+    document.getElementById('obPreview').classList.remove('hidden');
+}
+
+async function submitOnboarding(e) {
+    e.preventDefault();
+    const v = _obValues();
+    if (!v.company_name || !v.niche) { showNotification('Preencha todos os campos', true); return; }
+    const btn = document.getElementById('obSubmitBtn');
+    btn.disabled = true; btn.textContent = '⏳ Configurando...';
+    const r = await apiFetch('/api/agents/onboarding', { method: 'POST', body: JSON.stringify(v) });
+    btn.disabled = false; btn.textContent = '🚀 Configurar Agentes';
+    if (r && r.agents_updated) {
+        localStorage.setItem('nexus_onboarded', '1');
+        localStorage.setItem('nexus_company', v.company_name);
+        document.getElementById('onboardingModal').classList.add('hidden');
+        showNotification(`✅ ${r.agents_updated.length} agentes configurados para ${v.company_name}!`);
+        loadAgents();
+    } else {
+        showNotification('❌ Erro ao configurar agentes', true);
+    }
+}
+
+function checkOnboarding(agents) {
+    // Mostra modal de onboarding se nenhum agente passou pelo onboarding ainda
+    const done = localStorage.getItem('nexus_onboarded');
+    if (done) return;
+    const anyOnboarded = agents && agents.some && agents.some(a => a.onboarded);
+    if (!anyOnboarded) {
+        setTimeout(() => document.getElementById('onboardingModal').classList.remove('hidden'), 800);
+    } else {
+        localStorage.setItem('nexus_onboarded', '1');
+    }
+}
+
 // ─── Agents ──────────────────────────────────────────
+const agentIcons  = { atendimento: '🎧', vendas: '💼', suporte: '🔧' };
+const agentColors = { atendimento: 'from-blue-500 to-cyan-500', vendas: 'from-green-500 to-emerald-500', suporte: 'from-orange-500 to-amber-500' };
+let _allAgents = [];
+let _selectedAgent = null;
+let agentChatHistory = [];
+
 async function loadAgents() {
     const data = await apiFetch('/api/agents');
+    if (!data || !data.agents || data.agents.length === 0) return;
+    _allAgents = data.agents;
+    checkOnboarding(data.agents);
+    renderAgentList();
+    // Auto-seleciona o primeiro agente
+    if (!_selectedAgent && _allAgents.length > 0) selectAgent(_allAgents[0]);
+}
+
+function renderAgentList() {
     const container = document.getElementById('agentsList');
-    if (!data || !data.agents) {
-        container.innerHTML = '<div class="dashboard-card col-span-full text-center text-slate-500 py-8">Nenhum agente configurado ainda</div>'; return;
-    }
-    container.innerHTML = Object.entries(data.agents).map(([name, cfg]) => `
-        <div class="dashboard-card">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-lg">🤖</div>
-                <div>
-                    <div class="font-semibold text-sm">${name.replace(/_/g,' ')}</div>
-                    <div class="text-xs text-slate-500">${cfg.model||'GPT-4'}</div>
+    container.innerHTML = _allAgents.map(a => `
+        <div id="agentCard_${a.id}" onclick="selectAgent(${JSON.stringify(a).replace(/"/g,'&quot;')})"
+            class="cursor-pointer rounded-xl border p-4 transition-all
+                   ${_selectedAgent?.id === a.id
+                     ? 'border-purple-500 bg-slate-800'
+                     : 'border-slate-800 bg-slate-900/60 hover:border-slate-600'}">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br ${agentColors[a.type]||'from-purple-500 to-pink-600'} rounded-xl flex items-center justify-center text-lg shadow-lg">
+                        ${agentIcons[a.type]||'🤖'}
+                    </div>
+                    <div>
+                        <div class="font-semibold text-sm text-white">${a.name}</div>
+                        <div class="text-xs text-slate-500 capitalize">${a.type}</div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2 h-2 rounded-full ${a.active ? 'bg-green-400 shadow shadow-green-400/50' : 'bg-slate-600'}"></div>
+                        <span class="text-xs ${a.active ? 'text-green-400' : 'text-slate-500'}">${a.active ? 'Ativo' : 'Inativo'}</span>
+                    </div>
+                    ${a.auto_respond ? '<span class="text-xs text-blue-400">⚡ Auto</span>' : ''}
                 </div>
             </div>
-            <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full ${cfg.enabled ? 'bg-green-400' : 'bg-red-400'}"></div>
-                <span class="text-xs ${cfg.enabled ? 'text-green-400' : 'text-red-400'}">${cfg.enabled ? 'Ativo' : 'Inativo'}</span>
-            </div>
+            ${_selectedAgent?.id === a.id ? '<div class="mt-2 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>' : ''}
         </div>`).join('');
+}
+
+function selectAgent(agent) {
+    _selectedAgent = typeof agent === 'string' ? JSON.parse(agent) : agent;
+    renderAgentList();
+    renderAgentEditor(_selectedAgent);
+}
+
+const AVATAR_OPTIONS = ['🤖','🧠','💬','🎯','📦','🛒','📅','💰','📣','🤝','🔧','🌟','⚡','🚀','🎓','💼'];
+
+function renderAgentEditor(a) {
+    const editor = document.getElementById('agentEditor');
+    const temp = a.temperature ?? 0.7;
+    const tempLabel = temp <= 0.3 ? 'Focado' : temp <= 0.6 ? 'Equilibrado' : temp <= 0.85 ? 'Criativo' : 'Muito criativo';
+    const avatar = a.avatar || agentIcons[a.type] || '🤖';
+    editor.innerHTML = `
+        <!-- ═══ HEADER: Avatar + Nome + Toggles ═══ -->
+        <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-4">
+            <div class="flex items-center gap-4 flex-wrap">
+                <!-- Avatar picker -->
+                <div class="relative group">
+                    <button onclick="toggleAvatarPicker(${a.id})"
+                        class="w-14 h-14 bg-slate-800 border-2 border-slate-600 hover:border-purple-500 rounded-2xl flex items-center justify-center text-3xl transition-all shadow-lg">
+                        <span id="avatarDisplay_${a.id}">${avatar}</span>
+                    </button>
+                    <div id="avatarPicker_${a.id}" class="hidden absolute top-16 left-0 z-50 bg-slate-800 border border-slate-700 rounded-xl p-3 shadow-2xl grid grid-cols-4 gap-1.5 w-44">
+                        ${AVATAR_OPTIONS.map(e => `<button onclick="setAvatar(${a.id},'${e}')" class="w-9 h-9 hover:bg-slate-700 rounded-lg text-xl flex items-center justify-center transition-all">${e}</button>`).join('')}
+                    </div>
+                </div>
+                <!-- Name + type -->
+                <div class="flex-1 min-w-0">
+                    <input id="edName" value="${a.name}" placeholder="Nome do agente"
+                        class="w-full bg-transparent text-white font-bold text-lg border-b border-slate-700 focus:border-purple-500 focus:outline-none pb-1 mb-0.5 transition-colors">
+                    <div class="text-xs text-slate-500 uppercase tracking-widest">${a.type} · ${a.model || 'gpt-4o-mini'}</div>
+                </div>
+                <!-- Toggles -->
+                <div class="flex items-center gap-4 flex-wrap">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <span class="text-xs text-slate-400">Ativo</span>
+                        <div class="relative">
+                            <input type="checkbox" class="sr-only peer" id="edActive" ${a.active ? 'checked' : ''}
+                                onchange="quickSave(${a.id},{active:this.checked})">
+                            <div class="w-10 h-5 bg-slate-700 rounded-full peer peer-checked:bg-green-600 transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <span class="text-xs text-slate-400">⚡ Auto-resposta</span>
+                        <div class="relative">
+                            <input type="checkbox" class="sr-only peer" id="edAutoRespond" ${a.auto_respond ? 'checked' : ''}
+                                onchange="quickSave(${a.id},{auto_respond:this.checked}); showNotification(this.checked?'⚡ Auto-resposta ativada':'Auto-resposta desativada')">
+                            <div class="w-10 h-5 bg-slate-700 rounded-full peer peer-checked:bg-blue-600 transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ MODEL ═══ -->
+        <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-4 space-y-4">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>Model
+            </h3>
+            <div class="flex gap-3 items-end flex-wrap">
+                <div class="flex-1 min-w-40">
+                    <label class="block text-xs text-slate-500 mb-1.5">Modelo de IA</label>
+                    <select id="edModel" class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors">
+                        <option value="gpt-4o-mini" ${(a.model||'gpt-4o-mini')==='gpt-4o-mini'?'selected':''}>GPT-4o Mini — rápido e eficiente</option>
+                        <option value="gpt-4o" ${a.model==='gpt-4o'?'selected':''}>GPT-4o — mais inteligente</option>
+                        <option value="gpt-4-turbo" ${a.model==='gpt-4-turbo'?'selected':''}>GPT-4 Turbo — contexto longo</option>
+                    </select>
+                </div>
+                <div class="flex-1 min-w-52">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs text-slate-500">Temperature</label>
+                        <span id="tempLabel_${a.id}" class="text-xs font-semibold text-blue-400">${temp.toFixed(1)} — ${tempLabel}</span>
+                    </div>
+                    <input type="range" id="edTemp" min="0" max="1" step="0.05" value="${temp}"
+                        oninput="updateTempLabel(${a.id},this.value)"
+                        class="w-full h-2 rounded-full appearance-none cursor-pointer bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
+                    <div class="flex justify-between text-[10px] text-slate-600 mt-1">
+                        <span>0 — Focado</span><span>0.5 — Equilibrado</span><span>1 — Criativo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ INSTRUCTIONS ═══ -->
+        <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-4 space-y-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>Instructions
+            </h3>
+            <div>
+                <label class="block text-xs text-slate-500 mb-1.5">Persona <span class="text-slate-600">(quem é este agente)</span></label>
+                <input id="edPersona" value="${(a.persona||'').replace(/"/g,'&quot;')}"
+                    placeholder="Ex: Assistente de vendas da empresa X, especializado em converter leads"
+                    class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-colors">
+            </div>
+            <div>
+                <label class="block text-xs text-slate-500 mb-1.5">System Instructions <span class="text-slate-600">(como deve se comportar)</span></label>
+                <textarea id="edInstructions" rows="3"
+                    placeholder="Ex: Responda sempre em português. Seja cordial mas direto. Não mencione concorrentes. Se o cliente pedir preço, consulte a tabela de preços."
+                    class="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none transition-colors">${(a.instructions||'')}</textarea>
+            </div>
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-xs text-slate-500">Prompt completo <span class="text-slate-600">(substitui persona + instruções acima)</span></label>
+                    <button onclick="document.getElementById('edSystemPrompt').value=''" class="text-xs text-slate-600 hover:text-red-400 transition-colors">limpar</button>
+                </div>
+                <textarea id="edSystemPrompt" rows="5"
+                    placeholder="Deixe em branco para usar persona + instruções. Ou cole aqui um prompt personalizado completo..."
+                    class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700/50 hover:border-slate-500 rounded-lg text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none font-mono leading-relaxed transition-colors">${(a.system_prompt||'')}</textarea>
+            </div>
+        </div>
+
+        <!-- ═══ TOOLS & CAPABILITIES ═══ -->
+        <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-4 space-y-4">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>Tools
+            </h3>
+
+            <!-- File Search -->
+            <div class="border border-slate-700/50 rounded-xl overflow-hidden">
+                <div class="flex items-center justify-between p-3.5 bg-slate-800/40">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-green-900/40 border border-green-800/60 rounded-lg flex items-center justify-center text-lg">🗂️</div>
+                        <div>
+                            <div class="text-sm font-semibold text-white">File Search</div>
+                            <div class="text-xs text-slate-500">Faça upload de PDFs, TXTs. A IA consulta antes de responder.</div>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" id="edFileSearch" ${a.file_search ? 'checked' : ''}
+                            onchange="toggleFileSearch(${a.id},this.checked)">
+                        <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-green-600 transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+                    </label>
+                </div>
+                <div id="fileSearchArea_${a.id}" class="${a.file_search ? '' : 'hidden'} p-3.5 border-t border-slate-700/50 bg-slate-950/40 space-y-3">
+                    <div id="fileList_${a.id}" class="space-y-1.5">
+                        <div class="text-xs text-slate-600 italic">Carregando arquivos...</div>
+                    </div>
+                    <label class="flex items-center justify-center gap-2 cursor-pointer border border-dashed border-slate-600 hover:border-green-500 rounded-lg py-3 text-xs text-slate-400 hover:text-green-400 transition-all bg-slate-900/40 hover:bg-green-900/10">
+                        <input type="file" id="fileUpload_${a.id}" accept=".txt,.pdf,.csv,.md" class="hidden"
+                            onchange="uploadAgentFile(${a.id},this)">
+                        📎 Adicionar arquivo (PDF, TXT, CSV)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Code Interpreter -->
+            <div class="flex items-center justify-between p-3.5 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-blue-900/40 border border-blue-800/60 rounded-lg flex items-center justify-center text-lg">💻</div>
+                    <div>
+                        <div class="text-sm font-semibold text-white">Code Interpreter</div>
+                        <div class="text-xs text-slate-500">Permite cálculos complexos e análise de dados em tempo real.</div>
+                    </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer" id="edCodeInterp" ${a.code_interpreter ? 'checked' : ''}
+                        onchange="quickSave(${a.id},{code_interpreter:this.checked}); showNotification(this.checked?'💻 Code Interpreter ativo':'Code Interpreter desativado')">
+                    <div class="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-blue-600 transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+                </label>
+            </div>
+
+            <!-- Functions -->
+            <div class="border border-slate-700/50 rounded-xl overflow-hidden">
+                <div class="flex items-center justify-between p-3.5 bg-slate-800/40">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 bg-orange-900/40 border border-orange-800/60 rounded-lg flex items-center justify-center text-lg">🔌</div>
+                        <div>
+                            <div class="text-sm font-semibold text-white">Functions</div>
+                            <div class="text-xs text-slate-500">Defina chamadas de função JSON (criar lead, agendar, etc.)</div>
+                        </div>
+                    </div>
+                    <button onclick="toggleFunctionsArea(${a.id})" id="funcToggleBtn_${a.id}"
+                        class="text-xs px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 transition-all">
+                        ${a.functions_json ? 'Configurado ✓' : 'Adicionar'}
+                    </button>
+                </div>
+                <div id="functionsArea_${a.id}" class="${a.functions_json ? '' : 'hidden'} p-3.5 border-t border-slate-700/50 bg-slate-950/40">
+                    <label class="block text-xs text-slate-500 mb-1.5">JSON das funções disponíveis</label>
+                    <textarea id="edFunctions" rows="5"
+                        placeholder='[{"name":"criar_lead","description":"Cria um novo lead no CRM","parameters":{"type":"object","properties":{"nome":{"type":"string"},"telefone":{"type":"string"}}}}]'
+                        class="w-full px-3 py-2.5 bg-slate-950 border border-slate-700/50 rounded-lg text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/50 resize-none font-mono leading-relaxed">${(a.functions_json||'')}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SAVE BUTTON ═══ -->
+        <div class="flex gap-3">
+            <button onclick="saveEditorAgent(${a.id})"
+                class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-purple-900/30">
+                💾 Salvar Agente
+            </button>
+            <button onclick="resetEditorChat()" class="bg-slate-800 hover:bg-slate-700 px-5 py-3 rounded-xl text-sm transition-all">
+                🗑️ Limpar chat
+            </button>
+        </div>
+
+        <!-- ═══ TEST CHAT ═══ -->
+        <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-700/60 flex items-center justify-between bg-slate-800/40">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                    <span class="text-sm font-semibold">Testar ao vivo</span>
+                    <span class="text-xs text-slate-500 ml-1">— simule uma conversa com o agente configurado</span>
+                </div>
+            </div>
+            <div id="inlineChat" class="h-56 overflow-y-auto p-4 space-y-2">
+                <div class="text-center text-slate-600 text-xs py-6">Envie uma mensagem para testar o agente com as configurações atuais</div>
+            </div>
+            <div class="px-4 py-3 border-t border-slate-700/60 flex gap-2 bg-slate-800/20">
+                <input id="inlineChatInput" type="text" placeholder="Digite como se fosse um cliente..."
+                    onkeydown="if(event.key==='Enter')sendInlineChat()"
+                    class="flex-1 px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50">
+                <button onclick="sendInlineChat()"
+                    class="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all whitespace-nowrap">
+                    Enviar →
+                </button>
+            </div>
+        </div>
+    `;
+    agentChatHistory = [];
+    if (a.file_search) loadAgentFiles(a.id);
+    document.addEventListener('click', (e) => {
+        const picker = document.getElementById(`avatarPicker_${a.id}`);
+        if (picker && !picker.contains(e.target) && !e.target.closest(`[onclick*="toggleAvatarPicker"]`)) {
+            picker.classList.add('hidden');
+        }
+    }, { once: true });
+}
+
+function updateTempLabel(id, val) {
+    const v = parseFloat(val);
+    const label = v <= 0.3 ? 'Focado' : v <= 0.6 ? 'Equilibrado' : v <= 0.85 ? 'Criativo' : 'Muito criativo';
+    const el = document.getElementById(`tempLabel_${id}`);
+    if (el) el.textContent = `${v.toFixed(2)} — ${label}`;
+}
+
+function toggleAvatarPicker(id) {
+    const picker = document.getElementById(`avatarPicker_${id}`);
+    if (picker) picker.classList.toggle('hidden');
+}
+
+async function setAvatar(agentId, emoji) {
+    document.getElementById(`avatarDisplay_${agentId}`).textContent = emoji;
+    document.getElementById(`avatarPicker_${agentId}`).classList.add('hidden');
+    await quickSave(agentId, { avatar: emoji });
+    const idx = _allAgents.findIndex(a => a.id === agentId);
+    if (idx >= 0) { _allAgents[idx].avatar = emoji; renderAgentList(); }
+}
+
+function toggleFileSearch(agentId, enabled) {
+    const area = document.getElementById(`fileSearchArea_${agentId}`);
+    if (area) area.classList.toggle('hidden', !enabled);
+    quickSave(agentId, { file_search: enabled });
+    showNotification(enabled ? '🗂️ File Search ativado' : 'File Search desativado');
+    if (enabled) loadAgentFiles(agentId);
+}
+
+function toggleFunctionsArea(agentId) {
+    const area = document.getElementById(`functionsArea_${agentId}`);
+    if (area) area.classList.toggle('hidden');
+}
+
+async function loadAgentFiles(agentId) {
+    const container = document.getElementById(`fileList_${agentId}`);
+    if (!container) return;
+    const data = await apiFetch(`/api/agents/${agentId}/files`);
+    const files = data?.files || [];
+    if (!files.length) {
+        container.innerHTML = '<div class="text-xs text-slate-600 italic">Nenhum arquivo — faça upload abaixo</div>';
+        return;
+    }
+    container.innerHTML = files.map(f => `
+        <div class="flex items-center justify-between px-3 py-2 bg-slate-800/60 rounded-lg border border-slate-700/40">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="text-sm">${f.filename.endsWith('.pdf') ? '📄' : f.filename.endsWith('.csv') ? '📊' : '📝'}</span>
+                <span class="text-xs text-white truncate max-w-48">${f.filename}</span>
+                <span class="text-xs text-slate-500 shrink-0">${(f.file_size/1024).toFixed(1)}KB</span>
+            </div>
+            <button onclick="deleteAgentFile(${agentId},${f.id})" class="text-xs text-slate-600 hover:text-red-400 transition-colors ml-2 shrink-0">✕</button>
+        </div>`).join('');
+}
+
+async function uploadAgentFile(agentId, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = authToken || localStorage.getItem('nexus_token') || '';
+    try {
+        const res = await fetch(`${API_BASE}/api/agents/${agentId}/files`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showNotification(`✅ "${file.name}" enviado`);
+            loadAgentFiles(agentId);
+        } else {
+            showNotification(`❌ ${data.detail || 'Erro no upload'}`, true);
+        }
+    } catch(e) {
+        showNotification('❌ Erro ao enviar arquivo', true);
+    }
+    input.value = '';
+}
+
+async function deleteAgentFile(agentId, fileId) {
+    if (!confirm('Remover este arquivo da base de conhecimento?')) return;
+    const r = await apiFetch(`/api/agents/${agentId}/files/${fileId}`, { method: 'DELETE' });
+    if (r?.status === 'deleted') {
+        showNotification('Arquivo removido');
+        loadAgentFiles(agentId);
+    }
+}
+
+async function quickSave(id, fields) {
+    await apiFetch(`/api/agents/${id}`, { method: 'PUT', body: JSON.stringify(fields) });
+    const idx = _allAgents.findIndex(a => a.id === id);
+    if (idx >= 0) Object.assign(_allAgents[idx], fields);
+}
+
+async function saveEditorAgent(id) {
+    const name         = document.getElementById('edName').value.trim();
+    const model        = document.getElementById('edModel').value;
+    const persona      = document.getElementById('edPersona').value.trim();
+    const instructions = document.getElementById('edInstructions').value.trim();
+    const systemPrompt = document.getElementById('edSystemPrompt').value.trim();
+    const temperature  = parseFloat(document.getElementById('edTemp')?.value ?? 0.7);
+    const functionsJson = document.getElementById('edFunctions')?.value.trim() || '';
+
+    const payload = { name, model, persona, instructions, temperature, functions_json: functionsJson };
+    const tasks = [apiFetch(`/api/agents/${id}`, { method: 'PUT', body: JSON.stringify(payload) })];
+    tasks.push(apiFetch(`/api/agents/${id}/prompt`, { method: 'PATCH', body: JSON.stringify({ system_prompt: systemPrompt }) }));
+
+    const [r] = await Promise.all(tasks);
+    if (r) {
+        showNotification('✅ Agente salvo com sucesso!');
+        const idx = _allAgents.findIndex(a => a.id === id);
+        if (idx >= 0) Object.assign(_allAgents[idx], { ...payload, system_prompt: systemPrompt });
+        _selectedAgent = _allAgents[idx];
+        renderAgentList();
+    } else {
+        showNotification('❌ Erro ao salvar', true);
+    }
+}
+
+async function sendInlineChat() {
+    const input = document.getElementById('inlineChatInput');
+    const msg   = input.value.trim();
+    if (!msg || !_selectedAgent) return;
+    input.value = '';
+    const box = document.getElementById('inlineChat');
+
+    box.innerHTML += `<div class="flex justify-end"><div class="bg-purple-700 text-white text-sm px-3 py-2 rounded-2xl rounded-tr-sm max-w-xs">${msg}</div></div>`;
+    box.innerHTML += `<div id="inlineTyping" class="flex justify-start"><div class="bg-slate-800 text-slate-400 text-sm px-3 py-2 rounded-2xl rounded-tl-sm">digitando...</div></div>`;
+    box.scrollTop = box.scrollHeight;
+
+    agentChatHistory.push({ role: 'user', content: msg });
+    const r = await apiFetch('/api/agents/chat', { method: 'POST', body: JSON.stringify({
+        agent_type: _selectedAgent.type, message: msg, conversation_history: agentChatHistory
+    })});
+    document.getElementById('inlineTyping')?.remove();
+
+    if (r && r.reply) {
+        agentChatHistory.push({ role: 'assistant', content: r.reply });
+        box.innerHTML += `<div class="flex justify-start"><div class="bg-slate-800 text-white text-sm px-3 py-2 rounded-2xl rounded-tl-sm max-w-xs leading-relaxed">${r.reply.replace(/\n/g,'<br>')}</div></div>`;
+    } else {
+        box.innerHTML += `<div class="flex justify-start"><div class="bg-red-900/40 text-red-300 text-sm px-3 py-2 rounded-2xl">Erro ao obter resposta</div></div>`;
+    }
+    box.scrollTop = box.scrollHeight;
+}
+
+function resetEditorChat() {
+    agentChatHistory = [];
+    const box = document.getElementById('inlineChat');
+    if (box) box.innerHTML = '<div class="text-center text-slate-600 text-xs py-6">Chat limpo. Envie uma mensagem para testar.</div>';
+}
+
+async function toggleAgent(id, active) {
+    await quickSave(id, { active });
+    showNotification(active ? '✅ Agente ativado' : '⚪ Agente desativado');
+}
+
+// Mantém compatibilidade com modais antigos (não usados mais no editor inline)
+function openAgentConfig(agent) { selectAgent(agent); }
+function closeAgentConfig()     { document.getElementById('agentConfigModal').classList.add('hidden'); }
+async function saveAgentConfig(e) { e.preventDefault(); closeAgentConfig(); }
+function openAgentChat(type, name) { /* substituído pelo chat inline */ }
+function closeAgentChat()          { document.getElementById('agentChatModal').classList.add('hidden'); }
+async function sendAgentMessage()  { await sendInlineChat(); }
+
+// ─── Inbox ───────────────────────────────────────────
+let _allChats = [];
+let _openJid  = null;
+let _inboxPollTimer = null;
+let _inboxOffset = 0;
+let _inboxTotal = 0;
+let _inboxLoading = false;
+
+async function loadInbox() {
+    _inboxOffset = 0;
+    _allChats = [];
+    const data = await apiFetch('/api/inbox/chats?limit=30&offset=0');
+    if (!data) return;
+    _inboxTotal = data.total || 0;
+    _inboxOffset = data.chats ? data.chats.length : 0;
+    _allChats = data.chats || data;
+    document.getElementById('inboxTotalChats').textContent = `${_inboxTotal} conversas`;
+    renderChatList(_allChats);
+    if (_allChats.length > 0 && !_openJid) openChat(_allChats[0]);
+    // Scroll infinito
+    const chatList = document.getElementById('chatList');
+    chatList.onscroll = () => {
+        if (chatList.scrollTop + chatList.clientHeight >= chatList.scrollHeight - 50) loadMoreChats();
+    };
+    if (_inboxPollTimer) clearInterval(_inboxPollTimer);
+    _inboxPollTimer = setInterval(pollInbox, 3000);
+}
+
+async function loadMoreChats() {
+    if (_inboxLoading || _inboxOffset >= _inboxTotal) return;
+    _inboxLoading = true;
+    const data = await apiFetch(`/api/inbox/chats?limit=30&offset=${_inboxOffset}`);
+    _inboxLoading = false;
+    if (!data || !data.chats) return;
+    _inboxOffset += data.chats.length;
+    _allChats = [..._allChats, ...data.chats];
+    renderChatList(_allChats);
+}
+
+async function pollInbox() {
+    const data = await apiFetch('/api/inbox/chats?limit=30&offset=0');
+    if (!data) return;
+    const chats = data.chats || data;
+    let unread = 0;
+    chats.forEach(c => { unread += (c.unread || 0); });
+    if (unread > 0) {
+        const badge = document.getElementById('inboxBadge');
+        badge.textContent = unread > 9 ? '9+' : unread;
+        badge.classList.remove('hidden');
+    }
+    // Atualiza apenas os primeiros 30 sem destruir o scroll
+    const newJids = new Set(chats.map(c => c.jid));
+    _allChats = [...chats, ..._allChats.filter(c => !newJids.has(c.jid))];
+    renderChatList(_allChats);
+    if (_openJid) { const u = _allChats.find(c => c.jid === _openJid); if (u) refreshOpenChat(); }
+}
+
+const _AVATAR_COLORS = [
+    ['#7c3aed','#a855f7'], ['#2563eb','#06b6d4'], ['#059669','#10b981'],
+    ['#d97706','#f59e0b'], ['#dc2626','#f97316'], ['#7c3aed','#ec4899'],
+    ['#0891b2','#6366f1'], ['#16a34a','#84cc16'],
+];
+
+function _formatPhone(raw) {
+    if (!raw) return '';
+    const digits = raw.replace(/\D/g, '');
+    // BR mobile: 55 + DDD(2) + 9digits = 13 digits
+    if (digits.length === 13 && digits.startsWith('55')) {
+        const ddd = digits.slice(2, 4);
+        const n = digits.slice(4);
+        return `+55 (${ddd}) ${n.slice(0,5)}-${n.slice(5)}`;
+    }
+    // BR landline/mobile without country: 11 digits (DDD + 9digits) or 10 digits
+    if (digits.length === 11) {
+        return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
+    }
+    if (digits.length === 10) {
+        return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
+    }
+    return raw;
+}
+
+function _onAvatarError(img) {
+    const parent = img.parentElement;
+    if (!parent) return;
+    const initials = parent.dataset.initials || '?';
+    parent.removeChild(img);
+    parent.textContent = initials;
+}
+
+function _avatarGrad(str) {
+    let h = 0;
+    for (let ch of (str || '?')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const [c1, c2] = _AVATAR_COLORS[h % _AVATAR_COLORS.length];
+    return `background: linear-gradient(135deg, ${c1}, ${c2})`;
+}
+
+function _avatarEl(name, phone, size = 11) {
+    const label = (name && !/^\d+$/.test(name)) ? name : (phone || '?');
+    const initials = label.replace(/[^a-zA-ZÀ-ú0-9]/g,' ').trim().split(/\s+/)
+        .slice(0,2).map(w => w[0].toUpperCase()).join('');
+    const grad = _avatarGrad(phone || name);
+    return `<div class="w-${size} h-${size} rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0 overflow-hidden" style="${grad}">${initials || '?'}</div>`;
+}
+
+function renderChatList(chats) {
+    const list = document.getElementById('chatList');
+    if (!chats.length) {
+        list.innerHTML = '<div class="p-6 text-center text-slate-500 text-sm">Nenhuma conversa encontrada</div>'; return;
+    }
+
+    const now  = new Date();
+    const today = new Date(now); today.setHours(0,0,0,0);
+    const yest  = new Date(today); yest.setDate(yest.getDate()-1);
+
+    list.innerHTML = chats.map(c => {
+        const isOpen   = c.jid === _openJid;
+        const isLid    = c.jid && c.jid.endsWith('@lid');
+        const rawPhone = isLid ? null : (c.phone || c.jid.split('@')[0]);
+        // @lid = ID interno multi-device, não exibir como número
+        const name     = (c.name && !/^\d+$/.test(c.name))
+            ? c.name
+            : (isLid ? 'WhatsApp' : (_formatPhone(rawPhone) || rawPhone));
+        const preview  = (c.last_msg || '').replace(/</g,'&lt;').substring(0, 48) + (c.last_msg?.length > 48 ? '…' : '');
+
+        let timeStr = '';
+        if (c.last_ts) {
+            const d = new Date(c.last_ts * 1000);
+            const dDay = new Date(d); dDay.setHours(0,0,0,0);
+            if (dDay.getTime() === today.getTime())
+                timeStr = d.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+            else if (dDay.getTime() === yest.getTime())
+                timeStr = 'Ontem';
+            else
+                timeStr = d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
+        }
+
+        const initials = (name.replace(/[^a-zA-ZÀ-ú0-9]/g,' ').trim().split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('')) || '?';
+        const avatarContent = c.photo_url
+            ? `<img src="${c.photo_url}" class="w-full h-full object-cover" onerror="_onAvatarError(this)">`
+            : initials;
+
+        return `
+        <div onclick="openChat(${JSON.stringify(c).replace(/"/g,'&quot;')})"
+            class="px-3 py-3 cursor-pointer flex items-center gap-3 transition-all border-b border-slate-800/40
+                   ${isOpen ? 'bg-purple-950/40 border-l-2 border-l-purple-500' : 'hover:bg-slate-800/40 border-l-2 border-l-transparent'}">
+            <div class="relative flex-shrink-0">
+                <div id="avt-${rawPhone || c.jid}" class="w-11 h-11 rounded-full flex items-center justify-center font-bold text-white text-sm overflow-hidden"
+                     style="${_avatarGrad(rawPhone || c.jid)}" data-initials="${initials}">
+                    ${avatarContent}
+                </div>
+                ${c.unread > 0 ? `<div class="absolute -top-1 -right-1 w-5 h-5 bg-green-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-slate-900">${c.unread > 9 ? '9+' : c.unread}</div>` : ''}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-1">
+                    <span class="font-semibold text-sm ${isOpen ? 'text-purple-200' : 'text-white'} truncate">${name}</span>
+                    <span class="text-[11px] ${c.unread > 0 ? 'text-green-400 font-semibold' : 'text-slate-600'} flex-shrink-0">${timeStr}</span>
+                </div>
+                <div class="text-xs text-slate-500 truncate mt-0.5">
+                    ${c.from_me === 'true' || c.from_me === true ? '<span class="text-slate-600">✓</span> ' : ''}${preview || '<span class="italic text-slate-600">Sem mensagens</span>'}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+let _filterTimer = null;
+function debouncedFilterChats(q) {
+    clearTimeout(_filterTimer);
+    _filterTimer = setTimeout(() => filterChats(q), 200);
+}
+
+function filterChats(q) {
+    const filtered = q ? _allChats.filter(c =>
+        (c.name||'').toLowerCase().includes(q.toLowerCase()) ||
+        (c.phone||'').includes(q) ||
+        (c.last_msg||'').toLowerCase().includes(q.toLowerCase())
+    ) : _allChats;
+    renderChatList(filtered);
+}
+
+async function openChat(chat) {
+    _openJid = chat.jid;
+    renderChatList(_allChats);
+
+    const isLidChat = chat.jid && chat.jid.endsWith('@lid');
+    const rawPhone = isLidChat ? null : (chat.phone || chat.jid.split('@')[0]);
+    const name   = (chat.name && !/^\d+$/.test(chat.name))
+        ? chat.name
+        : (isLidChat ? 'WhatsApp' : (_formatPhone(rawPhone) || rawPhone));
+    const phone  = rawPhone || chat.jid;
+    const initials = name.replace(/[^a-zA-ZÀ-ú]/g,' ').trim().split(/\s+/).slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('') || '?';
+    const grad   = _avatarGrad(phone);
+
+    // Set avatar — use photo_url from chat list data immediately if available
+    const avatarEl = document.getElementById('chatAvatar');
+    avatarEl.style.cssText = `${grad}; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:white; font-size:14px; overflow:hidden;`;
+    if (chat.photo_url) {
+        avatarEl.innerHTML = `<img src="${chat.photo_url}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='${initials}'">`;
+        document.getElementById('chatOnlineDot').classList.remove('hidden');
+    } else {
+        avatarEl.innerHTML = initials;
+    }
+
+    document.getElementById('chatName').textContent   = name;
+    // @lid = ID interno WhatsApp multi-device, não é número de telefone real
+    const isLid = chat.jid && chat.jid.endsWith('@lid');
+    document.getElementById('chatStatus').textContent = isLid ? 'WhatsApp' : (_formatPhone(phone) || `+${phone}`);
+    document.getElementById('chatContactBtn').classList.remove('hidden');
+
+    const box = document.getElementById('chatMessages');
+    box.innerHTML = '<div class="text-center text-slate-600 text-xs py-8 animate-pulse">Carregando mensagens...</div>';
+
+    // Load messages (photo already applied from chat list data; fetch fresh photo only if none)
+    const [msgs, photoData] = await Promise.all([
+        apiFetch(`/api/inbox/chats/${encodeURIComponent(chat.jid)}/messages`),
+        !chat.photo_url
+            ? apiFetch(`/api/inbox/contact-photo?jid=${encodeURIComponent(chat.jid)}`).catch(() => null)
+            : Promise.resolve(null)
+    ]);
+
+    // Apply fresh photo if list didn't have one
+    if (!chat.photo_url && photoData?.url) {
+        avatarEl.innerHTML = `<img src="${photoData.url}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='${initials}'">`;
+        document.getElementById('chatOnlineDot').classList.remove('hidden');
+        const listAvt = document.getElementById(`avt-${phone}`);
+        if (listAvt) listAvt.innerHTML = `<img src="${photoData.url}" class="w-full h-full object-cover rounded-full" onerror="this.remove()">`;
+    }
+
+    renderMessages(msgs || []);
+
+    // Scroll para o topo → carrega mensagens anteriores
+    box.onscroll = null;
+    box.onscroll = () => {
+        if (box.scrollTop === 0 && !box._loadingOlder) _loadOlderMessages();
+    };
+}
+
+async function _loadOlderMessages() {
+    if (!_openJid) return;
+    const box = document.getElementById('chatMessages');
+    const firstMsg = box.querySelector('[data-ts]');
+    const oldestTs = firstMsg ? parseInt(firstMsg.dataset.ts) : null;
+    if (!oldestTs) return;
+
+    box._loadingOlder = true;
+    const indicator = document.createElement('div');
+    indicator.className = 'text-center text-slate-600 text-xs py-2 animate-pulse';
+    indicator.textContent = 'Carregando mensagens anteriores...';
+    box.prepend(indicator);
+
+    const older = await apiFetch(`/api/inbox/chats/${encodeURIComponent(_openJid)}/messages?before_ts=${oldestTs}`);
+    indicator.remove();
+    box._loadingOlder = false;
+
+    if (!older || !older.length) {
+        const done = document.createElement('div');
+        done.className = 'text-center text-slate-700 text-xs py-2';
+        done.textContent = '— Início da conversa —';
+        box.prepend(done);
+        box.onscroll = null;
+        return;
+    }
+
+    const prevHeight = box.scrollHeight;
+    const fragment = document.createElement('div');
+    renderMessagesInto(older, fragment);
+    box.prepend(fragment);
+    box.scrollTop = box.scrollHeight - prevHeight;
+}
+
+function openContactFromChat() {
+    if (!_openJid) return;
+    const chat = _allChats.find(c => c.jid === _openJid);
+    if (!chat) return;
+    setActiveNav(document.querySelector('[data-tab=contacts]'), 'contacts');
+}
+
+async function refreshOpenChat() {
+    if (!_openJid) return;
+    const msgs = await apiFetch(`/api/inbox/chats/${encodeURIComponent(_openJid)}/messages`);
+    renderMessages(msgs || []);
+}
+
+function _md(raw) {
+    return (raw || '[mídia]')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g,'<em>$1</em>')
+        .replace(/`(.+?)`/g,'<code class="bg-black/20 px-1 rounded text-xs">$1</code>')
+        .replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" class="underline opacity-80">$1</a>')
+        .replace(/\n/g,'<br>');
+}
+
+function _dateSep(ts) {
+    const d = new Date(ts * 1000);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const yest  = new Date(today); yest.setDate(yest.getDate()-1);
+    const day   = new Date(d); day.setHours(0,0,0,0);
+    if (day.getTime() === today.getTime()) return 'Hoje';
+    if (day.getTime() === yest.getTime())  return 'Ontem';
+    return d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+function _buildMessagesHtml(msgs) {
+    let html = '';
+    let lastDate = null;
+
+    msgs.forEach((m, i) => {
+        const fromMe  = m.from_me;
+        const isAI    = !!m.agent_type;
+        const time    = m.ts ? new Date(m.ts * 1000).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '';
+        const mtype   = m.msg_type || '';
+        const murl    = m.media_url || '';
+        const mname   = m.media_name || m.text || '';
+
+        // URL proxy (descriptografa via backend)
+        const msgId   = m.msg_id || '';
+        const rjid    = encodeURIComponent(m.remote_jid || _openJid || '');
+        const proxyUrl = msgId ? `${API_BASE}/api/inbox/media/${encodeURIComponent(msgId)}?jid=${rjid}` : '';
+
+        // Conteúdo especial por tipo de mídia
+        let bubble;
+        if (mtype === 'audioMessage' || mtype === 'ptvMessage') {
+            bubble = proxyUrl
+                ? `<audio controls preload="none" class="max-w-full" style="height:36px"><source src="${proxyUrl}"></audio>`
+                : `<span class="leading-relaxed opacity-70">🎵 Áudio</span>`;
+        } else if (mtype === 'imageMessage') {
+            bubble = proxyUrl
+                ? `<a href="${proxyUrl}" target="_blank"><img src="${proxyUrl}" class="rounded-lg max-w-full max-h-48 object-cover" loading="lazy" onerror="this.outerHTML='📷 Foto'"></a>${mname ? `<div class="text-xs mt-1 opacity-70">${mname}</div>` : ''}`
+                : `<span>📷 Foto</span>`;
+        } else if (mtype === 'stickerMessage') {
+            bubble = proxyUrl
+                ? `<img src="${proxyUrl}" style="width:120px;height:120px;object-fit:contain" loading="lazy" onerror="this.outerHTML='🩷'">`
+                : `<span>🩷</span>`;
+        } else if (mtype === 'documentMessage') {
+            const fname = mname || 'Documento';
+            bubble = proxyUrl
+                ? `<a href="${proxyUrl}" target="_blank" class="flex items-center gap-2 hover:opacity-80"><span class="text-2xl">📄</span><span class="text-sm underline break-all">${fname}</span></a>`
+                : `<span class="flex items-center gap-2">📄 <span class="opacity-70">${fname}</span></span>`;
+        } else if (mtype === 'videoMessage') {
+            bubble = proxyUrl
+                ? `<video controls preload="none" class="rounded-lg max-w-full max-h-48"><source src="${proxyUrl}"></video>${mname ? `<div class="text-xs mt-1 opacity-70">${mname}</div>` : ''}`
+                : `<span>🎥 Vídeo</span>`;
+        } else {
+            bubble = `<span class="leading-relaxed">${_md(m.text)}</span>`;
+        }
+        const text = bubble; // compatibilidade com o template abaixo
+
+        // Date separator
+        if (m.ts) {
+            const sep = _dateSep(m.ts);
+            if (sep !== lastDate) {
+                lastDate = sep;
+                html += `<div class="flex items-center gap-3 my-3"><div class="flex-1 h-px bg-slate-800"></div><span class="text-[10px] text-slate-600 flex-shrink-0">${sep}</span><div class="flex-1 h-px bg-slate-800"></div></div>`;
+            }
+        }
+
+        // Bubble grouping — check neighbours for same sender
+        const prev = msgs[i - 1];
+        const next = msgs[i + 1];
+        const samePrev = prev && prev.from_me === fromMe;
+        const sameNext = next && next.from_me === fromMe;
+        const isFirst = !samePrev;
+        const isLast  = !sameNext;
+        const gap     = isLast ? 'mb-2' : 'mb-0.5';
+
+        if (fromMe) {
+            // Sent: right side, purple gradient
+            const r = isFirst && isLast ? 'rounded-2xl rounded-tr-sm'
+                    : isFirst           ? 'rounded-2xl rounded-tr-sm rounded-br-sm'
+                    : isLast            ? 'rounded-2xl rounded-br-sm'
+                    :                     'rounded-xl rounded-r-sm';
+            html += `<div class="flex justify-end ${gap}" data-ts="${m.ts || 0}">
+                <div class="max-w-[70%]">
+                    ${isFirst && isAI ? '<div class="text-right text-[9px] text-purple-300/70 mb-0.5 mr-1">🤖 Nexus IA</div>' : ''}
+                    <div class="${r} bg-gradient-to-br from-purple-600 to-pink-600 text-white text-sm px-3.5 py-2 shadow-sm">
+                        ${text}
+                        <div class="text-right text-[10px] text-white/50 mt-1 -mb-0.5">${time}</div>
+                    </div>
+                </div>
+            </div>`;
+        } else {
+            // Received: left side, slate
+            const r = isFirst && isLast ? 'rounded-2xl rounded-tl-sm'
+                    : isFirst           ? 'rounded-2xl rounded-tl-sm rounded-bl-sm'
+                    : isLast            ? 'rounded-2xl rounded-bl-sm'
+                    :                     'rounded-xl rounded-l-sm';
+            html += `<div class="flex justify-start ${gap}" data-ts="${m.ts || 0}">
+                <div class="max-w-[70%] ${r} bg-slate-800 border border-slate-700/50 text-white text-sm px-3.5 py-2 shadow-sm">
+                    ${text}
+                    <div class="text-right text-[10px] text-slate-500 mt-1 -mb-0.5">${time}</div>
+                </div>
+            </div>`;
+        }
+    });
+    return html;
+}
+
+function renderMessages(msgs) {
+    const box = document.getElementById('chatMessages');
+    if (!msgs.length) {
+        box.innerHTML = '<div class="text-center text-slate-600 text-xs py-8">Nenhuma mensagem ainda</div>';
+        return;
+    }
+    box.innerHTML = _buildMessagesHtml(msgs);
+    box.scrollTop = box.scrollHeight;
+}
+
+function renderMessagesInto(msgs, container) {
+    container.innerHTML = _buildMessagesHtml(msgs);
+}
+
+async function sendManualReply() {
+    const input = document.getElementById('manualReplyInput');
+    const text  = input.value.trim();
+    if (!text || !_openJid) return;
+    input.value = '';
+    const number = _openJid.split('@')[0];
+    const r = await apiFetch('/api/inbox/send', { method: 'POST', body: JSON.stringify({ jid: _openJid, number, text }) });
+    if (r?.status === 'sent') {
+        // Adiciona bolha imediatamente
+        const box = document.getElementById('chatMessages');
+        const time = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+        box.innerHTML += `<div class="flex justify-end mb-2"><div class="max-w-[70%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-purple-600 to-pink-600 text-white text-sm px-3.5 py-2 shadow-sm">${_md(text)}<div class="text-right text-[10px] text-white/50 mt-1">${time}</div></div></div>`;
+        box.scrollTop = box.scrollHeight;
+    } else {
+        const errMsg = r?.detail || 'Erro ao enviar mensagem';
+        showNotification('❌ ' + errMsg, true);
+        input.value = text; // restaura o texto
+    }
+}
+
+// Chamado pelo webhook quando chega nova mensagem
+function inboxPushMessage(jid, msg) {
+    if (_openJid === jid) {
+        const box = document.getElementById('chatMessages');
+        const time = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+        const text = (msg.text||'').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+        box.innerHTML += `<div class="flex justify-start mb-2"><div class="max-w-[70%] rounded-2xl rounded-tl-sm bg-slate-800 border border-slate-700/50 text-white text-sm px-3.5 py-2 shadow-sm">${_md(msg.text||'')}<div class="text-right text-[10px] text-slate-500 mt-1">${time}</div></div></div>`;
+        box.scrollTop = box.scrollHeight;
+    } else {
+        // Badge no nav
+        const badge = document.getElementById('inboxBadge');
+        const cur = parseInt(badge.textContent || '0') + 1;
+        badge.textContent = cur > 9 ? '9+' : cur;
+        badge.classList.remove('hidden');
+        loadInbox(); // recarrega lista
+    }
 }
 
 // ─── Settings ────────────────────────────────────────
 function loadUserSettings() {
     const a = JSON.parse(localStorage.getItem('userAccount') || '{}');
-    if (a.name) {
-        document.getElementById('settingName').value = a.name;
-        document.getElementById('settingEmail').value = a.email || '';
-        document.getElementById('settingCompany').value = a.company || '';
-        document.getElementById('settingPhone').value = a.phone || '';
-    }
+    const storedEmail = sessionStorage.getItem('user_email') || localStorage.getItem('user_email') || '';
+    document.getElementById('settingName').value = a.name || '';
+    document.getElementById('settingEmail').value = a.email || storedEmail;
+    document.getElementById('settingCompany').value = a.company || localStorage.getItem('nexus_company') || '';
+    document.getElementById('settingPhone').value = a.phone || '';
     const p = JSON.parse(localStorage.getItem('userPreferences') || '{}');
     if (Object.keys(p).length > 0) {
         document.getElementById('emailNotif').checked = p.emailNotif !== false;
@@ -871,11 +2251,24 @@ function loadUserSettings() {
     }
 }
 
-function loadPlanInfo() {
-    const plans = { starter: { name: '🚀 Starter', price: 'R$ 1.000' }, professional: { name: '💼 Professional', price: 'R$ 1.500' }, premium: { name: '🏆 Premium', price: 'R$ 2.000' } };
-    const p = plans[localStorage.getItem('selected_plan') || 'professional'] || plans.professional;
-    document.getElementById('currentPlan').textContent = p.name;
-    document.getElementById('currentPrice').textContent = p.price;
+async function loadPlanInfo() {
+    const planMeta = {
+        trial:        { name: '⏳ Trial',      price: 'Gratuito (15 dias)' },
+        starter:      { name: '🥉 Starter',    price: 'R$ 997/mês' },
+        pro:          { name: '🥈 Pro',         price: 'R$ 1.997/mês' },
+        enterprise:   { name: '🥇 Enterprise', price: 'R$ 3.997/mês' },
+        professional: { name: '✅ Pro',         price: 'R$ 1.997/mês' },
+    };
+    try {
+        const m = await apiFetch('/api/metrics');
+        const plan = m?.plan || 'trial';
+        const meta = planMeta[plan] || { name: plan.toUpperCase(), price: '—' };
+        document.getElementById('currentPlan').textContent = meta.name;
+        document.getElementById('currentPrice').textContent = meta.price;
+    } catch(e) {
+        document.getElementById('currentPlan').textContent = '⏳ Trial';
+        document.getElementById('currentPrice').textContent = 'Gratuito (15 dias)';
+    }
 }
 
 function saveAccountSettings() {
@@ -906,18 +2299,181 @@ function changePassword() {
     showToast('🔐 Senha alterada!');
 }
 
-function upgradePlan() { showToast('Redirecionando...'); setTimeout(() => window.location.href = '/plan-selection.html', 800); }
+function upgradePlan() { showToast('Redirecionando para planos...'); setTimeout(() => window.location.href = '/payment', 800); }
+
+// ─── Pipeline ────────────────────────────────────────
+// ─── Kanban CRM ───────────────────────────────────────────────────────────────
+let _kanbanData  = { pipeline: null, stages: [] };
+let _kanbanDragId = null;   // deal id sendo arrastado
+let _kanbanDragSrc = null;  // stage id de origem
+
+const _STAGE_DOTS = ['bg-purple-400','bg-blue-400','bg-yellow-400','bg-orange-400','bg-green-400','bg-red-400'];
+
+async function loadPipeline() {
+    const board = document.getElementById('pipelineBoard');
+    board.innerHTML = '<div class="flex items-center justify-center w-full py-16 text-slate-600 text-sm animate-pulse">Carregando funil...</div>';
+    try {
+        const data = await apiFetch('/crm/pipelines');
+        _kanbanData = data || { pipeline: null, stages: [] };
+        _renderKanban();
+    } catch(e) {
+        board.innerHTML = '<div class="text-center text-slate-500 text-sm py-12">Erro ao carregar o funil.</div>';
+    }
+}
+
+function _renderKanban() {
+    const board = document.getElementById('pipelineBoard');
+    if (!_kanbanData.stages || !_kanbanData.stages.length) {
+        board.innerHTML = '<div class="text-center text-slate-500 text-sm py-12">Nenhum estágio encontrado.</div>';
+        return;
+    }
+    board.innerHTML = _kanbanData.stages.map((stage, i) => {
+        const dot = _STAGE_DOTS[i % _STAGE_DOTS.length];
+        const cards = (stage.deals || []).map(d => _dealCardHtml(d)).join('');
+        return `
+        <div class="flex-shrink-0 w-72 bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col max-h-[78vh]"
+             data-stage="${stage.id}"
+             ondragover="event.preventDefault();this.querySelector('.kanban-drop-zone').classList.add('ring-1','ring-purple-500/50')"
+             ondragleave="this.querySelector('.kanban-drop-zone').classList.remove('ring-1','ring-purple-500/50')"
+             ondrop="_kanbanDrop(event,${stage.id},this)">
+            <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-800 flex-shrink-0">
+                <span class="w-2 h-2 rounded-full ${dot}"></span>
+                <span class="font-semibold text-sm truncate flex-1">${_esc(stage.name)}</span>
+                <span class="text-xs bg-slate-800 text-slate-400 rounded-full px-2 py-0.5 flex-shrink-0">${(stage.deals||[]).length}</span>
+            </div>
+            <div class="kanban-drop-zone flex-1 overflow-y-auto p-3 space-y-2 min-h-[140px] rounded-b-xl transition-all">
+                ${cards || '<div class="text-center text-slate-700 text-xs py-8 pointer-events-none">Arraste um lead aqui</div>'}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function _esc(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function _dealCardHtml(d) {
+    const val = d.value > 0
+        ? `<span class="text-xs text-green-400 font-semibold">R$ ${Number(d.value).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`
+        : '';
+    const wa = d.contact_jid
+        ? `<span class="text-[10px] text-purple-400 bg-purple-950/40 border border-purple-900/40 px-1.5 py-0.5 rounded">💬 WA</span>`
+        : '';
+    return `
+    <div draggable="true"
+         data-deal="${d.id}"
+         ondragstart="_kanbanDragStart(event,${d.id})"
+         ondragend="_kanbanDragEnd(event)"
+         class="bg-slate-800/80 border border-slate-700 rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-purple-500/50 transition-all group">
+        <div class="font-medium text-sm text-white mb-2 leading-snug">${_esc(d.name)}</div>
+        <div class="flex items-center justify-between gap-2">
+            ${val}${wa}
+            <button onclick="event.stopPropagation();_deleteDeal(${d.id})"
+                class="ml-auto text-slate-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all text-xs leading-none" title="Remover">✕</button>
+        </div>
+    </div>`;
+}
+
+function _kanbanDragStart(e, dealId) {
+    _kanbanDragId  = dealId;
+    _kanbanDragSrc = parseInt(e.currentTarget.closest('[data-stage]').dataset.stage);
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => e.target.classList.add('opacity-40'), 0);
+}
+function _kanbanDragEnd(e) {
+    e.target.classList.remove('opacity-40');
+    document.querySelectorAll('.kanban-drop-zone').forEach(z => z.classList.remove('ring-1','ring-purple-500/50'));
+}
+
+async function _kanbanDrop(e, targetStageId, colEl) {
+    e.preventDefault();
+    colEl.querySelector('.kanban-drop-zone').classList.remove('ring-1','ring-purple-500/50');
+    if (!_kanbanDragId || targetStageId === _kanbanDragSrc) return;
+
+    const dealId = _kanbanDragId;
+    _kanbanDragId = _kanbanDragSrc = null;
+
+    // Optimistic UI — move imediatamente no estado local
+    let movedDeal = null;
+    _kanbanData.stages.forEach(s => {
+        const idx = (s.deals||[]).findIndex(d => d.id === dealId);
+        if (idx !== -1) movedDeal = s.deals.splice(idx, 1)[0];
+    });
+    if (movedDeal) {
+        const dest = _kanbanData.stages.find(s => s.id === targetStageId);
+        if (dest) dest.deals.unshift(movedDeal);
+    }
+    _renderKanban();
+
+    try {
+        const res = await apiFetch(`/crm/deals/${dealId}/move`, {
+            method: 'PUT',
+            body: JSON.stringify({ stage_id: targetStageId }),
+        });
+        if (!res || res.detail) throw new Error(res?.detail);
+    } catch(err) {
+        showToast && showToast('Erro ao mover o lead — recarregando', true);
+        loadPipeline(); // reverte
+    }
+}
+
+async function _deleteDeal(dealId) {
+    if (!confirm('Remover este lead do funil?')) return;
+    try {
+        await apiFetch(`/crm/deals/${dealId}`, { method: 'DELETE' });
+        _kanbanData.stages.forEach(s => {
+            s.deals = (s.deals||[]).filter(d => d.id !== dealId);
+        });
+        _renderKanban();
+    } catch(e) {
+        showToast && showToast('Erro ao remover lead', true);
+    }
+}
+
+function openCreateDealModal() {
+    // Popula o select de estágios com os dados já carregados
+    const sel = document.getElementById('dealStage');
+    sel.innerHTML = (_kanbanData.stages||[]).map(s =>
+        `<option value="${s.id}">${_esc(s.name)}</option>`
+    ).join('');
+    document.getElementById('dealName').value  = '';
+    document.getElementById('dealValue').value = '';
+    document.getElementById('dealJid').value   = '';
+    document.getElementById('dealModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('dealName').focus(), 50);
+}
+function closeCreateDealModal() {
+    document.getElementById('dealModal').classList.add('hidden');
+}
+async function submitCreateDeal() {
+    const name     = document.getElementById('dealName').value.trim();
+    const stage_id = parseInt(document.getElementById('dealStage').value);
+    const value    = parseFloat(document.getElementById('dealValue').value) || 0;
+    const jid      = document.getElementById('dealJid').value.trim() || null;
+    if (!name) { showToast && showToast('Informe o nome do lead', true); return; }
+    try {
+        const res = await apiFetch('/crm/deals', {
+            method: 'POST',
+            body: JSON.stringify({ name, stage_id, value, contact_jid: jid }),
+        });
+        if (res && res.id) {
+            const dest = _kanbanData.stages.find(s => s.id === stage_id);
+            if (dest) dest.deals.unshift({ id: res.id, name, value, contact_jid: jid, status: 'open' });
+            _renderKanban();
+            closeCreateDealModal();
+            showToast && showToast('Lead criado!');
+        }
+    } catch(e) {
+        showToast && showToast('Erro ao criar lead', true);
+    }
+}
 
 // ─── Integrations ─────────────────────────────────────
 let waPollingInterval = null;
 
 async function loadIntegrationsStatus() {
-    // WhatsApp
-    const instance = document.getElementById('waInstanceName').value || 'nexus_main';
-    try {
-        const r = await apiFetch(`/integrations/whatsapp/status/${instance}`);
-        if (r) updateWaBadge(r.status === 'connected');
-    } catch(e) {}
+    // WhatsApp — carrega lista de instâncias
+    try { await loadWhatsAppInstances(); } catch(e) {}
 
     // Email — check if configured
     try {
@@ -947,35 +2503,191 @@ function updateWaBadge(connected) {
     }
 }
 
-async function generateWhatsAppQR() {
-    const instanceName = document.getElementById('waInstanceName').value.trim() || 'nexus_main';
+async function generateWhatsAppQR(instanceName) {
+    instanceName = instanceName || 'nexus_main';
     document.getElementById('waQrModal').classList.remove('hidden');
-    document.getElementById('waQrInstruction').textContent = 'Gerando QR Code...';
-    document.getElementById('waQrContainer').innerHTML = '<div class="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full"></div>';
+    document.getElementById('waQrInstruction').textContent = 'Verificando status...';
+    document.getElementById('waQrContainer').innerHTML = '<div class="animate-spin w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full mx-auto"></div>';
     document.getElementById('waQrSteps').classList.add('hidden');
     document.getElementById('waConnectedMsg').classList.add('hidden');
 
     try {
+        // 1) Verifica status atual ANTES de tentar gerar QR
+        const status = await apiFetch(`/integrations/whatsapp/status/${instanceName}`);
+        if (status && status.status === 'connected') {
+            // Já conectado — mostra opção de desconectar
+            document.getElementById('waQrContainer').innerHTML = `
+                <div class="text-center py-2">
+                    <div class="text-5xl mb-3">✅</div>
+                    <p class="text-green-400 font-semibold mb-1">WhatsApp conectado!</p>
+                    <p class="text-slate-400 text-xs mb-4">Instância: <strong>${instanceName}</strong></p>
+                    <button onclick="disconnectWhatsApp('${instanceName}')"
+                        class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+                        🔌 Desconectar
+                    </button>
+                </div>`;
+            document.getElementById('waQrInstruction').textContent = 'Número já conectado';
+            return;
+        }
+
+        // 2) Não conectado — gera QR Code normalmente
+        document.getElementById('waQrInstruction').textContent = 'Gerando QR Code...';
         const r = await apiFetch('/integrations/whatsapp/generate-qrcode', {
             method: 'POST',
-            body: JSON.stringify({ client_id: 'nexus_main', instance_name: instanceName })
+            body: JSON.stringify({ client_id: instanceName, instance_name: instanceName })
         });
         if (!r) throw new Error('Sem resposta da API');
         if (r.detail) throw new Error(r.detail);
 
+        if (r.status === 'connected') {
+            document.getElementById('waQrContainer').innerHTML = '<div class="text-5xl text-center">✅</div>';
+            document.getElementById('waQrInstruction').textContent = 'WhatsApp já conectado!';
+            document.getElementById('waConnectedMsg').classList.remove('hidden');
+            loadWhatsAppInstances();
+            setTimeout(() => closeWaModal(), 2000);
+            return;
+        }
+
         const qrUrl = r.qrcode_url;
         if (qrUrl) {
-            document.getElementById('waQrContainer').innerHTML = `<img src="${qrUrl}" alt="WhatsApp QR Code" class="rounded-xl border-2 border-green-600/50 max-w-[220px]">`;
+            document.getElementById('waQrContainer').innerHTML = `<img src="${qrUrl}" alt="QR Code" class="rounded-xl border-2 border-green-600/50 max-w-[220px] mx-auto">`;
             document.getElementById('waQrInstruction').textContent = 'Escaneie com o WhatsApp';
             document.getElementById('waQrSteps').classList.remove('hidden');
             startWaPolling(instanceName);
         } else {
-            throw new Error('QR Code não gerado');
+            throw new Error('QR Code não retornado pela API');
         }
     } catch(e) {
-        document.getElementById('waQrContainer').innerHTML = `<div class="text-red-400 text-sm p-4">❌ ${e.message}</div>`;
+        document.getElementById('waQrContainer').innerHTML = `<div class="text-red-400 text-sm p-4 text-center">❌ ${e.message}</div>`;
         document.getElementById('waQrInstruction').textContent = 'Erro ao gerar QR Code';
     }
+}
+
+async function disconnectWhatsApp(instanceName) {
+    if (!confirm(`Desconectar o número da instância "${instanceName}"?`)) return;
+    document.getElementById('waQrContainer').innerHTML = '<div class="animate-spin w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full mx-auto"></div>';
+    const r = await apiFetch(`/integrations/whatsapp/disconnect/${instanceName}`, { method: 'POST' });
+    if (r && r.status === 'disconnected') {
+        showToast('✅ WhatsApp desconectado');
+        closeWaModal();
+        loadWhatsAppInstances();
+    } else {
+        showToast('❌ Erro ao desconectar', true);
+    }
+}
+
+async function deleteWhatsAppInstance(instanceName) {
+    if (!confirm(`Remover o número "${instanceName}" permanentemente?\n\nEssa ação desconecta e exclui a instância. Você precisará reconectar o WhatsApp se quiser usá-la novamente.`)) return;
+    const r = await apiFetch(`/integrations/whatsapp/instances/${instanceName}`, { method: 'DELETE' });
+    if (r && r.status === 'deleted') {
+        showToast('✅ Número removido com sucesso');
+        loadWhatsAppInstances();
+    } else {
+        showToast('❌ Erro ao remover número', true);
+    }
+}
+
+async function loadWhatsAppInstances() {
+    const userEmail = localStorage.getItem('user_email') || sessionStorage.getItem('user_email') || '';
+    const data = await apiFetch(`/integrations/whatsapp/instances${userEmail ? '?user_email=' + encodeURIComponent(userEmail) : ''}`);
+    const list = document.getElementById('waInstancesList');
+    const instances = data?.instances || [];
+
+    // Atualiza todos os indicadores de status na interface
+    const hasConnected = instances.some(i => i.live_status === 'connected');
+    updateWaBadge(hasConnected);
+    const wsEl = document.getElementById('whatsappStatus');
+    if (wsEl) {
+        wsEl.textContent = hasConnected ? '✅ Conectado' : '❌ Não conectado';
+        wsEl.className = hasConnected ? 'text-green-400 text-xs font-semibold' : 'text-red-400 text-xs font-semibold';
+    }
+
+    if (!list) return;
+    if (!instances.length) {
+        list.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-8 gap-3 text-center">
+            <div class="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center text-3xl">📱</div>
+            <p class="text-slate-400 text-sm font-medium">Nenhum número adicionado ainda</p>
+            <p class="text-slate-600 text-xs">Clique em "+ Adicionar Número" para conectar seu WhatsApp</p>
+        </div>`;
+        return;
+    }
+    const statusLabel = { connected: 'Conectado', close: 'Desconectado', connecting: 'Conectando...', pending: 'Aguardando QR' };
+    list.innerHTML = instances.map(inst => {
+        const isConn = inst.live_status === 'connected';
+        const isPending = inst.live_status === 'pending';
+        const phone = inst.phone_number ? inst.phone_number.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '+$1 ($2) $3-$4') : '';
+        return `
+        <div class="flex items-center gap-4 p-4 rounded-xl border transition-all ${isConn ? 'bg-green-950/20 border-green-800/40 hover:border-green-600/50' : 'bg-slate-800/50 border-slate-700/40 hover:border-slate-600/60'}">
+            <div class="relative flex-shrink-0">
+                <div class="w-11 h-11 ${isConn ? 'bg-green-500/20' : 'bg-slate-700/60'} rounded-xl flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" class="w-6 h-6 ${isConn ? 'fill-green-400' : 'fill-slate-500'}"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.849L.057 23.945l6.244-1.637A11.935 11.935 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.8 9.8 0 01-4.988-1.361l-.358-.213-3.706.972.988-3.609-.234-.371A9.797 9.797 0 012.182 12C2.182 6.573 6.573 2.182 12 2.182S21.818 6.573 21.818 12 17.427 21.818 12 21.818z"/></svg>
+                </div>
+                ${isConn ? '<span class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></span>' : ''}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="font-semibold text-sm text-white truncate">${inst.instance_name}</div>
+                <div class="text-xs ${isConn ? 'text-green-400' : 'text-slate-500'} mt-0.5">${phone || (isConn ? 'Conectado' : (statusLabel[inst.live_status] || 'Desconectado'))}</div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <span class="hidden sm:inline-flex px-2.5 py-1 rounded-full text-[11px] font-bold ${isConn ? 'bg-green-900/60 text-green-300 border border-green-700/50' : isPending ? 'bg-yellow-900/40 text-yellow-300 border border-yellow-700/40' : 'bg-slate-700/60 text-slate-400 border border-slate-600/50'}">
+                    ${statusLabel[inst.live_status] || 'Desconectado'}
+                </span>
+                <button onclick="generateWhatsAppQR('${inst.instance_name}')"
+                    class="${isConn ? 'bg-green-700/40 hover:bg-green-600/50 text-green-300 border border-green-700/40' : 'bg-slate-700 hover:bg-slate-600 text-white border border-slate-600'} px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border">
+                    ${isConn ? 'Gerenciar' : 'Conectar'}
+                </button>
+                <button onclick="deleteWhatsAppInstance('${inst.instance_name}')"
+                    title="Remover número"
+                    class="p-1.5 rounded-lg bg-slate-800 hover:bg-red-900/40 text-slate-500 hover:text-red-400 border border-slate-700/50 hover:border-red-700/50 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function addNewWhatsAppInstance() {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+    overlay.innerHTML = `
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-80 shadow-2xl">
+            <h3 class="font-bold text-white mb-1">Adicionar Número</h3>
+            <p class="text-slate-500 text-xs mb-4">Use apenas letras minúsculas, números e underscore</p>
+            <input id="wa-new-name" type="text" value="meu_whatsapp"
+                class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 mb-4 font-mono"
+                placeholder="ex: empresa_vendas">
+            <div class="flex gap-3">
+                <button id="wa-new-cancel" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg text-sm font-semibold transition-all">Cancelar</button>
+                <button id="wa-new-confirm" class="flex-1 bg-green-600 hover:bg-green-500 py-2 rounded-lg text-sm font-bold text-white transition-all">Criar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    const inp = overlay.querySelector('#wa-new-name');
+    inp.focus(); inp.select();
+    overlay.querySelector('#wa-new-cancel').onclick = () => overlay.remove();
+    overlay.querySelector('#wa-new-confirm').onclick = async () => {
+        const name = inp.value.trim().toLowerCase().replace(/\s+/g, '_');
+        if (!name || !/^[a-z0-9_]+$/.test(name)) {
+            inp.style.borderColor = '#ef4444'; return;
+        }
+        overlay.remove();
+        const userEmail = localStorage.getItem('user_email') || sessionStorage.getItem('user_email') || '';
+        const r = await apiFetch('/integrations/whatsapp/instances', {
+            method: 'POST',
+            body: JSON.stringify({ user_email: userEmail, instance_name: name })
+        });
+        if (r?.status === 'created') {
+            showToast(`✅ Instância "${name}" criada`);
+            await loadWhatsAppInstances();
+            generateWhatsAppQR(name);
+        } else {
+            showToast(`❌ ${r?.detail || 'Erro ao criar instância'}`, 'error');
+        }
+    };
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') overlay.querySelector('#wa-new-confirm').click(); });
 }
 
 function startWaPolling(instanceName) {
@@ -985,11 +2697,11 @@ function startWaPolling(instanceName) {
             const r = await apiFetch(`/integrations/whatsapp/status/${instanceName}`);
             if (r && r.status === 'connected') {
                 clearInterval(waPollingInterval);
-                document.getElementById('waQrContainer').innerHTML = '<div class="text-5xl">✅</div>';
+                document.getElementById('waQrContainer').innerHTML = '<div class="text-5xl text-center">✅</div>';
                 document.getElementById('waQrInstruction').textContent = 'WhatsApp conectado!';
                 document.getElementById('waQrSteps').classList.add('hidden');
                 document.getElementById('waConnectedMsg').classList.remove('hidden');
-                updateWaBadge(true);
+                loadWhatsAppInstances();
                 setTimeout(() => closeWaModal(), 2500);
             }
         } catch(e) {}
@@ -1002,14 +2714,8 @@ function closeWaModal() {
 }
 
 async function checkWhatsAppStatus() {
-    const instance = document.getElementById('waInstanceName').value.trim() || 'nexus_main';
-    const r = await apiFetch(`/integrations/whatsapp/status/${instance}`);
-    if (r) {
-        updateWaBadge(r.status === 'connected');
-        showToast(r.status === 'connected' ? '✅ WhatsApp conectado!' : `📱 Status: ${r.state || r.message}`);
-    } else {
-        showToast('❌ Erro ao verificar status', true);
-    }
+    await loadWhatsAppInstances();
+    showToast('🔄 Status atualizado');
 }
 
 async function connectTelegram() {
@@ -1127,6 +2833,87 @@ function deleteAccountConfirm() {
     }
 }
 
+// ─── Metrics ─────────────────────────────────────────
+async function loadMetrics() {
+    const m = await apiFetch('/api/metrics');
+    if (!m) return;
+
+    // Contatos
+    const total = m.contacts?.total ?? 0;
+    const src   = m.contacts?.by_source ?? {};
+    const srcTxt = Object.entries(src).map(([k,v]) => `${k}: ${v}`).join(' · ') || 'sem dados';
+    document.getElementById('contactCount').textContent = total.toLocaleString('pt-BR');
+    document.getElementById('contactSource').textContent = srcTxt;
+
+    // Mensagens IA
+    const sent = m.messages?.sent ?? 0;
+    const recv = m.messages?.received ?? 0;
+    document.getElementById('msgSentCount').textContent = sent.toLocaleString('pt-BR');
+    document.getElementById('msgReceivedLabel').textContent = `${recv} recebidas de clientes`;
+
+    // Pipeline
+    const pip  = m.pipeline?.total ?? 0;
+    const conv = m.pipeline?.conversion_rate ?? 0;
+    document.getElementById('pipelineCount').textContent = pip.toLocaleString('pt-BR');
+    document.getElementById('conversionLabel').textContent = `${conv}% taxa de fechamento`;
+
+    // Plano
+    const plan = m.plan ?? 'trial';
+    const planNames = { trial: '⏳ Trial', starter: '🥉 Starter', pro: '🥈 Pro', enterprise: '🥇 Enterprise', professional: '✅ Pro' };
+    const isPaid = ['starter','pro','enterprise','professional'].includes(plan);
+    document.getElementById('planBadge').textContent = planNames[plan] || plan.toUpperCase();
+    document.getElementById('planBadge').className = `text-2xl font-bold ${isPaid ? 'text-green-400' : 'text-yellow-400'}`;
+    document.getElementById('planLabel').textContent = isPaid ? `Plano ${plan.charAt(0).toUpperCase()+plan.slice(1)} ativo` : 'Faça upgrade para liberar todos os recursos';
+    document.getElementById('upgradeBtn').innerHTML = isPaid ? '' :
+        `<button onclick="startCheckout('pro','monthly')" class="text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 px-3 py-1 rounded-lg font-semibold transition-all">Fazer Upgrade</button>`;
+
+    // Também atualiza o contactCount na aba de contatos se estiver visível
+    if (document.getElementById('contactCount')) {
+        // já foi atualizado acima
+    }
+}
+
+async function startCheckout(tier, plan) {
+    tier = tier || 'pro';
+    plan = plan || 'monthly';
+    const r = await apiFetch('/api/billing/checkout', { method: 'POST', body: JSON.stringify({ tier, plan }) });
+    if (r?.checkout_url) {
+        window.location.href = r.checkout_url;
+    } else {
+        showNotification('❌ Erro ao iniciar checkout: ' + (r?.detail || 'verifique Stripe'), true);
+    }
+}
+
+async function loadTrialBanner() {
+    const banner = document.getElementById('trialBanner');
+    if (!banner) return;
+    try {
+        const t = await apiFetch('/api/me/trial');
+        if (!t || t.on_paid_plan || t.days_left === null) { banner.classList.add('hidden'); return; }
+        const days = t.days_left;
+        const urgent = days <= 3;
+        const warn   = days <= 7 && !urgent;
+        const bg    = urgent ? 'bg-red-950/60 border-red-700/50'   : warn ? 'bg-yellow-950/50 border-yellow-700/40' : 'bg-purple-950/40 border-purple-700/30';
+        const icon  = urgent ? '🚨' : warn ? '⚠️' : '🎁';
+        const color = urgent ? 'text-red-300' : warn ? 'text-yellow-300' : 'text-purple-200';
+        const msg   = days === 0
+            ? 'Seu período de testes <strong>encerrou hoje</strong>. Faça upgrade para continuar usando.'
+            : `Aproveite o seu período de testes! Você tem <strong>${days} dia${days === 1 ? '' : 's'}</strong> restante${days === 1 ? '' : 's'} no Trial.`;
+        banner.className = `mb-5 rounded-xl px-4 py-3 flex items-center justify-between gap-3 border ${bg}`;
+        banner.innerHTML = `
+            <div class="flex items-center gap-3">
+                <span class="text-xl flex-shrink-0">${icon}</span>
+                <span class="${color} text-sm">${msg}</span>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <button onclick="startCheckout('pro','monthly')" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all">
+                    Fazer Upgrade
+                </button>
+                <button onclick="this.closest('#trialBanner').classList.add('hidden')" class="text-slate-500 hover:text-slate-300 text-lg leading-none px-1">×</button>
+            </div>`;
+    } catch (_) { banner.classList.add('hidden'); }
+}
+
 // ─── Init ────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     checkAuth();
@@ -1134,8 +2921,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadLeads();
     loadCampaigns();
     loadContacts();
+    loadMetrics();
+    loadTrialBanner();
 
-    setInterval(() => { checkSystemHealth(); loadLeads(); loadCampaigns(); loadContacts(); }, 30000);
+    setInterval(() => { checkSystemHealth(); loadLeads(); loadCampaigns(); loadContacts(); loadMetrics(); }, 30000);
+
+    // Drawflow é inicializado lazy, na primeira vez que a tab Workflows abre
 
     // Search
     document.getElementById('globalSearch').addEventListener('input', function() {
@@ -1149,6 +2940,681 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!this.value) document.querySelectorAll('tbody tr').forEach(r => r.style.display = '');
     });
 });
+
+// ════════════════════════════════════════════════════════
+//  WORKFLOW BUILDER  —  Drawflow-based visual canvas
+// ════════════════════════════════════════════════════════
+
+let _df = null;          // Drawflow instance
+let _wfCurrentId = null; // workflow aberto
+let _wfSelectedNode = null;
+let _wfNodeCounter = 1;
+let _userProfile = {};   // cached from /api/me — injected into Start node & prompt optimizer
+
+async function _loadUserProfile() {
+    try {
+        const data = await apiFetch('/api/me');
+        if (data) _userProfile = data;
+    } catch (_) {}
+}
+
+// ── Node templates ────────────────────────────────────
+const WF_NODE_HELP = {
+    start:       'Ponto de entrada do fluxo. Os dados da empresa (nome, nicho) são injetados automaticamente para contextualizar as IAs seguintes. Não precisa alterar nada aqui.',
+    agent:       'A mente do robô. No campo de instruções, defina a persona (ex: "Você é um vendedor focado em fechar contratos"). Temperatura baixa (0.3) = respostas mais previsíveis; alta (0.9) = mais criativas. Ative "Include history" para manter o contexto da conversa.',
+    classify:    'Triagem inteligente. Liste as categorias separadas por vírgula (ex: vendas,suporte,financeiro). A IA lê a mensagem e roteia o cliente para a saída correspondente. Cada categoria gera um output diferente no nó.',
+    file_search: 'Injeta sua base de conhecimento (catálogos, regras, FAQs) antes de responder. A IA usará esses documentos de forma prioritária. Conecte ao agente que tem a KB configurada.',
+    condition:   'Roteador lógico. A IA avalia a condição digitada (ex: "O cliente demonstrou interesse em comprar?") e divide o fluxo em Sim ou Não.',
+    guardrails:  'Filtro de segurança. Defina o que a IA nunca pode fazer ou dizer (ex: "Não citar concorrentes. Não prometer prazos sem confirmação."). Saída 1 = mensagem passou · Saída 2 = violação detectada.',
+    action:      'Dispara uma ação direta: enviar mensagem para o WhatsApp, criar um lead ou notificar um humano. Escolha o tipo e escreva o template da mensagem.',
+    end:         'Finaliza o fluxo e entrega a resposta gerada ao longo do grafo para o cliente. Adicione uma mensagem de fechamento opcional.',
+};
+
+const WF_NODE_DEFS = {
+    start: {
+        label: '▶ Start',
+        cls: 'node-start',
+        inputs: 0, outputs: 1,
+        defaultData: { label: 'Start', description: 'Entrada do fluxo', company_name: '', niche: '' },
+        htmlFn: d => `<div class="title-box">▶ Start<span class="wf-help-btn" onclick="event.stopPropagation();wfShowHelp('start')">?</span></div><div class="box">${d.description || 'Início do fluxo'}</div>`,
+    },
+    agent: {
+        label: '🤖 Agente',
+        cls: 'node-agent',
+        inputs: 1, outputs: 1,
+        defaultData: { label: 'Agente IA', agent_id: '', agent_type: 'atendimento', instructions: '', model: 'gpt-4o-mini', temperature: 0.7, include_history: true, file_search: false },
+        htmlFn: d => `<div class="title-box">🤖 ${d.label||'Agente'}<span class="wf-help-btn" onclick="event.stopPropagation();wfShowHelp('agent')">?</span></div><div class="box">${d.agent_type||'atendimento'} · ${d.model||'gpt-4o-mini'}</div>`,
+    },
+    classify: {
+        label: '🏷 Classificar',
+        cls: 'node-classify',
+        inputs: 1, outputs: 3,
+        defaultData: { label: 'Classificar', categories: 'vendas,suporte,outro', instructions: 'Classifique a mensagem em uma das categorias.' },
+        htmlFn: d => `<div class="title-box" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">🏷 ${d.label||'Classificar'}<span class="wf-help-btn" onclick="event.stopPropagation();wfShowHelp('classify')">?</span></div><div class="box">${(d.categories||'').split(',').join(' · ')}</div>`,
+    },
+    file_search: {
+        label: '📂 File Search',
+        cls: 'node-filesearch',
+        inputs: 1, outputs: 1,
+        defaultData: { label: 'File Search', agent_id: '', inject_mode: 'context' },
+        htmlFn: d => `<div class="title-box" style="background:linear-gradient(135deg,#0d9488,#14b8a6)">📂 ${d.label||'File Search'}<span class="wf-help-btn" onclick="event.stopPropagation();wfShowHelp('file_search')">?</span></div><div class="box">Injeta base de conhecimento</div>`,
+    },
+    condition: {
+        label: '⚡ If/Else',
+        cls: 'node-condition',
+        inputs: 1, outputs: 2,
+        defaultData: { label: 'If/Else', rule: '', true_label: 'Sim', false_label: 'Não' },
+        htmlFn: d => `<div class="title-box">⚡ ${d.label||'If/Else'}<span class="wf-help-btn" onclick="event.stopPropagation();wfShowHelp('condition')">?</span></div><div class="box">${d.rule||'Condição...'}</div>`,
+    },
+    guardrails: {
+        label: '🛡 Guardrails',
+        cls: 'node-guardrails',
+        inputs: 1, outputs: 2,
+        defaultData: { label: 'Guardrails', rules: '', blocked_reply: 'Não posso ajudar com isso.' },
+        htmlFn: d => `<div class="title-box" style="background:linear-gradient(135deg,#c2410c,#ea580c)">🛡 ${d.label||'Guardrails'}<span class="wf-help-btn" onclick="event.stopPropagation();wfShowHelp('guardrails')">?</span></div><div class="box">Passa · Bloqueado</div>`,
+    },
+    action: {
+        label: '📤 Ação',
+        cls: 'node-action',
+        inputs: 1, outputs: 1,
+        defaultData: { label: 'Enviar mensagem', action_type: 'send_message', template: '' },
+        htmlFn: d => `<div class="title-box">📤 ${d.label||'Ação'}<span class="wf-help-btn" onclick="event.stopPropagation();wfShowHelp('action')">?</span></div><div class="box">${d.action_type||'send_message'}</div>`,
+    },
+    end: {
+        label: '⏹ End',
+        cls: 'node-end',
+        inputs: 1, outputs: 0,
+        defaultData: { label: 'End', message: '' },
+        htmlFn: d => `<div class="title-box">⏹ End<span class="wf-help-btn" onclick="event.stopPropagation();wfShowHelp('end')">?</span></div><div class="box">${d.message||'Fim do fluxo'}</div>`,
+    },
+};
+
+// ── Init ─────────────────────────────────────────────
+function initDrawflow() {
+    try {
+        const el = document.getElementById('drawflow');
+        if (!el) { console.warn('Drawflow: elemento #drawflow não encontrado'); return; }
+        if (typeof Drawflow === 'undefined') { console.warn('Drawflow: biblioteca não carregada'); return; }
+        // Força visibilidade para o Drawflow conseguir medir o container
+        el.style.minHeight = '400px';
+        _df = new Drawflow(el);
+        _df.reroute    = false; // desabilitado: duplo-clique criava pontos extras
+        _df.curvature  = 0.5;
+        _df.start();
+        _df.on('nodeSelected',   id => { _wfSelectedNode = id; wfOpenPanel(id); });
+        _df.on('nodeUnselected', ()  => { _wfSelectedNode = null; });
+        _df.on('nodeMoved',        () => wfMarkUnsaved());
+        _df.on('connectionCreated', () => wfMarkUnsaved());
+        _df.on('connectionRemoved', () => wfMarkUnsaved());
+
+        // Clique no canvas — modo tesoura corta; modo normal não faz nada extra
+        el.addEventListener('click', e => {
+            if (!_wfScissorsMode) return;
+            const connEl = e.target.closest('.connection');
+            if (!connEl) return;
+            e.stopPropagation();
+            _wfRemoveConnElement(connEl);
+        });
+
+        // Backspace remove conexão selecionada (modo normal)
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+            const tag = document.activeElement?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            const sel = document.querySelector('#drawflow .connection.selected');
+            if (sel && _df) { e.preventDefault(); _wfRemoveConnElement(sel); }
+        });
+    } catch(e) {
+        console.error('Drawflow init error:', e);
+    }
+}
+
+// ── Melhoria 2: tooltip de ajuda por tipo de nó ───────────────────────────────
+function wfShowHelp(type) {
+    const text = WF_NODE_HELP[type] || '';
+    const label = WF_NODE_DEFS[type]?.label || type;
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(2px)';
+    el.innerHTML = `
+        <div style="background:#1e293b;border:1px solid #475569;border-radius:16px;padding:20px 24px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.7)">
+            <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:10px">${label}</div>
+            <div style="font-size:13px;color:#94a3b8;line-height:1.6">${text}</div>
+            <button onclick="this.closest('[style*=fixed]').remove()" style="margin-top:16px;width:100%;background:linear-gradient(135deg,#7c3aed,#a855f7);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;padding:8px;cursor:pointer">
+                Entendido
+            </button>
+        </div>`;
+    el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+    document.body.appendChild(el);
+}
+
+// ── Modo Tesoura ──────────────────────────────────────────────────────────────
+let _wfScissorsMode = false;
+
+function wfToggleScissors() {
+    _wfScissorsMode = !_wfScissorsMode;
+    const btn    = document.getElementById('wf-scissors-btn');
+    const canvas = document.getElementById('drawflow');
+    if (_wfScissorsMode) {
+        if (btn) {
+            btn.classList.add('bg-red-600/60', 'border-red-400', 'text-white');
+            btn.classList.remove('bg-red-900/20', 'border-red-700/40', 'text-red-400');
+            btn.title = 'Modo tesoura ATIVO — clique em uma linha para cortá-la. Clique aqui para sair.';
+        }
+        if (canvas) { canvas.style.cursor = 'crosshair'; canvas.classList.add('scissors-active'); }
+    } else {
+        if (btn) {
+            btn.classList.remove('bg-red-600/60', 'border-red-400', 'text-white');
+            btn.classList.add('bg-red-900/20', 'border-red-700/40', 'text-red-400');
+            btn.title = 'Ativar modo tesoura para cortar conexões';
+        }
+        if (canvas) { canvas.style.cursor = ''; canvas.classList.remove('scissors-active'); }
+    }
+}
+
+// Remove conexão pelo elemento DOM — usa removeSingleConnection (API correta do Drawflow)
+function _wfRemoveConnElement(connEl) {
+    if (!connEl || !_df) return;
+    const classes = Array.from(connEl.classList);
+    const inC   = classes.find(c => c.startsWith('node_in_'));
+    const outC  = classes.find(c => c.startsWith('node_out_'));
+    const inpC  = classes.find(c => c.startsWith('input_'));
+    const outpC = classes.find(c => c.startsWith('output_'));
+    if (!inC || !outC || !inpC || !outpC) return;
+    const idInput  = inC.replace('node_in_', '');
+    const idOutput = outC.replace('node_out_', '');
+    try {
+        _df.removeSingleConnection(idOutput, idInput, outpC, inpC);
+    } catch(_) {
+        connEl.remove(); // fallback direto no DOM
+    }
+    wfMarkUnsaved();
+}
+
+// Backspace/Delete quando uma conexão está selecionada (modo normal)
+function wfDeleteSelectedConnection() {
+    const sel = document.querySelector('#drawflow .connection.selected');
+    if (!sel) return;
+    _wfRemoveConnElement(sel);
+}
+
+// ── List view ─────────────────────────────────────────
+async function loadWorkflowList() {
+    const chips = document.getElementById('wf-chips');
+    chips.innerHTML = '<span class="text-slate-500 text-sm">Carregando...</span>';
+    const list = await apiFetch('/api/workflows');
+    if (!list) { chips.innerHTML = '<span class="text-slate-500 text-sm">Erro ao carregar</span>'; return; }
+    if (!list.length) {
+        chips.innerHTML = '<span class="text-slate-500 text-sm italic">Nenhum workflow. Clique em "+ Novo" para começar.</span>';
+        return;
+    }
+    chips.innerHTML = list.map(wf => `
+        <div class="flex items-center gap-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 cursor-pointer hover:border-purple-500 transition-all group"
+             onclick="wfOpen(${wf.id})">
+            <span class="text-sm font-semibold text-white">${wf.name}</span>
+            ${wf.active ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">ATIVO</span>' : ''}
+            <button onclick="event.stopPropagation(); wfDeleteConfirm(${wf.id}, '${wf.name.replace(/'/g, '')}')"
+                class="ml-1 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all text-xs">✕</button>
+        </div>
+    `).join('');
+}
+
+// ── New workflow ──────────────────────────────────────
+function wfNew() {
+    // Mini-modal não-bloqueante em vez de prompt()
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center';
+    overlay.innerHTML = `
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-80 shadow-2xl">
+            <h3 class="font-bold text-white mb-4">Novo Workflow</h3>
+            <input id="wf-new-name" type="text" value="Meu Workflow" autofocus
+                class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4">
+            <div class="flex gap-3">
+                <button id="wf-new-cancel" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg text-sm font-semibold transition-all">Cancelar</button>
+                <button id="wf-new-confirm" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-2 rounded-lg text-sm font-semibold transition-all">Criar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    const nameInput = overlay.querySelector('#wf-new-name');
+    nameInput.focus();
+    nameInput.select();
+
+    const cleanup = () => overlay.remove();
+    overlay.querySelector('#wf-new-cancel').onclick = cleanup;
+
+    const doCreate = async () => {
+        const name = nameInput.value.trim() || 'Novo Workflow';
+        const confirmBtn = overlay.querySelector('#wf-new-confirm');
+        confirmBtn.textContent = 'Criando...';
+        confirmBtn.disabled = true;
+        cleanup();
+        try {
+            const wf = await apiFetch('/api/workflows', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description: '' })
+            });
+            if (!wf) { showToast('Erro ao criar workflow', 'error'); return; }
+            _wfCurrentId = wf.id;
+            wfShowEditor(wf);
+            showToast(`✅ "${name}" criado!`, 'success');
+            // Duplo RAF: 1º garante que o browser aplicou o flex; 2º garante que
+            // o Drawflow terminou seu layout interno após _df.clear()
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                try {
+                    const ctx = wf.drawflow?.context || {};
+                    wfAddNode('start', 80, 100, {
+                        description: ctx.company_name ? `Empresa: ${ctx.company_name}` : 'Entrada do fluxo',
+                        company_name: ctx.company_name || '',
+                        niche: ctx.niche || '',
+                    });
+                } catch(err) {
+                    console.error('wfAddNode start error:', err);
+                }
+            }));
+        } catch(e) {
+            console.error('wfNew error:', e);
+            showToast('Erro ao criar workflow', 'error');
+        }
+    };
+    overlay.querySelector('#wf-new-confirm').onclick = doCreate;
+    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doCreate(); if (e.key === 'Escape') cleanup(); });
+}
+
+// ── Open existing workflow ────────────────────────────
+async function wfOpen(id) {
+    const wf = await apiFetch(`/api/workflows/${id}`);
+    if (!wf) return;
+    _wfCurrentId = wf.id;
+    wfShowEditor(wf);
+    requestAnimationFrame(() => {
+        try {
+            if (_df && wf.drawflow && wf.drawflow.drawflow) {
+                _df.clear();
+                _df.import(wf.drawflow);
+            }
+        } catch(e) { console.error('wfOpen import error:', e); }
+    });
+}
+
+// ── Show/hide editor vs list ──────────────────────────
+function wfShowEditor(wf) {
+    const sec = document.getElementById('sec-workflows');
+    if (sec) sec.style.display = 'flex';
+
+    document.getElementById('wf-list-view').classList.add('hidden');
+    const tb = document.getElementById('wf-editor-toolbar');
+    tb.classList.remove('hidden');
+    tb.classList.add('flex');
+    document.getElementById('wf-name-input').value = wf.name || '';
+
+    const activateBtn = document.getElementById('wf-activate-btn');
+    if (!wf.active) activateBtn.classList.remove('hidden'); else activateBtn.classList.add('hidden');
+
+    const badge = document.getElementById('wf-saved-badge');
+    badge.classList.remove('hidden');
+    badge.textContent = '● salvo';
+    badge.style.color = '#94a3b8';
+
+    _wfSelectedNode = null;
+    document.getElementById('wf-config-panel').style.display = 'none';
+    if (_df) _df.clear();
+
+    // Atualiza o título global para o nome do workflow
+    document.getElementById('pageTitle').textContent = `⚡ ${wf.name}`;
+}
+
+function wfBackToList() {
+    _wfCurrentId = null;
+    document.getElementById('wf-list-view').classList.remove('hidden');
+    const tb = document.getElementById('wf-editor-toolbar');
+    tb.classList.add('hidden');
+    tb.classList.remove('flex');
+    document.getElementById('wf-config-panel').style.display = 'none';
+    if (_df) _df.clear();
+    document.getElementById('pageTitle').textContent = '⚡ Workflows';
+    loadWorkflowList();
+}
+
+// ── Add node ──────────────────────────────────────────
+function wfAddNode(type, posX, posY, overrideData) {
+    if (!_df) return;
+    const def = WF_NODE_DEFS[type];
+    if (!def) return;
+    const data = { ...def.defaultData, ...(overrideData || {}) };
+    const html = def.htmlFn(data);
+    const x = posX || 200 + Math.random() * 200;
+    const y = posY || 100 + Math.random() * 200;
+    const nodeId = _df.addNode(type, def.inputs, def.outputs, x, y, `${def.cls}`, data, html);
+    wfMarkUnsaved();
+    return nodeId;
+}
+
+// ── Config panel ──────────────────────────────────────
+function wfOpenPanel(nodeId) {
+    const node = _df.getNodeFromId(nodeId);
+    if (!node) return;
+    const type = node.name;
+    const data = node.data || {};
+    const panel = document.getElementById('wf-config-panel');
+    panel.style.display = 'flex';
+    panel.style.flexDirection = 'column';
+    document.getElementById('wf-panel-title').textContent = WF_NODE_DEFS[type]?.label || type;
+
+    const helpText = WF_NODE_HELP[type] || '';
+    let html = helpText
+        ? `<div class="bg-slate-800/70 border border-slate-700 rounded-lg p-3 mb-1 text-xs text-slate-400 leading-relaxed flex gap-2"><span class="text-purple-400 flex-shrink-0">ℹ</span><span>${helpText}</span></div>`
+        : '';
+    if (type === 'start') {
+        const pCompany  = data.company_name || _userProfile.company || '';
+        const pNiche    = data.niche        || _userProfile.ramo_empresa || '';
+        const pDesc     = data.description  || _userProfile.objetivo_ia  || '';
+        const autoFilled = (!data.company_name && _userProfile.company);
+        html = `
+        ${autoFilled ? '<div class="bg-purple-900/30 border border-purple-700/40 rounded-lg px-3 py-2 mb-1 text-xs text-purple-300">✨ Dados importados do seu cadastro automaticamente</div>' : ''}
+        <label class="text-slate-400 text-xs">Label</label>
+        <input id="np-label" value="${data.label||'Início'}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-2">Nome da empresa</label>
+        <input id="np-company_name" value="${pCompany}" placeholder="Ex: Nexus CRM" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-2">Setor / Nicho</label>
+        <input id="np-niche" value="${pNiche}" placeholder="Ex: estetica, saude, vendas_varejo" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-2">Objetivo da IA</label>
+        <input id="np-description" value="${pDesc}" placeholder="Ex: atendimento_suporte, vendas_agendamentos" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-2">Tom de voz</label>
+        <input id="np-tom_de_voz" value="${data.tom_de_voz||_userProfile.tom_de_voz||''}" placeholder="Ex: amigavel, formal, comercial" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">`;
+    } else if (type === 'agent') {
+        html = `
+        <div class="bg-slate-800/60 border border-purple-700/30 rounded-lg p-3 mb-3">
+            <label class="text-purple-300 text-xs font-semibold block mb-2">🤖 Agente cadastrado</label>
+            <select id="np-agent_id" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 mb-1">
+                <option value="">⏳ Carregando agentes...</option>
+            </select>
+            <p id="np-agent-hint" class="text-[10px] text-slate-500">Selecione um agente real para vincular a este nó.</p>
+        </div>
+        <label class="text-slate-400 text-xs">Label do nó</label>
+        <input id="np-label" value="${data.label||''}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-3">Tipo</label>
+        <select id="np-agent_type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            ${['atendimento','vendas','suporte'].map(t=>`<option value="${t}" ${data.agent_type===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+        <label class="text-slate-400 text-xs mt-3">Modelo</label>
+        <select id="np-model" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            ${['gpt-4o-mini','gpt-4o','gpt-4-turbo','gpt-3.5-turbo'].map(m=>`<option value="${m}" ${data.model===m?'selected':''}>${m}</option>`).join('')}
+        </select>
+        <label class="text-slate-400 text-xs mt-3">Temperatura: <span id="np-temp-label">${data.temperature??0.7}</span></label>
+        <input id="np-temperature" type="range" min="0" max="1" step="0.1" value="${data.temperature??0.7}"
+            oninput="document.getElementById('np-temp-label').textContent=this.value" class="w-full accent-purple-500">
+        <div class="mt-3 space-y-2">
+            <label class="text-slate-400 text-xs block">Ferramentas</label>
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input id="np-include_history" type="checkbox" ${data.include_history!==false?'checked':''} class="accent-purple-500 w-4 h-4">
+                <span class="text-sm text-white">Include chat history</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input id="np-file_search" type="checkbox" ${data.file_search?'checked':''} class="accent-teal-500 w-4 h-4">
+                <span class="text-sm text-white">📂 File Search (KB)</span>
+            </label>
+        </div>
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-1">
+                <label class="text-slate-400 text-xs">Instruções / System Prompt</label>
+                <button onclick="wfOptimizePrompt()" class="flex items-center gap-1 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/40 text-purple-300 hover:text-purple-200 text-[10px] font-semibold px-2 py-1 rounded-lg transition-all">
+                    ✨ Otimizar com IA
+                </button>
+            </div>
+            <div id="np-optimize-area" class="hidden mb-2 bg-slate-950 border border-purple-700/40 rounded-lg p-2">
+                <input id="np-optimize-idea" placeholder="Descreva em palavras simples (ex: robô de vendas para clínica estética)" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-purple-500 mb-2">
+                <button onclick="wfRunOptimize()" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white text-xs font-bold py-2 rounded-lg transition-all">
+                    Gerar Prompt Profissional →
+                </button>
+            </div>
+        </div>
+        <textarea id="np-instructions" rows="6" placeholder="Descreva como o agente deve se comportar..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none font-mono text-xs leading-relaxed">${data.instructions||''}</textarea>`;
+
+        // Carrega agentes reais de forma async após renderizar o HTML
+        (async () => {
+            const sel = document.getElementById('np-agent_id');
+            if (!sel) return;
+            try {
+                const agents = await apiFetch('/api/agents');
+                if (!agents || !agents.length) {
+                    sel.innerHTML = '<option value="">Nenhum agente cadastrado</option>';
+                    const hint = document.getElementById('np-agent-hint');
+                    if (hint) hint.innerHTML = '<a onclick="setActiveNav(document.querySelector(\'[data-tab=agents]\'),\'agents\')" class="text-purple-400 underline cursor-pointer">Criar agente na aba Agentes →</a>';
+                    return;
+                }
+                sel.innerHTML = '<option value="">— Nenhum (usar configuração manual) —</option>' +
+                    agents.map(a => `<option value="${a.id}" ${String(data.agent_id) === String(a.id) ? 'selected' : ''}>${a.name} (${a.type})</option>`).join('');
+                // Ao selecionar um agente real, preenche campos automaticamente
+                sel.addEventListener('change', () => {
+                    const chosen = agents.find(a => String(a.id) === sel.value);
+                    if (!chosen) return;
+                    const lbl = document.getElementById('np-label');
+                    const typ = document.getElementById('np-agent_type');
+                    const ins = document.getElementById('np-instructions');
+                    if (lbl && !lbl.value) lbl.value = chosen.name;
+                    if (typ && chosen.type) typ.value = chosen.type;
+                    if (ins && chosen.system_prompt) ins.value = chosen.system_prompt;
+                });
+            } catch(_) {
+                sel.innerHTML = '<option value="">Erro ao carregar agentes</option>';
+            }
+        })();
+    } else if (type === 'classify') {
+        html = `
+        <label class="text-slate-400 text-xs">Label</label>
+        <input id="np-label" value="${data.label||'Classificar'}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-3">Categorias (vírgula)</label>
+        <input id="np-categories" value="${data.categories||'vendas,suporte,outro'}" placeholder="vendas,suporte,outro"
+            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <p class="text-[10px] text-slate-500 mt-1">Cada categoria vira uma saída no nó (output 1, 2, 3...).</p>
+        <label class="text-slate-400 text-xs mt-3">Instrução para o classificador</label>
+        <textarea id="np-instructions" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none">${data.instructions||'Classifique a mensagem do usuário em uma das categorias.'}</textarea>`;
+    } else if (type === 'file_search') {
+        html = `
+        <label class="text-slate-400 text-xs">Label</label>
+        <input id="np-label" value="${data.label||'File Search'}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-3">Agente (ID do agente com KB)</label>
+        <input id="np-agent_id" value="${data.agent_id||''}" placeholder="Deixe vazio para usar todos" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-3">Modo de injeção</label>
+        <select id="np-inject_mode" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <option value="context" ${data.inject_mode==='context'?'selected':''}>Adicionar ao contexto</option>
+            <option value="prepend" ${data.inject_mode==='prepend'?'selected':''}>Prefixar na mensagem</option>
+        </select>`;
+    } else if (type === 'guardrails') {
+        html = `
+        <label class="text-slate-400 text-xs">Label</label>
+        <input id="np-label" value="${data.label||'Guardrails'}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-3">Regras (o que bloquear)</label>
+        <textarea id="np-rules" rows="3" placeholder="Ex: Não falar de concorrentes. Não citar preços sem aprovação." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none">${data.rules||''}</textarea>
+        <label class="text-slate-400 text-xs mt-3">Resposta quando bloqueado</label>
+        <input id="np-blocked_reply" value="${data.blocked_reply||'Não posso ajudar com isso.'}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <p class="text-[10px] text-slate-500 mt-1">Saída 1 = passa · Saída 2 = bloqueado</p>`;
+    } else if (type === 'condition') {
+        html = `
+        <label class="text-slate-400 text-xs">Label</label>
+        <input id="np-label" value="${data.label||''}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-2">Regra (condição)</label>
+        <input id="np-rule" value="${data.rule||''}" placeholder="Ex: intenção == compra" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-2">Saída Verdadeira</label>
+        <input id="np-true_label" value="${data.true_label||'Sim'}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-2">Saída Falsa</label>
+        <input id="np-false_label" value="${data.false_label||'Não'}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">`;
+    } else if (type === 'action') {
+        html = `
+        <label class="text-slate-400 text-xs">Label</label>
+        <input id="np-label" value="${data.label||''}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-2">Tipo de Ação</label>
+        <select id="np-action_type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            ${['send_message','send_whatsapp','create_lead','notify_human'].map(a =>
+              `<option value="${a}" ${data.action_type===a?'selected':''}>${a}</option>`).join('')}
+        </select>
+        <label class="text-slate-400 text-xs mt-2">Template / Mensagem</label>
+        <textarea id="np-template" rows="3" placeholder="Mensagem a enviar..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none">${data.template||''}</textarea>`;
+    } else if (type === 'end') {
+        html = `
+        <label class="text-slate-400 text-xs">Label</label>
+        <input id="np-label" value="${data.label||''}" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <label class="text-slate-400 text-xs mt-2">Mensagem final (opcional)</label>
+        <textarea id="np-message" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none">${data.message||''}</textarea>`;
+    }
+    document.getElementById('wf-panel-body').innerHTML = html;
+}
+
+function wfClosePanel() {
+    document.getElementById('wf-config-panel').style.display = 'none';
+    _wfSelectedNode = null;
+}
+
+function wfSaveNodeConfig() {
+    if (!_wfSelectedNode || !_df) return;
+    const node = _df.getNodeFromId(_wfSelectedNode);
+    if (!node) return;
+    const type = node.name;
+    const def = WF_NODE_DEFS[type];
+    if (!def) return;
+
+    // Lê todos os campos id="np-*" (texto, select, range, checkbox)
+    const newData = { ...node.data };
+    document.querySelectorAll('#wf-panel-body [id^="np-"]').forEach(el => {
+        const key = el.id.replace('np-', '').replace(/-/g, '_');
+        newData[key] = el.type === 'checkbox' ? el.checked : el.value;
+    });
+
+    // Atualiza HTML do nó
+    _df.updateNodeDataFromId(_wfSelectedNode, newData);
+    const nodeEl = document.querySelector(`#node-${_wfSelectedNode} .drawflow_content_node`);
+    if (nodeEl) nodeEl.innerHTML = def.htmlFn(newData);
+    wfMarkUnsaved();
+}
+
+function wfOptimizePrompt() {
+    const area = document.getElementById('np-optimize-area');
+    if (area) area.classList.toggle('hidden');
+}
+
+async function wfRunOptimize() {
+    const idea = document.getElementById('np-optimize-idea')?.value?.trim();
+    if (!idea) return;
+    const btn = document.querySelector('#np-optimize-area button');
+    btn.textContent = '⏳ Gerando...';
+    btn.disabled = true;
+    try {
+        const data = await apiFetch('/api/workflows/optimize-prompt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idea, node_type: 'agent' })
+        });
+        if (data?.prompt) {
+            document.getElementById('np-instructions').value = data.prompt;
+            document.getElementById('np-optimize-area').classList.add('hidden');
+            showToast('✨ Prompt gerado com sucesso!', 'success');
+        }
+    } catch (e) {
+        showToast('Erro ao gerar prompt. Verifique a chave OpenAI.', 'error');
+    } finally {
+        btn.textContent = 'Gerar Prompt Profissional →';
+        btn.disabled = false;
+    }
+}
+
+function wfDeleteSelectedNode() {
+    if (!_wfSelectedNode || !_df) return;
+    if (!confirm('Remover este nó?')) return;
+    _df.removeNodeId(`node-${_wfSelectedNode}`);
+    wfClosePanel();
+    wfMarkUnsaved();
+}
+
+// ── Save ──────────────────────────────────────────────
+function wfMarkUnsaved() {
+    const badge = document.getElementById('wf-saved-badge');
+    if (badge) { badge.textContent = '○ não salvo'; badge.style.color = '#f59e0b'; }
+}
+
+async function wfSave() {
+    if (!_wfCurrentId || !_df) return;
+    const name = document.getElementById('wf-name-input').value || 'Workflow';
+    const drawflow = _df.export();
+    const res = await apiFetch(`/api/workflows/${_wfCurrentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description: '', drawflow })
+    });
+    if (res) {
+        const badge = document.getElementById('wf-saved-badge');
+        badge.textContent = '● salvo';
+        badge.style.color = '#94a3b8';
+    }
+}
+
+async function wfActivate() {
+    if (!_wfCurrentId) return;
+    await wfSave();
+    const res = await apiFetch(`/api/workflows/${_wfCurrentId}/activate`, { method: 'POST' });
+    if (res) {
+        document.getElementById('wf-activate-btn').classList.add('hidden');
+        showToast('Workflow ativado!', 'success');
+    }
+}
+
+async function wfDeleteConfirm(id, name) {
+    if (!confirm(`Deletar workflow "${name}"?`)) return;
+    await apiFetch(`/api/workflows/${id}`, { method: 'DELETE' });
+    loadWorkflowList();
+}
+
+// ── Test Run ──────────────────────────────────────────
+async function wfTestRun() {
+    if (!_wfCurrentId) return;
+    await wfSave();
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center';
+    overlay.innerHTML = `
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-[480px] shadow-2xl">
+            <h3 class="font-bold text-white mb-1">▷ Testar Workflow</h3>
+            <p class="text-slate-500 text-xs mb-4">Simula uma mensagem entrando no fluxo</p>
+            <textarea id="wf-test-msg" rows="3" placeholder="Digite uma mensagem de teste..." class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none mb-4">Olá, quero comprar o plano Professional</textarea>
+            <div id="wf-test-result" class="hidden bg-slate-800/80 border border-slate-700 rounded-lg p-3 text-sm text-white mb-4 max-h-48 overflow-y-auto"></div>
+            <div class="flex gap-3">
+                <button id="wf-test-cancel" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg text-sm font-semibold">Fechar</button>
+                <button id="wf-test-run" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-2 rounded-lg text-sm font-semibold">▷ Executar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#wf-test-cancel').onclick = () => overlay.remove();
+    overlay.querySelector('#wf-test-run').onclick = async () => {
+        const msg = overlay.querySelector('#wf-test-msg').value.trim();
+        if (!msg) return;
+        const btn = overlay.querySelector('#wf-test-run');
+        btn.textContent = 'Executando...';
+        btn.disabled = true;
+        const resultEl = overlay.querySelector('#wf-test-result');
+        resultEl.classList.remove('hidden');
+        resultEl.innerHTML = '<span class="text-slate-500">Processando nós...</span>';
+        const res = await apiFetch(`/api/workflows/${_wfCurrentId}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msg, conversation_history: [] })
+        });
+        btn.textContent = '▷ Executar';
+        btn.disabled = false;
+        if (!res) { resultEl.innerHTML = '<span class="text-red-400">Erro ao executar</span>'; return; }
+        const trace = (res.trace || []).map(t => `<div class="text-[11px] text-slate-400 mb-1">→ <b class="text-slate-300">${t.node}</b> (${t.type}): ${t.output||''}</div>`).join('');
+        resultEl.innerHTML = `
+            <div class="text-emerald-400 font-semibold mb-2">Resposta final:</div>
+            <div class="text-white mb-3">${res.reply||'(sem resposta)'}</div>
+            ${trace ? `<div class="border-t border-slate-700 pt-2 mt-2"><div class="text-[10px] text-slate-500 mb-1">TRACE DE EXECUÇÃO</div>${trace}</div>` : ''}`;
+    };
+}
+
+function showToast(msg, type='info') {
+    const colors = { success: 'bg-emerald-600', error: 'bg-red-600', info: 'bg-slate-700' };
+    const t = document.createElement('div');
+    t.className = `fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl text-sm font-semibold shadow-xl ${colors[type]||colors.info} text-white`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),350); }, 2800);
+}
 </script>
 </body>
 </html>
