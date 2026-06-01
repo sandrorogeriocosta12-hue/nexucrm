@@ -287,17 +287,59 @@
 
         <!-- ── CAMPAIGNS ─────────────────────────────── -->
         <section id="sec-campaigns" class="hidden page-fade">
-            <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
                 <div>
                     <h2 class="text-xl font-bold">Campanhas WhatsApp</h2>
                     <p class="text-slate-500 text-sm mt-1">Disparo em massa com delay antibanimento (15-30s por mensagem)</p>
                 </div>
-                <button onclick="openCampaignModal()" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-5 py-2 rounded-lg font-semibold text-sm transition-all shadow-lg shadow-green-500/20">+ Nova Campanha</button>
+                <div class="flex gap-2">
+                    <button onclick="openPostCreator()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2">
+                        🎨 Criar Post/Cupom
+                    </button>
+                    <button onclick="openCampaignModal()" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-4 py-2 rounded-lg font-semibold text-sm transition-all">+ Nova Campanha</button>
+                </div>
             </div>
             <div id="campaignsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 <div class="text-slate-500 text-sm text-center col-span-full py-10 animate-pulse">Carregando campanhas...</div>
             </div>
         </section>
+
+        <!-- ── CRIADOR DE POSTS / CUPONS ──────────────────────────────────── -->
+        <div id="postCreatorModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm" onclick="if(event.target===this)closePostCreator()">
+            <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-5xl mx-4 shadow-2xl flex flex-col" style="max-height:95vh">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-5 border-b border-slate-800">
+                    <h2 class="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">🎨 Criador de Posts e Cupons</h2>
+                    <button onclick="closePostCreator()" class="text-slate-500 hover:text-white text-xl">&times;</button>
+                </div>
+                <div class="flex flex-1 min-h-0 overflow-hidden">
+                    <!-- Painel esquerdo: templates + campos -->
+                    <div class="w-72 flex-shrink-0 border-r border-slate-800 overflow-y-auto p-4 space-y-5">
+                        <!-- Seleção de template -->
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Template</p>
+                            <div class="grid grid-cols-2 gap-2" id="post-template-grid">
+                                <!-- preenchido pelo JS -->
+                            </div>
+                        </div>
+                        <!-- Campos dinâmicos -->
+                        <div id="post-fields" class="space-y-3">
+                            <!-- preenchido pelo JS com base no template -->
+                        </div>
+                        <!-- Ações -->
+                        <div class="space-y-2 pt-2">
+                            <button onclick="postCreatorRender()" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-2 rounded-lg text-sm font-semibold transition-all">🔄 Atualizar Preview</button>
+                            <button onclick="postCreatorDownload()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 py-2 rounded-lg text-sm font-semibold transition-all">⬇️ Baixar PNG</button>
+                            <button onclick="postCreatorUsarNaCampanha()" class="w-full bg-green-700/30 hover:bg-green-700/60 border border-green-700/40 text-green-300 py-2 rounded-lg text-sm font-semibold transition-all">📤 Usar em Campanha</button>
+                        </div>
+                    </div>
+                    <!-- Preview do canvas -->
+                    <div class="flex-1 flex items-center justify-center bg-slate-950/60 p-6 overflow-auto">
+                        <canvas id="postCanvas" width="800" height="800" style="max-width:100%;max-height:70vh;border-radius:12px;box-shadow:0 0 40px rgba(0,0,0,0.6)"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- ── CONTACTS ───────────────────────────────── -->
         <section id="sec-contacts" class="hidden page-fade">
@@ -1548,6 +1590,322 @@ async function deleteCampaign(id) {
     if (!confirm('Deletar esta campanha?')) return;
     await apiFetch(`/api/campaigns/${id}`, { method: 'DELETE' });
     showToast && showToast('Campanha deletada'); loadCampaigns();
+}
+
+// ── Criador de Posts/Cupons ───────────────────────────────────────────────────
+const POST_TEMPLATES = [
+    {
+        id: 'promocao',
+        label: '🔥 Promoção',
+        thumb: '#ef4444',
+        fields: [
+            { id: 'empresa',   label: 'Nome da empresa',   default: 'Nexus CRM' },
+            { id: 'titulo',    label: 'Título da oferta',  default: '50% OFF' },
+            { id: 'subtitulo', label: 'Subtítulo',         default: 'Só hoje!' },
+            { id: 'detalhe',   label: 'Detalhe/produto',   default: 'Em todos os planos anuais' },
+            { id: 'cta',       label: 'Botão (CTA)',        default: 'Garanta agora → (11) 9xxxx-xxxx' },
+            { id: 'cor1',      label: 'Cor principal',      default: '#dc2626', type: 'color' },
+            { id: 'cor2',      label: 'Cor secundária',     default: '#7c3aed', type: 'color' },
+        ],
+        draw(ctx, W, H, f) {
+            const g = ctx.createLinearGradient(0,0,W,H);
+            g.addColorStop(0, f.cor1); g.addColorStop(1, f.cor2);
+            ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+            // padrão de bolinhas
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            for (let x=0;x<W;x+=60) for (let y=0;y<H;y+=60) { ctx.beginPath(); ctx.arc(x,y,20,0,Math.PI*2); ctx.fill(); }
+            // badge OFERTA
+            ctx.fillStyle = '#fbbf24'; _roundRect(ctx, W/2-80, 60, 160, 50, 25); ctx.fill();
+            ctx.fillStyle = '#1e1b4b'; ctx.font = 'bold 22px Arial'; ctx.textAlign = 'center';
+            ctx.fillText('OFERTA ESPECIAL', W/2, 93);
+            // título
+            ctx.fillStyle = '#fff'; ctx.font = `bold ${f.titulo.length>8?72:88}px Arial`;
+            ctx.fillText(f.titulo, W/2, 260);
+            // subtítulo
+            ctx.font = 'bold 42px Arial'; ctx.fillStyle = '#fbbf24';
+            ctx.fillText(f.subtitulo, W/2, 330);
+            // detalhe
+            ctx.font = '28px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            _wrapText(ctx, f.detalhe, W/2, 400, W-120, 36);
+            // empresa
+            ctx.font = 'bold 26px Arial'; ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillText(f.empresa, W/2, 560);
+            // cta
+            ctx.fillStyle = '#fff'; _roundRect(ctx, 80, 610, W-160, 70, 14); ctx.fill();
+            ctx.fillStyle = f.cor1; ctx.font = 'bold 22px Arial';
+            ctx.fillText(f.cta, W/2, 655);
+            // rodapé
+            ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '18px Arial';
+            ctx.fillText('nexuscrm.tech', W/2, H-30);
+        }
+    },
+    {
+        id: 'cupom',
+        label: '🎟 Cupom',
+        thumb: '#7c3aed',
+        fields: [
+            { id: 'empresa',   label: 'Nome da empresa',   default: 'Minha Loja' },
+            { id: 'cupom',     label: 'Código do cupom',   default: 'NEXUS20' },
+            { id: 'desconto',  label: 'Desconto',          default: '20% OFF' },
+            { id: 'validade',  label: 'Válido até',        default: '30/06/2026' },
+            { id: 'detalhe',   label: 'Produtos válidos',  default: 'Toda a loja' },
+            { id: 'cor1',      label: 'Cor principal',     default: '#7c3aed', type: 'color' },
+        ],
+        draw(ctx, W, H, f) {
+            ctx.fillStyle = '#0f0f1a'; ctx.fillRect(0,0,W,H);
+            // fundo do cupom
+            const g = ctx.createLinearGradient(0,0,W,H);
+            g.addColorStop(0,f.cor1+'33'); g.addColorStop(1,'#000'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+            // borda tracejada
+            ctx.setLineDash([20,10]); ctx.strokeStyle = f.cor1; ctx.lineWidth = 4;
+            ctx.strokeRect(40,40,W-80,H-80); ctx.setLineDash([]);
+            // círculos dos lados (estilo cupom)
+            ctx.fillStyle = '#0f0f1a';
+            [H/3, 2*H/3].forEach(y => { ctx.beginPath(); ctx.arc(40,y,30,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(W-40,y,30,0,Math.PI*2); ctx.fill(); });
+            // empresa
+            ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='bold 24px Arial'; ctx.textAlign='center';
+            ctx.fillText(f.empresa.toUpperCase(), W/2, 130);
+            // desconto
+            ctx.fillStyle=f.cor1; ctx.font='bold 100px Arial'; ctx.fillText(f.desconto, W/2, 280);
+            // código
+            ctx.fillStyle='#fff'; ctx.font='bold 48px "Courier New"';
+            ctx.fillText(f.cupom, W/2, 380);
+            // detalhe
+            ctx.font='24px Arial'; ctx.fillStyle='rgba(255,255,255,0.7)';
+            _wrapText(ctx, f.detalhe, W/2, 460, W-180, 32);
+            // linha divisória
+            ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=2; ctx.setLineDash([8,6]);
+            ctx.beginPath(); ctx.moveTo(80,530); ctx.lineTo(W-80,530); ctx.stroke(); ctx.setLineDash([]);
+            // validade
+            ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font='22px Arial';
+            ctx.fillText('Válido até: '+f.validade, W/2, 580);
+            ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.font='16px Arial';
+            ctx.fillText('nexuscrm.tech', W/2, H-60);
+        }
+    },
+    {
+        id: 'lancamento',
+        label: '🚀 Lançamento',
+        thumb: '#0891b2',
+        fields: [
+            { id: 'empresa',  label: 'Empresa',         default: 'Nexus CRM' },
+            { id: 'produto',  label: 'Nome do produto', default: 'Plano Pro' },
+            { id: 'badge',    label: 'Badge',           default: 'NOVO' },
+            { id: 'desc',     label: 'Descrição',       default: 'Automação completa de WhatsApp com IA' },
+            { id: 'preco',    label: 'Preço',           default: 'R$ 297/mês' },
+            { id: 'cta',      label: 'CTA',             default: 'Saiba mais em nexuscrm.tech' },
+            { id: 'cor1',     label: 'Cor principal',   default: '#0891b2', type: 'color' },
+        ],
+        draw(ctx, W, H, f) {
+            ctx.fillStyle='#020617'; ctx.fillRect(0,0,W,H);
+            // grade de pontos
+            ctx.fillStyle='rgba(255,255,255,0.04)';
+            for(let x=0;x<W;x+=40) for(let y=0;y<H;y+=40){ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();}
+            // círculo brilhante de fundo
+            const glow = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,350);
+            glow.addColorStop(0,f.cor1+'44'); glow.addColorStop(1,'transparent');
+            ctx.fillStyle=glow; ctx.fillRect(0,0,W,H);
+            // badge
+            ctx.fillStyle=f.cor1; _roundRect(ctx,W/2-60,80,120,40,20); ctx.fill();
+            ctx.fillStyle='#fff'; ctx.font='bold 20px Arial'; ctx.textAlign='center'; ctx.fillText(f.badge,W/2,108);
+            // empresa
+            ctx.font='24px Arial'; ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.fillText(f.empresa,W/2,175);
+            // produto
+            ctx.font=`bold ${f.produto.length>12?52:64}px Arial`; ctx.fillStyle='#fff'; ctx.fillText(f.produto,W/2,270);
+            // desc
+            ctx.font='26px Arial'; ctx.fillStyle='rgba(255,255,255,0.7)';
+            _wrapText(ctx,f.desc,W/2,340,W-120,34);
+            // preço
+            ctx.font='bold 56px Arial'; ctx.fillStyle=f.cor1; ctx.fillText(f.preco,W/2,500);
+            // linha
+            ctx.strokeStyle=f.cor1+'66'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(100,555); ctx.lineTo(W-100,555); ctx.stroke();
+            // cta
+            ctx.font='24px Arial'; ctx.fillStyle='rgba(255,255,255,0.6)'; _wrapText(ctx,f.cta,W/2,610,W-120,32);
+        }
+    },
+    {
+        id: 'boasvindas',
+        label: '👋 Boas-vindas',
+        thumb: '#059669',
+        fields: [
+            { id: 'empresa',  label: 'Empresa',       default: 'Nexus CRM' },
+            { id: 'nome',     label: 'Nome do cliente', default: '{{nome}}' },
+            { id: 'mensagem', label: 'Mensagem',       default: 'Seja bem-vindo! Estamos felizes em ter você conosco.' },
+            { id: 'sub',      label: 'Subtítulo',      default: 'Qualquer dúvida, é só chamar!' },
+            { id: 'contato',  label: 'Contato',        default: '(11) 9xxxx-xxxx' },
+            { id: 'cor1',     label: 'Cor principal',  default: '#059669', type: 'color' },
+        ],
+        draw(ctx, W, H, f) {
+            const g = ctx.createLinearGradient(0,0,0,H);
+            g.addColorStop(0,'#0f172a'); g.addColorStop(1,f.cor1+'22');
+            ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+            // ondas decorativas
+            ctx.strokeStyle=f.cor1+'44'; ctx.lineWidth=80;
+            ctx.beginPath(); ctx.arc(W,0,300,0,Math.PI); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0,H,300,Math.PI,2*Math.PI); ctx.stroke();
+            // ícone de boas-vindas
+            ctx.font='90px serif'; ctx.textAlign='center'; ctx.fillStyle='#fff';
+            ctx.fillText('👋', W/2, 160);
+            // empresa
+            ctx.font='bold 28px Arial'; ctx.fillStyle=f.cor1; ctx.fillText(f.empresa,W/2,220);
+            // nome
+            ctx.font='bold 48px Arial'; ctx.fillStyle='#fff';
+            ctx.fillText(f.nome, W/2, 310);
+            // mensagem
+            ctx.font='26px Arial'; ctx.fillStyle='rgba(255,255,255,0.8)';
+            _wrapText(ctx,f.mensagem,W/2,390,W-120,34);
+            // sub
+            ctx.font='22px Arial'; ctx.fillStyle='rgba(255,255,255,0.5)';
+            _wrapText(ctx,f.sub,W/2,510,W-160,30);
+            // contato
+            ctx.fillStyle=f.cor1; _roundRect(ctx,120,580,W-240,60,12); ctx.fill();
+            ctx.fillStyle='#fff'; ctx.font='bold 24px Arial'; ctx.fillText(f.contato,W/2,618);
+            ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.font='18px Arial'; ctx.fillText('nexuscrm.tech',W/2,H-40);
+        }
+    },
+    {
+        id: 'urgencia',
+        label: '⏰ Urgência',
+        thumb: '#ea580c',
+        fields: [
+            { id: 'empresa',   label: 'Empresa',          default: 'Minha Empresa' },
+            { id: 'titulo',    label: 'Título principal',  default: 'ÚLTIMAS VAGAS!' },
+            { id: 'subtitulo', label: 'Subtítulo',         default: 'Oferta encerra em 24h' },
+            { id: 'detalhe',   label: 'O que está acabando', default: 'Apenas 5 vagas no plano Premium com suporte VIP' },
+            { id: 'cta',       label: 'Call to action',    default: 'Garanta a sua AGORA' },
+            { id: 'contato',   label: 'Contato/link',      default: 'nexuscrm.tech' },
+            { id: 'cor1',      label: 'Cor principal',     default: '#ea580c', type: 'color' },
+        ],
+        draw(ctx, W, H, f) {
+            ctx.fillStyle='#1c0a00'; ctx.fillRect(0,0,W,H);
+            // fundo com gradiente urgente
+            const g = ctx.createLinearGradient(0,0,0,H);
+            g.addColorStop(0,f.cor1+'55'); g.addColorStop(0.5,'transparent'); g.addColorStop(1,f.cor1+'33');
+            ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+            // ícone
+            ctx.font='80px serif'; ctx.textAlign='center'; ctx.fillText('⏰',W/2,130);
+            // empresa
+            ctx.font='22px Arial'; ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.fillText(f.empresa,W/2,190);
+            // título
+            ctx.font=`bold ${f.titulo.length>12?54:68}px Arial`; ctx.fillStyle=f.cor1; ctx.fillText(f.titulo,W/2,280);
+            // subtítulo
+            ctx.font='bold 34px Arial'; ctx.fillStyle='#fbbf24'; ctx.fillText(f.subtitulo,W/2,340);
+            // detalhe
+            ctx.font='26px Arial'; ctx.fillStyle='rgba(255,255,255,0.8)';
+            _wrapText(ctx,f.detalhe,W/2,415,W-120,34);
+            // barra pulsante
+            ctx.fillStyle=f.cor1; _roundRect(ctx,60,520,W-120,80,16); ctx.fill();
+            ctx.fillStyle='#fff'; ctx.font='bold 30px Arial'; ctx.fillText(f.cta,W/2,568);
+            // contato
+            ctx.font='22px Arial'; ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fillText(f.contato,W/2,650);
+            ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.font='16px Arial'; ctx.fillText('nexuscrm.tech',W/2,H-40);
+        }
+    },
+];
+
+let _postTpl = POST_TEMPLATES[0];
+let _postFields = {};
+
+function _roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+    ctx.arcTo(x+w,y,x+w,y+r,r); ctx.lineTo(x+w,y+h-r);
+    ctx.arcTo(x+w,y+h,x+w-r,y+h,r); ctx.lineTo(x+r,y+h);
+    ctx.arcTo(x,y+h,x,y+h-r,r); ctx.lineTo(x,y+r);
+    ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+}
+
+function _wrapText(ctx, text, cx, y, maxW, lineH) {
+    const words = String(text).split(' ');
+    let line = '';
+    for (const w of words) {
+        const test = line ? line+' '+w : w;
+        if (ctx.measureText(test).width > maxW && line) {
+            ctx.fillText(line, cx, y); line = w; y += lineH;
+        } else { line = test; }
+    }
+    if (line) ctx.fillText(line, cx, y);
+}
+
+function openPostCreator() {
+    document.getElementById('postCreatorModal').classList.remove('hidden');
+    document.getElementById('postCreatorModal').style.display = 'flex';
+    // Renderiza grid de templates
+    const tGrid = document.getElementById('post-template-grid');
+    tGrid.innerHTML = POST_TEMPLATES.map(t => `
+        <button onclick="_postSelectTemplate('${t.id}')"
+            id="ptpl-${t.id}"
+            class="relative rounded-xl overflow-hidden border-2 transition-all ${_postTpl.id===t.id?'border-purple-500':'border-slate-700 hover:border-slate-500'}"
+            style="height:70px;background:${t.thumb}22">
+            <div style="position:absolute;inset:0;background:${t.thumb};opacity:0.3"></div>
+            <span class="relative text-xs font-semibold text-white px-2">${t.label}</span>
+        </button>`).join('');
+    _postRenderFields();
+    postCreatorRender();
+}
+
+function closePostCreator() {
+    document.getElementById('postCreatorModal').classList.add('hidden');
+}
+
+function _postSelectTemplate(id) {
+    _postTpl = POST_TEMPLATES.find(t => t.id === id) || POST_TEMPLATES[0];
+    document.querySelectorAll('[id^="ptpl-"]').forEach(b => b.classList.replace('border-purple-500','border-slate-700'));
+    const sel = document.getElementById('ptpl-'+id);
+    if (sel) sel.classList.replace('border-slate-700','border-purple-500');
+    _postRenderFields();
+    postCreatorRender();
+}
+
+function _postRenderFields() {
+    const container = document.getElementById('post-fields');
+    container.innerHTML = _postTpl.fields.map(f => `
+        <div>
+            <label class="block text-[10px] text-slate-500 mb-1 uppercase tracking-wider">${f.label}</label>
+            ${f.type === 'color'
+                ? `<div class="flex items-center gap-2"><input type="color" id="pf-${f.id}" value="${_postFields[f.id]||f.default}" oninput="_postFields['${f.id}']=this.value" class="w-10 h-8 rounded cursor-pointer border-0 bg-transparent"><input type="text" value="${_postFields[f.id]||f.default}" oninput="document.getElementById('pf-${f.id}').value=this.value;_postFields['${f.id}']=this.value" class="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none"></div>`
+                : `<input type="text" id="pf-${f.id}" value="${_postFields[f.id]||f.default}" oninput="_postFields['${f.id}']=this.value" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-purple-500">`
+            }
+        </div>`).join('');
+    // Inicializa valores padrão
+    _postTpl.fields.forEach(f => { if (!_postFields[f.id]) _postFields[f.id] = f.default; });
+}
+
+function postCreatorRender() {
+    // Lê todos os campos atuais
+    _postTpl.fields.forEach(f => {
+        const el = document.getElementById('pf-'+f.id);
+        if (el) _postFields[f.id] = el.value || f.default;
+    });
+    const canvas = document.getElementById('postCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    try {
+        _postTpl.draw(ctx, W, H, _postFields);
+    } catch(e) { console.error('Post render error:', e); }
+}
+
+function postCreatorDownload() {
+    postCreatorRender();
+    const canvas = document.getElementById('postCanvas');
+    const a = document.createElement('a');
+    a.download = `${_postTpl.id}-${Date.now()}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+}
+
+function postCreatorUsarNaCampanha() {
+    postCreatorRender();
+    const canvas = document.getElementById('postCanvas');
+    const dataUrl = canvas.toDataURL('image/png');
+    // Armazena para uso na campanha
+    window._postImageDataUrl = dataUrl;
+    closePostCreator();
+    openCampaignModal();
+    showToast && showToast('✅ Post adicionado! Configure a campanha e dispare.');
 }
 
 // ─── Contacts ────────────────────────────────────────
