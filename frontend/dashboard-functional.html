@@ -3190,10 +3190,12 @@ async function loadWorkflowList() {
     const chips = document.getElementById('wf-chips');
     chips.innerHTML = '<span class="text-slate-500 text-sm">Carregando...</span>';
     // Carrega workflows e agentes em paralelo
-    const [list, agents] = await Promise.all([
+    const [list, agentsResp] = await Promise.all([
         apiFetch('/api/workflows').catch(() => null),
-        apiFetch('/api/agents').catch(() => [])
+        apiFetch('/api/agents').catch(() => ({}))
     ]);
+    // A API retorna { agents: [...] }, não um array direto
+    const agents = agentsResp?.agents || [];
 
     if (!list) { chips.innerHTML = '<span class="text-slate-500 text-sm">Erro ao carregar</span>'; }
     else if (!list.length) {
@@ -3284,8 +3286,8 @@ async function _wfSaveAgentEdit() {
         await apiFetch(`/api/agents/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
         document.getElementById('wf-agent-modal').classList.add('hidden');
         showToast && showToast('✅ Agente atualizado!');
-        const agents = await apiFetch('/api/agents').catch(() => []);
-        _wfRenderAgentsGrid(agents || []);
+        const agR = await apiFetch('/api/agents').catch(() => ({}));
+        _wfRenderAgentsGrid(agR?.agents || []);
     } catch(_) {
         showToast && showToast('Erro ao salvar agente', true);
     }
@@ -3614,8 +3616,10 @@ async function _wfLoadAgentsPanel(currentAgentId) {
     const hint = document.getElementById('np-agent-hint');
     if (!sel) return;
     try {
-        const agents = await apiFetch('/api/agents');
-        if (!agents || !agents.length) {
+        const resp   = await apiFetch('/api/agents');
+        // A API retorna { agents: [...] }
+        const agents = resp?.agents || [];
+        if (!agents.length) {
             sel.innerHTML = '<option value="">Nenhum agente cadastrado</option>';
             if (hint) hint.innerHTML = '<a onclick="setActiveNav(document.querySelector(\'[data-tab=agents]\'),\'agents\')" class="text-purple-400 underline cursor-pointer">→ Criar agente na aba Agentes</a>';
             return;
