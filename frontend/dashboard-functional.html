@@ -382,6 +382,54 @@
                 </div>
             </div>
 
+            <!-- Painel de Agentes — visível só na lista de workflows -->
+            <div id="wf-agents-section" class="overflow-y-auto border-b border-slate-800 bg-slate-950/60" style="max-height:38vh">
+                <div class="flex items-center justify-between px-5 py-3 border-b border-slate-800/60">
+                    <span class="text-sm font-semibold text-slate-300">🤖 Agentes disponíveis para usar nos workflows</span>
+                    <button onclick="setActiveNav(document.querySelector('[data-tab=agents]'),'agents')" class="text-xs text-purple-400 hover:text-purple-300 transition-all">+ Criar novo agente →</button>
+                </div>
+                <div id="wf-agents-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-4">
+                    <div class="text-slate-600 text-xs col-span-full text-center py-4 animate-pulse">Carregando agentes...</div>
+                </div>
+            </div>
+
+            <!-- Modal de edição rápida de agente (dentro de Workflows) -->
+            <div id="wf-agent-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm" onclick="if(event.target===this)document.getElementById('wf-agent-modal').classList.add('hidden')">
+                <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg mx-4 shadow-2xl flex flex-col" style="max-height:90vh">
+                    <div class="flex items-center justify-between p-5 border-b border-slate-800">
+                        <h3 class="font-bold text-white" id="wf-agent-modal-title">Editar Agente</h3>
+                        <button onclick="document.getElementById('wf-agent-modal').classList.add('hidden')" class="text-slate-500 hover:text-white text-xl leading-none">&times;</button>
+                    </div>
+                    <div class="overflow-y-auto p-5 space-y-4 text-sm flex-1">
+                        <input type="hidden" id="wf-edit-agent-id">
+                        <div><label class="block text-xs text-slate-400 mb-1">Nome</label>
+                        <input id="wf-edit-name" type="text" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"></div>
+                        <div><label class="block text-xs text-slate-400 mb-1">Tipo</label>
+                        <select id="wf-edit-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="atendimento">atendimento</option>
+                            <option value="vendas">vendas</option>
+                            <option value="suporte">suporte</option>
+                        </select></div>
+                        <div><label class="block text-xs text-slate-400 mb-1">Persona</label>
+                        <input id="wf-edit-persona" type="text" placeholder="Ex: Assistente cordial e direto" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"></div>
+                        <div><label class="block text-xs text-slate-400 mb-1">Instruções</label>
+                        <textarea id="wf-edit-instructions" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea></div>
+                        <div><label class="block text-xs text-slate-400 mb-1">System Prompt (tem prioridade sobre persona+instruções)</label>
+                        <textarea id="wf-edit-system-prompt" rows="5" placeholder="Deixe vazio para usar persona + instruções" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea></div>
+                        <div class="flex items-center gap-3">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input id="wf-edit-auto-respond" type="checkbox" class="accent-purple-500 w-4 h-4">
+                                <span class="text-sm text-white">Resposta automática ativa</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="p-5 border-t border-slate-800 flex gap-3">
+                        <button onclick="document.getElementById('wf-agent-modal').classList.add('hidden')" class="flex-1 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg text-sm transition-all">Cancelar</button>
+                        <button onclick="_wfSaveAgentEdit()" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-2 rounded-lg text-sm font-semibold transition-all">Salvar alterações</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Corpo: canvas + config panel -->
             <div class="flex flex-1 min-h-0">
 
@@ -3141,21 +3189,126 @@ function wfDeleteSelectedConnection() {
 async function loadWorkflowList() {
     const chips = document.getElementById('wf-chips');
     chips.innerHTML = '<span class="text-slate-500 text-sm">Carregando...</span>';
-    const list = await apiFetch('/api/workflows');
-    if (!list) { chips.innerHTML = '<span class="text-slate-500 text-sm">Erro ao carregar</span>'; return; }
-    if (!list.length) {
+    // Carrega workflows e agentes em paralelo
+    const [list, agents] = await Promise.all([
+        apiFetch('/api/workflows').catch(() => null),
+        apiFetch('/api/agents').catch(() => [])
+    ]);
+
+    if (!list) { chips.innerHTML = '<span class="text-slate-500 text-sm">Erro ao carregar</span>'; }
+    else if (!list.length) {
         chips.innerHTML = '<span class="text-slate-500 text-sm italic">Nenhum workflow. Clique em "+ Novo" para começar.</span>';
+    } else {
+        chips.innerHTML = list.map(wf => `
+            <div class="flex items-center gap-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 cursor-pointer hover:border-purple-500 transition-all group"
+                 onclick="wfOpen(${wf.id})">
+                <span class="text-sm font-semibold text-white">${wf.name}</span>
+                ${wf.active ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">ATIVO</span>' : ''}
+                <button onclick="event.stopPropagation(); wfDeleteConfirm(${wf.id}, '${wf.name.replace(/'/g, '')}')"
+                    class="ml-1 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all text-xs">✕</button>
+            </div>
+        `).join('');
+    }
+
+    _wfRenderAgentsGrid(agents || []);
+}
+
+// Renderiza o grid de agentes no painel de workflows
+function _wfRenderAgentsGrid(agents) {
+    const grid = document.getElementById('wf-agents-grid');
+    if (!grid) return;
+    if (!agents.length) {
+        grid.innerHTML = `<div class="col-span-full text-center py-6 text-slate-600 text-sm">
+            Nenhum agente criado ainda.
+            <a onclick="setActiveNav(document.querySelector('[data-tab=agents]'),'agents')" class="text-purple-400 underline cursor-pointer ml-1">Criar agente →</a>
+        </div>`;
         return;
     }
-    chips.innerHTML = list.map(wf => `
-        <div class="flex items-center gap-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 cursor-pointer hover:border-purple-500 transition-all group"
-             onclick="wfOpen(${wf.id})">
-            <span class="text-sm font-semibold text-white">${wf.name}</span>
-            ${wf.active ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-bold">ATIVO</span>' : ''}
-            <button onclick="event.stopPropagation(); wfDeleteConfirm(${wf.id}, '${wf.name.replace(/'/g, '')}')"
-                class="ml-1 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all text-xs">✕</button>
-        </div>
-    `).join('');
+    const _TYPE_COLOR = { atendimento:'purple', vendas:'green', suporte:'blue' };
+    grid.innerHTML = agents.map(a => {
+        const col = _TYPE_COLOR[a.type] || 'slate';
+        const dot = a.auto_respond
+            ? '<span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" title="Resposta automática ativa"></span>'
+            : '<span class="w-2 h-2 rounded-full bg-slate-600 flex-shrink-0" title="Resposta automática inativa"></span>';
+        const prompt = (a.system_prompt || a.instructions || a.persona || '').slice(0, 80);
+        return `
+        <div class="bg-slate-900 border border-slate-800 hover:border-${col}-500/50 rounded-xl p-4 flex flex-col gap-2 transition-all group">
+            <div class="flex items-center gap-2">
+                ${dot}
+                <span class="font-semibold text-sm text-white truncate flex-1">${a.name}</span>
+                <span class="text-[10px] bg-${col}-500/15 text-${col}-400 border border-${col}-500/30 px-2 py-0.5 rounded-full flex-shrink-0">${a.type}</span>
+            </div>
+            ${prompt ? `<p class="text-xs text-slate-500 leading-relaxed line-clamp-2">${prompt}</p>` : '<p class="text-xs text-slate-700 italic">Sem instrução definida</p>'}
+            <div class="flex gap-2 mt-auto pt-1">
+                <button onclick="_wfOpenAgentEdit(${JSON.stringify(a).replace(/"/g,'&quot;')})"
+                    class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-${col}-500/50 text-xs py-1.5 rounded-lg transition-all font-medium">
+                    ✏️ Editar
+                </button>
+                <button onclick="wfAddNodeFromAgent(${JSON.stringify(a).replace(/"/g,'&quot;')})"
+                    class="bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/40 text-purple-300 text-xs py-1.5 px-2.5 rounded-lg transition-all font-medium"
+                    title="Abrir workflow e inserir este agente no canvas">
+                    + Workflow
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// Abre modal de edição rápida de agente
+function _wfOpenAgentEdit(agent) {
+    document.getElementById('wf-edit-agent-id').value      = agent.id;
+    document.getElementById('wf-agent-modal-title').textContent = `Editar: ${agent.name}`;
+    document.getElementById('wf-edit-name').value           = agent.name || '';
+    document.getElementById('wf-edit-type').value           = agent.type || 'atendimento';
+    document.getElementById('wf-edit-persona').value        = agent.persona || '';
+    document.getElementById('wf-edit-instructions').value   = agent.instructions || '';
+    document.getElementById('wf-edit-system-prompt').value  = agent.system_prompt || '';
+    document.getElementById('wf-edit-auto-respond').checked = !!agent.auto_respond;
+    document.getElementById('wf-agent-modal').classList.remove('hidden');
+    document.getElementById('wf-agent-modal').style.display = 'flex';
+}
+
+// Salva edição do agente e atualiza o grid
+async function _wfSaveAgentEdit() {
+    const id = document.getElementById('wf-edit-agent-id').value;
+    if (!id) return;
+    const payload = {
+        name:          document.getElementById('wf-edit-name').value.trim(),
+        type:          document.getElementById('wf-edit-type').value,
+        persona:       document.getElementById('wf-edit-persona').value.trim(),
+        instructions:  document.getElementById('wf-edit-instructions').value.trim(),
+        system_prompt: document.getElementById('wf-edit-system-prompt').value.trim(),
+        auto_respond:  document.getElementById('wf-edit-auto-respond').checked,
+    };
+    try {
+        await apiFetch(`/api/agents/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+        document.getElementById('wf-agent-modal').classList.add('hidden');
+        showToast && showToast('✅ Agente atualizado!');
+        const agents = await apiFetch('/api/agents').catch(() => []);
+        _wfRenderAgentsGrid(agents || []);
+    } catch(_) {
+        showToast && showToast('Erro ao salvar agente', true);
+    }
+}
+
+// Cria novo workflow e abre canvas com nó do agente já inserido
+async function wfAddNodeFromAgent(agent) {
+    // Se já tem um workflow aberto, só adiciona o nó
+    if (_wfCurrentId && _df) {
+        wfShowEditor({ id: _wfCurrentId, name: document.getElementById('wf-name-input')?.value || 'Workflow', active: false });
+        setTimeout(() => wfAddNode('agent', 200, 150, { label: agent.name, agent_id: agent.id, agent_type: agent.type, instructions: agent.system_prompt || agent.instructions || '' }), 100);
+        return;
+    }
+    // Cria novo workflow com o nome do agente
+    const wf = await apiFetch('/api/workflows', { method: 'POST', body: JSON.stringify({ name: `Fluxo — ${agent.name}`, description: '' }) });
+    if (!wf) { showToast && showToast('Erro ao criar workflow', true); return; }
+    _wfCurrentId = wf.id;
+    wfShowEditor(wf);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        wfAddNode('start', 60, 150);
+        wfAddNode('agent', 280, 150, { label: agent.name, agent_id: agent.id, agent_type: agent.type, instructions: agent.system_prompt || agent.instructions || '' });
+        wfAddNode('end',   500, 150);
+    }));
 }
 
 // ── New workflow ──────────────────────────────────────
@@ -3275,6 +3428,7 @@ function wfShowEditor(wf) {
 
     _wfSelectedNode = null;
     document.getElementById('wf-config-panel').style.display = 'none';
+    document.getElementById('wf-agents-section').style.display = 'none';
     if (_df) _df.clear();
 
     // Atualiza o título global para o nome do workflow
@@ -3290,6 +3444,8 @@ function wfBackToList() {
     document.getElementById('wf-config-panel').style.display = 'none';
     if (_df) _df.clear();
     document.getElementById('pageTitle').textContent = '⚡ Workflows';
+    const agSec = document.getElementById('wf-agents-section');
+    if (agSec) agSec.style.display = '';
     loadWorkflowList();
 }
 
