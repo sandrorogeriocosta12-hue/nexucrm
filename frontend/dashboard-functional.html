@@ -647,12 +647,25 @@
 
         <!-- ── PIPELINE ──────────────────────────────── -->
         <section id="sec-pipeline" class="hidden page-fade">
-            <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <!-- Cabeçalho + seletor de funis -->
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
                 <div>
                     <h2 class="text-xl font-bold">Pipeline de Vendas</h2>
                     <p class="text-slate-500 text-sm mt-1">Arraste os cards para mover leads e disparar automações no WhatsApp</p>
                 </div>
-                <button onclick="openCreateDealModal()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-xl text-sm font-semibold transition-all">+ Novo Lead</button>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <input id="pipelineSearch" type="text" placeholder="🔍 Filtrar leads..." oninput="_pipelineFilter(this.value)"
+                        class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-purple-500 w-44">
+                    <button onclick="openCreateDealModal()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-xl text-sm font-semibold transition-all">+ Novo Lead</button>
+                </div>
+            </div>
+            <!-- Tabs de funis -->
+            <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+                <div id="pipelineTabs" class="flex gap-2"></div>
+                <button onclick="_createPipelineModal()"
+                    class="flex-shrink-0 bg-slate-800 hover:bg-slate-700 border border-slate-700 border-dashed text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-all">
+                    + Novo Funil
+                </button>
             </div>
             <div id="pipelineBoard" class="flex gap-3 overflow-x-auto pb-4 items-start select-none">
                 <div class="flex items-center justify-center w-full py-16 text-slate-600 text-sm animate-pulse">Carregando funil...</div>
@@ -704,6 +717,9 @@
                     </div>
                 </div>
 
+                <!-- Produtos (injetado pelo JS se houver) -->
+                <div id="dd-products"></div>
+
                 <!-- Timeline de atividades -->
                 <div class="flex-1 overflow-y-auto px-5 py-4">
                     <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Histórico de Atividades</p>
@@ -747,6 +763,12 @@
                         <label class="block text-xs text-slate-400 mb-1">Data de fechamento prevista</label>
                         <input id="dealCloseDate" type="date"
                             class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Produtos / Serviços <span class="text-slate-600">(opcional)</span></label>
+                        <div id="dealProductsList" class="space-y-2 mb-2"></div>
+                        <button type="button" onclick="_addDealProductRow()"
+                            class="text-xs text-purple-400 hover:text-purple-300 transition-all">+ Adicionar produto</button>
                     </div>
                 </div>
                 <div class="flex gap-3 mt-6">
@@ -2987,22 +3009,104 @@ function upgradePlan() { showToast('Redirecionando para planos...'); setTimeout(
 
 // ─── Pipeline ────────────────────────────────────────
 // ─── Kanban CRM ───────────────────────────────────────────────────────────────
-let _kanbanData  = { pipeline: null, stages: [] };
-let _kanbanDragId = null;   // deal id sendo arrastado
-let _kanbanDragSrc = null;  // stage id de origem
+let _kanbanData      = { pipeline: null, stages: [] };
+let _kanbanDragId    = null;
+let _kanbanDragSrc   = null;
+let _activePipelineId = null;
 
 const _STAGE_DOTS = ['bg-purple-400','bg-blue-400','bg-yellow-400','bg-orange-400','bg-green-400','bg-red-400'];
 
-async function loadPipeline() {
+async function loadPipeline(pipelineId = null) {
     const board = document.getElementById('pipelineBoard');
     board.innerHTML = '<div class="flex items-center justify-center w-full py-16 text-slate-600 text-sm animate-pulse">Carregando funil...</div>';
+    // Carrega lista de funis e o funil ativo em paralelo
+    const url = pipelineId ? `/crm/pipelines?pipeline_id=${pipelineId}` : '/crm/pipelines';
+    const [data, pipelines] = await Promise.all([
+        apiFetch(url).catch(() => null),
+        apiFetch('/crm/pipelines/list').catch(() => []),
+    ]);
+    _kanbanData = data || { pipeline: null, stages: [] };
+    _activePipelineId = _kanbanData.pipeline?.id || null;
+    _renderPipelineTabs(pipelines || []);
+    _renderKanban();
+}
+
+function _renderPipelineTabs(pipelines) {
+    const tabs = document.getElementById('pipelineTabs');
+    if (!tabs) return;
+    tabs.innerHTML = pipelines.map(p => `
+        <button onclick="loadPipeline(${p.id})"
+            class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-all border flex items-center gap-2 ${_activePipelineId === p.id ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-purple-500/50'}">
+            ${_esc(p.name)}
+            ${pipelines.length > 1 ? `<span onclick="event.stopPropagation();_deletePipeline(${p.id},'${_esc(p.name)}')" class="text-slate-500 hover:text-red-400 text-xs leading-none ml-1">✕</span>` : ''}
+        </button>`).join('');
+}
+
+async function _deletePipeline(id, name) {
+    if (!confirm(`Deletar o funil "${name}" e todos os seus estágios e deals?`)) return;
     try {
-        const data = await apiFetch('/crm/pipelines');
-        _kanbanData = data || { pipeline: null, stages: [] };
-        _renderKanban();
-    } catch(e) {
-        board.innerHTML = '<div class="text-center text-slate-500 text-sm py-12">Erro ao carregar o funil.</div>';
-    }
+        await apiFetch(`/crm/pipelines/${id}`, { method: 'DELETE' });
+        loadPipeline();
+    } catch(e) { showToast && showToast('Não é possível deletar o único funil', true); }
+}
+
+function _createPipelineModal() {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm';
+    overlay.innerHTML = `
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+            <h3 class="font-bold text-white mb-4">Novo Funil</h3>
+            <input id="newFunnelName" type="text" value="" placeholder="Ex: Pós-Venda, Parcerias..."
+                class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4">
+            <div class="flex gap-3">
+                <button onclick="this.closest('[class*=fixed]').remove()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded-lg text-sm">Cancelar</button>
+                <button id="newFunnelConfirm" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 py-2 rounded-lg text-sm font-semibold text-white">Criar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    const inp = overlay.querySelector('#newFunnelName'); inp.focus();
+    const doCreate = async () => {
+        const name = inp.value.trim(); if (!name) return;
+        try {
+            const res = await apiFetch('/crm/pipelines', { method: 'POST', body: JSON.stringify({ name }) });
+            overlay.remove();
+            if (res?.id) { showToast && showToast(`✅ Funil "${name}" criado!`); loadPipeline(res.id); }
+        } catch(_) { showToast && showToast('Erro ao criar funil', true); }
+    };
+    overlay.querySelector('#newFunnelConfirm').onclick = doCreate;
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') doCreate(); if (e.key === 'Escape') overlay.remove(); });
+}
+
+// Filtro de busca — mostra/oculta cards em tempo real sem nova requisição
+function _pipelineFilter(q) {
+    const query = q.toLowerCase().trim();
+    document.querySelectorAll('#pipelineBoard [data-deal]').forEach(card => {
+        const name = card.querySelector('.font-medium')?.textContent?.toLowerCase() || '';
+        card.style.display = (!query || name.includes(query)) ? '' : 'none';
+    });
+}
+
+// Produtos no deal
+function _addDealProductRow() {
+    const list = document.getElementById('dealProductsList');
+    if (!list) return;
+    const row = document.createElement('div');
+    row.className = 'flex gap-1 items-center';
+    row.innerHTML = `
+        <input type="text" placeholder="Nome do produto" class="deal-prod-name flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none">
+        <input type="number" placeholder="Qtd" class="deal-prod-qty w-12 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none">
+        <input type="number" placeholder="R$" class="deal-prod-price w-20 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none">
+        <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 text-xs px-1">✕</button>`;
+    list.appendChild(row);
+}
+
+function _getDealProducts() {
+    const rows = document.querySelectorAll('#dealProductsList > div');
+    return Array.from(rows).map(r => ({
+        name:  r.querySelector('.deal-prod-name')?.value?.trim(),
+        qty:   parseFloat(r.querySelector('.deal-prod-qty')?.value) || 1,
+        price: parseFloat(r.querySelector('.deal-prod-price')?.value) || 0,
+    })).filter(p => p.name);
 }
 
 function _renderKanban() {
@@ -3223,6 +3327,20 @@ async function openDealDetail(dealId) {
     document.getElementById('dd-note-area').classList.add('hidden');
     document.getElementById('dd-note-text').value = '';
 
+    // Exibe produtos se existirem
+    const ddProds = document.getElementById('dd-products');
+    if (ddProds) {
+        try {
+            const prods = JSON.parse(deal.products || '[]');
+            ddProds.innerHTML = prods.length
+                ? `<div class="px-5 py-3 border-b border-slate-800 bg-slate-950/30">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">📦 Produtos / Serviços</p>
+                    <div class="space-y-1">${prods.map(p=>`<div class="flex justify-between text-xs text-slate-300"><span>${_esc(p.name)}</span><span class="text-slate-500">x${p.qty} · R$${Number(p.price).toLocaleString('pt-BR')}</span></div>`).join('')}</div>
+                   </div>`
+                : '';
+        } catch(_) { ddProds.innerHTML = ''; }
+    }
+
     // Mostra modal e carrega atividades
     const modal = document.getElementById('dealDetailModal');
     modal.classList.remove('hidden');
@@ -3338,14 +3456,16 @@ async function submitCreateDeal() {
     const close_date = document.getElementById('dealCloseDate')?.value || null;
     if (!name) { showToast && showToast('Informe o nome do lead', true); return; }
     try {
+        const products = _getDealProducts();
         const res = await apiFetch('/crm/deals', {
             method: 'POST',
-            body: JSON.stringify({ name, stage_id, value, contact_jid: jid, close_date }),
+            body: JSON.stringify({ name, stage_id, value, contact_jid: jid, close_date, products: JSON.stringify(products) }),
         });
         if (res && res.id) {
             const dest = _kanbanData.stages.find(s => s.id === stage_id);
             if (dest) dest.deals.unshift({ id: res.id, name, value, contact_jid: jid, close_date, status: 'open' });
             _renderKanban();
+            if (document.getElementById('dealProductsList')) document.getElementById('dealProductsList').innerHTML = '';
             closeCreateDealModal();
             showToast && showToast('Lead criado!');
         }

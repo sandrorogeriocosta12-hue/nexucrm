@@ -2025,7 +2025,12 @@ def _ensure_kanban_tables():
         cur.execute("CREATE INDEX IF NOT EXISTS deals_user_email_idx ON nexus.deals(user_email)")
         cur.execute("CREATE INDEX IF NOT EXISTS deals_stage_id_idx ON nexus.deals(stage_id)")
         # Migração idempotente — adiciona colunas se ainda não existirem
-        for col, defn in [("probability","INTEGER DEFAULT NULL"),("close_date","DATE DEFAULT NULL"),("lost_reason","TEXT DEFAULT NULL")]:
+        for col, defn in [
+            ("probability", "INTEGER DEFAULT NULL"),
+            ("close_date",  "DATE DEFAULT NULL"),
+            ("lost_reason", "TEXT DEFAULT NULL"),
+            ("products",    "TEXT DEFAULT '[]'"),   # JSON: [{name, qty, price}]
+        ]:
             try: cur.execute(f"ALTER TABLE nexus.deals ADD COLUMN IF NOT EXISTS {col} {defn}")
             except Exception: pass
         cur.execute("""
@@ -2086,9 +2091,67 @@ class DealMove(BaseModel):
     lost_reason: Optional[str] = None   # obrigatório quando destino é "Perdido"
 
 
+@app.get("/crm/pipelines/list")
+async def list_pipelines(current_user: dict = Depends(get_current_user)):
+    """Lista todos os funis do usuário."""
+    import psycopg2.extras
+    user_email = current_user["email"]
+    con = _crm_conn()
+    try:
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT id, name, created_at FROM nexus.pipelines WHERE user_email = %s ORDER BY created_at", (user_email,))
+        return [dict(r) for r in cur.fetchall()]
+    finally:
+        con.close()
+
+
+class PipelineCreate(BaseModel):
+    name: str
+
+
+@app.post("/crm/pipelines", status_code=201)
+async def create_pipeline(payload: PipelineCreate, current_user: dict = Depends(get_current_user)):
+    """Cria novo funil com os 6 estágios padrão."""
+    user_email = current_user["email"]
+    if not payload.name.strip():
+        raise HTTPException(status_code=400, detail="Nome obrigatório")
+    con = _crm_conn()
+    try:
+        cur = con.cursor()
+        cur.execute("INSERT INTO nexus.pipelines (user_email, name) VALUES (%s, %s) RETURNING id", (user_email, payload.name.strip()))
+        pipeline_id = cur.fetchone()[0]
+        for i, stage_name in enumerate(_DEFAULT_STAGES):
+            cur.execute("INSERT INTO nexus.pipeline_stages (pipeline_id, user_email, name, position) VALUES (%s,%s,%s,%s)", (pipeline_id, user_email, stage_name, i))
+        con.commit()
+        return {"id": pipeline_id, "name": payload.name.strip()}
+    except Exception as e:
+        con.rollback(); raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
+
+
+@app.delete("/crm/pipelines/{pipeline_id}")
+async def delete_pipeline(pipeline_id: int, current_user: dict = Depends(get_current_user)):
+    user_email = current_user["email"]
+    con = _crm_conn()
+    try:
+        cur = con.cursor()
+        cur.execute("SELECT COUNT(*) FROM nexus.pipelines WHERE user_email = %s", (user_email,))
+        if cur.fetchone()[0] <= 1:
+            raise HTTPException(status_code=400, detail="Não é possível deletar o único funil")
+        cur.execute("DELETE FROM nexus.pipelines WHERE id = %s AND user_email = %s", (pipeline_id, user_email))
+        con.commit()
+        return {"deleted": pipeline_id}
+    except HTTPException: raise
+    except Exception as e:
+        con.rollback(); raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
+
+
 @app.get("/crm/pipelines")
-async def get_kanban_board(current_user: dict = Depends(get_current_user)):
-    """Retorna o pipeline completo com estágios e deals do usuário."""
+async def get_kanban_board(pipeline_id: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+    """Retorna o pipeline completo com estágios e deals. pipeline_id opcional — usa o primeiro se omitido."""
     import psycopg2.extras
     user_email = current_user["email"]
     con = _crm_conn()
@@ -2102,24 +2165,24 @@ async def get_kanban_board(current_user: dict = Depends(get_current_user)):
             con = _crm_conn()
             cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        cur.execute(
-            "SELECT id, name FROM nexus.pipelines WHERE user_email = %s ORDER BY created_at LIMIT 1",
-            (user_email,)
-        )
+        if pipeline_id:
+            cur.execute("SELECT id, name FROM nexus.pipelines WHERE id = %s AND user_email = %s", (pipeline_id, user_email))
+        else:
+            cur.execute("SELECT id, name FROM nexus.pipelines WHERE user_email = %s ORDER BY created_at LIMIT 1", (user_email,))
         pipeline = cur.fetchone()
         if not pipeline:
             return {"pipeline": None, "stages": []}
 
         cur.execute(
-            "SELECT id, name, position FROM nexus.pipeline_stages WHERE user_email = %s ORDER BY position ASC",
-            (user_email,)
+            "SELECT id, name, position FROM nexus.pipeline_stages WHERE pipeline_id = %s AND user_email = %s ORDER BY position ASC",
+            (pipeline["id"], user_email)
         )
         stages_rows = cur.fetchall()
 
         stages = []
         for s in stages_rows:
             cur.execute("""
-                SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, created_at, updated_at
+                SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, products, created_at, updated_at
                 FROM nexus.deals
                 WHERE stage_id = %s AND user_email = %s AND status = 'open'
                 ORDER BY updated_at DESC
@@ -2133,6 +2196,7 @@ async def get_kanban_board(current_user: dict = Depends(get_current_user)):
                 "probability": d["probability"],
                 "close_date":  str(d["close_date"]) if d["close_date"] else None,
                 "lost_reason": d["lost_reason"],
+                "products":    d["products"] or "[]",
                 "created_at":  d["created_at"].isoformat() if d["created_at"] else None,
                 "updated_at":  d["updated_at"].isoformat() if d["updated_at"] else None,
             } for d in cur.fetchall()]
