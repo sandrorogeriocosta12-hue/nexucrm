@@ -749,19 +749,163 @@ async def webhook_whatsapp(instance_name: str, request: Request):
     return {"status": "ok"}
 
 
+# ─── Channel token helpers ─────────────────────────────────────────────────────
+
+def _get_channel_token(user_email: str, channel: str) -> str | None:
+    """Busca token de integração em nexus.integrations (cria tabela se não existir)."""
+    try:
+        con = _db_conn()
+        cur = con.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS nexus.integrations (
+                user_email TEXT NOT NULL,
+                channel    TEXT NOT NULL,
+                token      TEXT,
+                extra_id   TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                PRIMARY KEY (user_email, channel)
+            )
+        """)
+        con.commit()
+        cur.execute(
+            "SELECT token FROM nexus.integrations WHERE user_email = %s AND channel = %s",
+            (user_email, channel)
+        )
+        row = cur.fetchone()
+        con.close()
+        return row[0] if row else None
+    except Exception as e:
+        logger.warning(f"⚠️  Falha ao buscar token {channel}: {e}")
+        return None
+
+
+def _get_instagram_token_by_page(page_id: str) -> tuple:
+    """Retorna (user_email, page_access_token) pelo page_id do Instagram."""
+    try:
+        con = _db_conn()
+        cur = con.cursor()
+        cur.execute(
+            "SELECT user_email, token FROM nexus.integrations WHERE extra_id = %s AND channel = 'instagram' LIMIT 1",
+            (page_id,)
+        )
+        row = cur.fetchone()
+        con.close()
+        return (row[0], row[1]) if row else (None, None)
+    except Exception as e:
+        logger.warning(f"⚠️  Falha ao buscar token Instagram page {page_id}: {e}")
+        return None, None
+
+
+def _save_message_channel(direction: str, contact_jid: str, contact_name: str,
+                          content: str, agent_type: str, channel: str):
+    """Como _save_message mas com channel explícito."""
+    try:
+        con = _db_conn()
+        cur = con.cursor()
+        cur.execute(
+            "SELECT user_email FROM nexus.agents WHERE auto_respond = TRUE AND active = TRUE LIMIT 1"
+        )
+        row = cur.fetchone()
+        user_email = row[0] if row else "system"
+        cur.execute("""
+            INSERT INTO nexus.messages (user_email, direction, channel, contact_jid, contact_name, content, agent_type)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (user_email, direction, channel, contact_jid, contact_name, content, agent_type))
+        con.commit()
+        con.close()
+    except Exception as e:
+        logger.warning(f"⚠️  Não foi possível salvar mensagem [{channel}]: {e}")
+
+
+async def _auto_reply_telegram(user_email: str, tg_chat_id: int,
+                               sender_name: str, text: str):
+    jid = f"tg:{tg_chat_id}"
+    asyncio.create_task(asyncio.to_thread(
+        _save_message_channel, "in", jid, sender_name, text, "", "telegram"
+    ))
+    agent = await _get_agent_cached()
+    if not agent:
+        logger.info("ℹ️  Nenhum agente ativo — mensagem Telegram registrada")
+        return
+    reply = await _call_openai(agent, jid, text)
+    if not reply:
+        return
+    bot_token = await asyncio.to_thread(_get_channel_token, user_email, "telegram")
+    if not bot_token:
+        logger.warning(f"⚠️  Bot token Telegram não encontrado para {user_email}")
+        return
+    try:
+        resp = await _get_http().post(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            json={"chat_id": tg_chat_id, "text": reply}
+        )
+        if resp.status_code == 200:
+            logger.info(f"✅ Telegram → {tg_chat_id}: {reply[:80]}")
+            asyncio.create_task(asyncio.to_thread(
+                _save_message_channel, "out", jid, sender_name, reply, agent["type"], "telegram"
+            ))
+        else:
+            logger.warning(f"⚠️  Telegram API {resp.status_code}: {resp.text[:200]}")
+    except Exception as e:
+        logger.error(f"❌ Erro ao enviar Telegram: {e}")
+
+
+async def _auto_reply_instagram(page_id: str, sender_id: str, text: str):
+    jid = f"ig:{sender_id}"
+    asyncio.create_task(asyncio.to_thread(
+        _save_message_channel, "in", jid, sender_id, text, "", "instagram"
+    ))
+    user_email, page_token = await asyncio.to_thread(_get_instagram_token_by_page, page_id)
+    if not page_token:
+        logger.warning(f"⚠️  Token Instagram não encontrado para page {page_id}")
+        return
+    agent = await _get_agent_cached()
+    if not agent:
+        logger.info("ℹ️  Nenhum agente ativo — mensagem Instagram registrada")
+        return
+    reply = await _call_openai(agent, jid, text)
+    if not reply:
+        return
+    try:
+        resp = await _get_http().post(
+            "https://graph.facebook.com/v19.0/me/messages",
+            params={"access_token": page_token},
+            json={"recipient": {"id": sender_id}, "message": {"text": reply}}
+        )
+        if resp.status_code == 200:
+            logger.info(f"✅ Instagram → {sender_id}: {reply[:80]}")
+            asyncio.create_task(asyncio.to_thread(
+                _save_message_channel, "out", jid, sender_id, reply, agent["type"], "instagram"
+            ))
+        else:
+            logger.warning(f"⚠️  Graph API {resp.status_code}: {resp.text[:200]}")
+    except Exception as e:
+        logger.error(f"❌ Erro ao enviar Instagram: {e}")
+
+
 # ─── Telegram Webhook ──────────────────────────────────────────────────────────
 
-@router.post("/webhooks/telegram/{chat_id}")
-async def webhook_telegram(chat_id: str, request: Request):
+@router.post("/webhooks/telegram/{user_email}")
+async def webhook_telegram(user_email: str, request: Request):
     try:
         payload = await request.json()
     except Exception:
         return {"status": "ok"}
 
-    if "message" in payload:
-        msg = payload["message"]
-        if not msg.get("text", "").startswith("/"):
-            logger.info(f"🤖 Telegram [{chat_id}] de {msg.get('chat',{}).get('first_name','?')}: {msg.get('text','')[:80]}")
+    msg = payload.get("message") or payload.get("edited_message")
+    if not msg:
+        return {"status": "ok"}
+
+    text = (msg.get("text") or "").strip()
+    if not text or text.startswith("/"):
+        return {"status": "ok"}
+
+    tg_chat_id = msg.get("chat", {}).get("id")
+    sender_name = (msg.get("from", {}).get("first_name")
+                   or msg.get("chat", {}).get("first_name") or "?")
+
+    logger.info(f"📥 Telegram [{user_email}] de {sender_name} ({tg_chat_id}): {text[:80]}")
+    asyncio.create_task(_auto_reply_telegram(user_email, tg_chat_id, sender_name, text))
     return {"status": "ok"}
 
 
@@ -786,10 +930,18 @@ async def webhook_instagram(request: Request):
         payload = await request.json()
     except Exception:
         return {"status": "ok"}
+
     for entry in payload.get("entry", []):
-        for change in entry.get("changes", []):
-            for msg in change.get("value", {}).get("messages", []):
-                logger.info(f"📸 Instagram de {msg.get('from','?')}: {msg.get('text','')[:80]}")
+        page_id = str(entry.get("id", ""))
+        # Instagram DMs via Messenger Platform (formato correto)
+        for messaging in entry.get("messaging", []):
+            sender_id = messaging.get("sender", {}).get("id", "")
+            text = (messaging.get("message", {}).get("text") or "").strip()
+            if not text or sender_id == page_id:
+                continue
+            logger.info(f"📥 Instagram page={page_id} de {sender_id}: {text[:80]}")
+            asyncio.create_task(_auto_reply_instagram(page_id, sender_id, text))
+
     return {"status": "ok"}
 
 

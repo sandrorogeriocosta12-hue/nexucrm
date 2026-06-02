@@ -656,6 +656,10 @@
                 <div class="flex items-center gap-2 flex-wrap">
                     <input id="pipelineSearch" type="text" placeholder="🔍 Filtrar leads..." oninput="_pipelineFilter(this.value)"
                         class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-purple-500 w-44">
+                    <select id="vendedorFilter" onchange="_pipelineFilter(document.getElementById('pipelineSearch').value)"
+                        class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-purple-500">
+                        <option value="">👤 Todos</option>
+                    </select>
                     <button onclick="openCreateDealModal()" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-xl text-sm font-semibold transition-all">+ Novo Lead</button>
                 </div>
             </div>
@@ -3193,13 +3197,28 @@ function _createPipelineModal() {
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') doCreate(); if (e.key === 'Escape') overlay.remove(); });
 }
 
-// Filtro de busca — mostra/oculta cards em tempo real sem nova requisição
+// Filtro de busca + vendedor — mostra/oculta cards em tempo real sem nova requisição
 function _pipelineFilter(q) {
-    const query = q.toLowerCase().trim();
+    const query    = (q || '').toLowerCase().trim();
+    const vendedor = (document.getElementById('vendedorFilter')?.value || '').toLowerCase();
     document.querySelectorAll('#pipelineBoard [data-deal]').forEach(card => {
-        const name = card.querySelector('.font-medium')?.textContent?.toLowerCase() || '';
-        card.style.display = (!query || name.includes(query)) ? '' : 'none';
+        const name    = card.querySelector('.font-medium')?.textContent?.toLowerCase() || '';
+        const owner   = (card.dataset.assignedTo || '').toLowerCase();
+        const nameOk  = !query    || name.includes(query);
+        const ownerOk = !vendedor || owner === vendedor;
+        card.style.display = (nameOk && ownerOk) ? '' : 'none';
     });
+}
+
+function _populateVendedorFilter() {
+    const sel = document.getElementById('vendedorFilter');
+    if (!sel || !_kanbanData?.stages) return;
+    const vendors = new Set();
+    _kanbanData.stages.forEach(s => (s.deals||[]).forEach(d => { if (d.assigned_to) vendors.add(d.assigned_to); }));
+    const current = sel.value;
+    sel.innerHTML = '<option value="">👤 Todos</option>'
+        + [...vendors].sort().map(v => `<option value="${_esc(v)}">${_esc(v.split('@')[0])}</option>`).join('');
+    if ([...vendors].includes(current)) sel.value = current;
 }
 
 // Produtos no deal
@@ -3259,6 +3278,7 @@ function _renderKanban() {
             </div>
         </div>`;
     }).join('');
+    _populateVendedorFilter();
 }
 
 function _esc(s) {
@@ -3278,16 +3298,20 @@ function _dealCardHtml(d) {
     const closeDate = d.close_date
         ? `<span class="text-[10px] text-slate-500">📅 ${new Date(d.close_date+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</span>`
         : '';
+    const assignedLabel = d.assigned_to
+        ? `<span class="text-[10px] text-slate-400 bg-slate-700 px-1.5 py-0.5 rounded" title="${_esc(d.assigned_to)}">👤 ${_esc(d.assigned_to.split('@')[0])}</span>`
+        : '';
     return `
     <div draggable="true"
          data-deal="${d.id}"
+         data-assigned-to="${_esc(d.assigned_to||'')}"
          ondragstart="_kanbanDragStart(event,${d.id})"
          ondragend="_kanbanDragEnd(event)"
          onclick="_kanbanCardClick(event,${d.id})"
          class="bg-slate-800/80 border border-slate-700 rounded-lg p-3 cursor-pointer hover:border-purple-500/50 transition-all group select-none">
         <div class="font-medium text-sm text-white mb-2 leading-snug">${_esc(d.name)}</div>
         <div class="flex items-center flex-wrap gap-1.5">
-            ${val}${prob}${wa}${closeDate}
+            ${val}${prob}${wa}${closeDate}${assignedLabel}
             <button onclick="event.stopPropagation();_deleteDeal(${d.id})"
                 class="ml-auto text-slate-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all text-xs leading-none" title="Remover">✕</button>
         </div>

@@ -2049,10 +2049,11 @@ def _ensure_kanban_tables():
         cur.execute("CREATE INDEX IF NOT EXISTS deals_stage_id_idx ON nexus.deals(stage_id)")
         # Migração idempotente — adiciona colunas se ainda não existirem
         for col, defn in [
-            ("probability", "INTEGER DEFAULT NULL"),
-            ("close_date",  "DATE DEFAULT NULL"),
-            ("lost_reason", "TEXT DEFAULT NULL"),
-            ("products",    "TEXT DEFAULT '[]'"),   # JSON: [{name, qty, price}]
+            ("probability",  "INTEGER DEFAULT NULL"),
+            ("close_date",   "DATE DEFAULT NULL"),
+            ("lost_reason",  "TEXT DEFAULT NULL"),
+            ("products",     "TEXT DEFAULT '[]'"),   # JSON: [{name, qty, price}]
+            ("assigned_to",  "VARCHAR(255) DEFAULT NULL"),
         ]:
             try: cur.execute(f"ALTER TABLE nexus.deals ADD COLUMN IF NOT EXISTS {col} {defn}")
             except Exception: pass
@@ -2107,6 +2108,7 @@ class DealCreate(BaseModel):
     contact_jid: Optional[str] = None
     value: float = 0.0
     close_date: Optional[str] = None
+    assigned_to: Optional[str] = None
 
 
 class DealMove(BaseModel):
@@ -2173,7 +2175,7 @@ async def delete_pipeline(pipeline_id: int, current_user: dict = Depends(get_cur
 
 
 @app.get("/crm/pipelines")
-async def get_kanban_board(pipeline_id: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+async def get_kanban_board(pipeline_id: Optional[int] = None, vendedor: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Retorna o pipeline completo com estágios e deals. pipeline_id opcional — usa o primeiro se omitido."""
     import psycopg2.extras
     user_email = current_user["email"]
@@ -2204,12 +2206,20 @@ async def get_kanban_board(pipeline_id: Optional[int] = None, current_user: dict
 
         stages = []
         for s in stages_rows:
-            cur.execute("""
-                SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, products, created_at, updated_at
-                FROM nexus.deals
-                WHERE stage_id = %s AND user_email = %s AND status = 'open'
-                ORDER BY updated_at DESC
-            """, (s["id"], user_email))
+            if vendedor:
+                cur.execute("""
+                    SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, products, assigned_to, created_at, updated_at
+                    FROM nexus.deals
+                    WHERE stage_id = %s AND user_email = %s AND status = 'open' AND assigned_to = %s
+                    ORDER BY updated_at DESC
+                """, (s["id"], user_email, vendedor))
+            else:
+                cur.execute("""
+                    SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, products, assigned_to, created_at, updated_at
+                    FROM nexus.deals
+                    WHERE stage_id = %s AND user_email = %s AND status = 'open'
+                    ORDER BY updated_at DESC
+                """, (s["id"], user_email))
             deals = [{
                 "id":          d["id"],
                 "name":        d["name"],
@@ -2220,6 +2230,7 @@ async def get_kanban_board(pipeline_id: Optional[int] = None, current_user: dict
                 "close_date":  str(d["close_date"]) if d["close_date"] else None,
                 "lost_reason": d["lost_reason"],
                 "products":    d["products"] or "[]",
+                "assigned_to": d["assigned_to"],
                 "created_at":  d["created_at"].isoformat() if d["created_at"] else None,
                 "updated_at":  d["updated_at"].isoformat() if d["updated_at"] else None,
             } for d in cur.fetchall()]
@@ -2247,9 +2258,9 @@ async def create_deal(payload: DealCreate, current_user: dict = Depends(get_curr
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="Estágio não encontrado")
         cur.execute("""
-            INSERT INTO nexus.deals (stage_id, user_email, name, contact_jid, value)
-            VALUES (%s, %s, %s, %s, %s) RETURNING id
-        """, (payload.stage_id, user_email, payload.name, payload.contact_jid, payload.value))
+            INSERT INTO nexus.deals (stage_id, user_email, name, contact_jid, value, assigned_to)
+            VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
+        """, (payload.stage_id, user_email, payload.name, payload.contact_jid, payload.value, payload.assigned_to))
         deal_id = cur.fetchone()[0]
         con.commit()
         return {"id": deal_id, "name": payload.name, "stage_id": payload.stage_id}
