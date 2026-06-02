@@ -116,16 +116,45 @@ app.include_router(fuzzy_router)
 @app.on_event("startup")
 async def startup_event():
     if _DB_AVAILABLE:
-        init_db()
-    try:
-        _ensure_campaigns_table()
-        _ensure_contacts_table()
-        _ensure_workflows_table()
-        _ensure_whatsapp_instances_table()
-        _ensure_kanban_tables()
-        _ensure_sales_goals_table()
-    except Exception:
-        pass
+        try:
+            init_db()
+        except Exception as _e:
+            logging.getLogger(__name__).warning(f"init_db failed: {_e}")
+    for _fn in [
+        _ensure_campaigns_table,
+        _ensure_contacts_table,
+        _ensure_workflows_table,
+        _ensure_whatsapp_instances_table,
+        _ensure_kanban_tables,
+        _ensure_sales_goals_table,
+    ]:
+        try:
+            _fn()
+        except Exception as _e:
+            logging.getLogger(__name__).warning(f"{_fn.__name__} failed: {_e}")
+
+
+@app.post("/api/admin/init-db", include_in_schema=False)
+async def admin_init_db(secret: str = ""):
+    """Força re-inicialização das tabelas. Protegido por secret env."""
+    expected = os.getenv("ADMIN_INIT_SECRET", "nexus_init_2026")
+    if secret != expected:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    results = {}
+    if _DB_AVAILABLE:
+        try:
+            init_db()
+            results["init_db"] = "ok"
+        except Exception as e:
+            results["init_db"] = str(e)
+    for fn in [_ensure_campaigns_table, _ensure_contacts_table, _ensure_workflows_table,
+               _ensure_whatsapp_instances_table, _ensure_kanban_tables, _ensure_sales_goals_table]:
+        try:
+            fn()
+            results[fn.__name__] = "ok"
+        except Exception as e:
+            results[fn.__name__] = str(e)
+    return results
 
 # CORS - Allow both backend (8080) and frontend (8081) ports
 default_origins = [
@@ -1012,6 +1041,7 @@ def _ensure_campaigns_table():
     try:
         con.autocommit = True
         cur = con.cursor()
+        cur.execute("CREATE SCHEMA IF NOT EXISTS nexus")
         cur.execute("""
             CREATE TABLE IF NOT EXISTS nexus.campaigns (
                 id                  VARCHAR(20)  PRIMARY KEY,
@@ -2009,6 +2039,7 @@ def _ensure_kanban_tables():
     try:
         con.autocommit = True
         cur = con.cursor()
+        cur.execute("CREATE SCHEMA IF NOT EXISTS nexus")
         cur.execute("""
             CREATE TABLE IF NOT EXISTS nexus.pipelines (
                 id         SERIAL PRIMARY KEY,
