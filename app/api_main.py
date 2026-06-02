@@ -125,6 +125,7 @@ async def startup_event():
         _ensure_contacts_table,
         _ensure_workflows_table,
         _ensure_whatsapp_instances_table,
+        _ensure_quick_replies_table,
         _ensure_kanban_tables,
         _ensure_sales_goals_table,
     ]:
@@ -148,7 +149,8 @@ async def admin_init_db(secret: str = ""):
         except Exception as e:
             results["init_db"] = str(e)
     for fn in [_ensure_campaigns_table, _ensure_contacts_table, _ensure_workflows_table,
-               _ensure_whatsapp_instances_table, _ensure_kanban_tables, _ensure_sales_goals_table]:
+               _ensure_whatsapp_instances_table, _ensure_quick_replies_table,
+               _ensure_kanban_tables, _ensure_sales_goals_table]:
         try:
             fn()
             results[fn.__name__] = "ok"
@@ -1583,6 +1585,10 @@ class AgentUpdate(BaseModel):
     code_interpreter: Optional[bool] = None
     functions_json: Optional[str] = None
     avatar: Optional[str] = None
+    work_days: Optional[str] = None
+    work_start: Optional[str] = None
+    work_end: Optional[str] = None
+    away_message: Optional[str] = None
 
 
 class AgentChatRequest(BaseModel):
@@ -2012,6 +2018,26 @@ def _ensure_whatsapp_instances_table():
         con.close()
 
 
+def _ensure_quick_replies_table():
+    con = _crm_conn()
+    try:
+        con.autocommit = True
+        cur = con.cursor()
+        cur.execute("CREATE SCHEMA IF NOT EXISTS nexus")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS nexus.quick_replies (
+                id         SERIAL PRIMARY KEY,
+                user_email VARCHAR(255) NOT NULL,
+                title      VARCHAR(100) NOT NULL,
+                content    TEXT         NOT NULL,
+                created_at TIMESTAMP    DEFAULT NOW()
+            )
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS quick_replies_user_email_idx ON nexus.quick_replies(user_email)")
+    finally:
+        con.close()
+
+
 def _ensure_sales_goals_table():
     con = _crm_conn()
     try:
@@ -2239,31 +2265,34 @@ async def get_kanban_board(pipeline_id: Optional[int] = None, vendedor: Optional
         for s in stages_rows:
             if vendedor:
                 cur.execute("""
-                    SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, products, assigned_to, created_at, updated_at
+                    SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, products, assigned_to, created_at, updated_at,
+                           EXTRACT(EPOCH FROM (NOW() - updated_at)) / 86400 AS days_stopped
                     FROM nexus.deals
                     WHERE stage_id = %s AND user_email = %s AND status = 'open' AND assigned_to = %s
                     ORDER BY updated_at DESC
                 """, (s["id"], user_email, vendedor))
             else:
                 cur.execute("""
-                    SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, products, assigned_to, created_at, updated_at
+                    SELECT id, name, contact_jid, value, status, probability, close_date, lost_reason, products, assigned_to, created_at, updated_at,
+                           EXTRACT(EPOCH FROM (NOW() - updated_at)) / 86400 AS days_stopped
                     FROM nexus.deals
                     WHERE stage_id = %s AND user_email = %s AND status = 'open'
                     ORDER BY updated_at DESC
                 """, (s["id"], user_email))
             deals = [{
-                "id":          d["id"],
-                "name":        d["name"],
-                "contact_jid": d["contact_jid"],
-                "value":       float(d["value"] or 0),
-                "status":      d["status"],
-                "probability": d["probability"],
-                "close_date":  str(d["close_date"]) if d["close_date"] else None,
-                "lost_reason": d["lost_reason"],
-                "products":    d["products"] or "[]",
-                "assigned_to": d["assigned_to"],
-                "created_at":  d["created_at"].isoformat() if d["created_at"] else None,
-                "updated_at":  d["updated_at"].isoformat() if d["updated_at"] else None,
+                "id":           d["id"],
+                "name":         d["name"],
+                "contact_jid":  d["contact_jid"],
+                "value":        float(d["value"] or 0),
+                "status":       d["status"],
+                "probability":  d["probability"],
+                "close_date":   str(d["close_date"]) if d["close_date"] else None,
+                "lost_reason":  d["lost_reason"],
+                "products":     d["products"] or "[]",
+                "assigned_to":  d["assigned_to"],
+                "days_stopped": int(d["days_stopped"] or 0),
+                "created_at":   d["created_at"].isoformat() if d["created_at"] else None,
+                "updated_at":   d["updated_at"].isoformat() if d["updated_at"] else None,
             } for d in cur.fetchall()]
             stages.append({"id": s["id"], "name": s["name"], "position": s["position"], "deals": deals})
 
@@ -3644,6 +3673,72 @@ _STRIPE_PRICES = {
 
 # Mapa inverso: price_id → nome do plano (para webhook)
 _PRICE_TO_PLAN = {v: k[0] for k, v in _STRIPE_PRICES.items() if v}
+
+
+# ─── Quick Replies ─────────────────────────────────────────────────────────────
+
+class QuickReplyCreate(BaseModel):
+    title: str
+    content: str
+
+
+@app.get("/inbox/quick-replies")
+async def list_quick_replies(current_user: dict = Depends(get_current_user)):
+    import psycopg2.extras
+    user_email = current_user["email"]
+    con = _crm_conn()
+    try:
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            "SELECT id, title, content, created_at FROM nexus.quick_replies WHERE user_email = %s ORDER BY title ASC",
+            (user_email,)
+        )
+        rows = cur.fetchall()
+        return [{"id": r["id"], "title": r["title"], "content": r["content"]} for r in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
+
+
+@app.post("/inbox/quick-replies", status_code=201)
+async def create_quick_reply(payload: QuickReplyCreate, current_user: dict = Depends(get_current_user)):
+    user_email = current_user["email"]
+    if not payload.title.strip() or not payload.content.strip():
+        raise HTTPException(status_code=400, detail="Título e conteúdo são obrigatórios")
+    con = _crm_conn()
+    try:
+        cur = con.cursor()
+        cur.execute(
+            "INSERT INTO nexus.quick_replies (user_email, title, content) VALUES (%s, %s, %s) RETURNING id",
+            (user_email, payload.title.strip(), payload.content.strip())
+        )
+        new_id = cur.fetchone()[0]
+        con.commit()
+        return {"id": new_id, "title": payload.title.strip(), "content": payload.content.strip()}
+    except Exception as e:
+        con.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
+
+
+@app.delete("/inbox/quick-replies/{reply_id}", status_code=204)
+async def delete_quick_reply(reply_id: int, current_user: dict = Depends(get_current_user)):
+    user_email = current_user["email"]
+    con = _crm_conn()
+    try:
+        cur = con.cursor()
+        cur.execute(
+            "DELETE FROM nexus.quick_replies WHERE id = %s AND user_email = %s",
+            (reply_id, user_email)
+        )
+        con.commit()
+    except Exception as e:
+        con.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
 
 
 class CheckoutRequest(BaseModel):

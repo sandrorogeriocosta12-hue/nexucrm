@@ -67,7 +67,18 @@ def _get_auto_respond_agent() -> dict | None:
         import psycopg2.extras
         con = _db_conn()
         cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        # Qualquer agente ativo + auto_respond ligado serve; usa atendimento como padrão
+        # Migração idempotente — garante colunas de horário
+        for col, defn in [
+            ("work_days",    "VARCHAR(20) DEFAULT '1,2,3,4,5'"),
+            ("work_start",   "TIME DEFAULT '08:00'"),
+            ("work_end",     "TIME DEFAULT '18:00'"),
+            ("away_message", "TEXT DEFAULT ''"),
+        ]:
+            try:
+                cur.execute(f"ALTER TABLE nexus.agents ADD COLUMN IF NOT EXISTS {col} {defn}")
+            except Exception:
+                pass
+        con.commit()
         cur.execute("""
             SELECT a.* FROM nexus.agents a
             WHERE a.auto_respond = TRUE AND a.active = TRUE
@@ -80,6 +91,34 @@ def _get_auto_respond_agent() -> dict | None:
     except Exception as e:
         logger.warning(f"⚠️  Não foi possível buscar agente: {e}")
         return None
+
+
+def _agent_is_available(agent: dict) -> bool:
+    """Retorna True se o horário atual está dentro do expediente do agente."""
+    import datetime
+    try:
+        work_days  = str(agent.get("work_days") or "1,2,3,4,5")
+        work_start = agent.get("work_start")  # datetime.time ou string "HH:MM"
+        work_end   = agent.get("work_end")
+        if not work_days and not work_start:
+            return True  # sem restrição configurada
+
+        now    = datetime.datetime.now()
+        weekday = str(now.isoweekday())  # 1=seg … 7=dom
+        if weekday not in work_days.split(","):
+            return False
+
+        if work_start and work_end:
+            def _to_time(t):
+                if isinstance(t, datetime.time):
+                    return t
+                h, m = str(t).split(":")[:2]
+                return datetime.time(int(h), int(m))
+            if not (_to_time(work_start) <= now.time() <= _to_time(work_end)):
+                return False
+    except Exception:
+        pass
+    return True
 
 
 async def _update_context_summary(jid: str) -> None:
@@ -727,6 +766,16 @@ async def webhook_whatsapp(instance_name: str, request: Request):
 
         logger.info(f"🤖 Agente [{agent['name']}] respondendo para {number}...")
 
+        # Verifica horário de funcionamento
+        if not _agent_is_available(agent):
+            away = (agent.get("away_message") or "").strip()
+            if away:
+                await _send_whatsapp_text(instance_name, number, away)
+                asyncio.create_task(asyncio.to_thread(_save_message, "out", jid, push_name, away, "away"))
+            else:
+                logger.info(f"⏰ Agente fora do expediente — sem away_message configurada")
+            continue
+
         # Gera resposta com OpenAI (passa image_url para visão multimodal)
         reply = await _call_openai(agent, jid, text, image_url=image_url)
         if not reply:
@@ -827,6 +876,17 @@ async def _auto_reply_telegram(user_email: str, tg_chat_id: int,
     if not agent:
         logger.info("ℹ️  Nenhum agente ativo — mensagem Telegram registrada")
         return
+
+    if not _agent_is_available(agent):
+        away = (agent.get("away_message") or "").strip()
+        bot_token = await asyncio.to_thread(_get_channel_token, user_email, "telegram")
+        if away and bot_token:
+            await _get_http().post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                json={"chat_id": tg_chat_id, "text": away}
+            )
+        return
+
     reply = await _call_openai(agent, jid, text)
     if not reply:
         return
@@ -863,6 +923,17 @@ async def _auto_reply_instagram(page_id: str, sender_id: str, text: str):
     if not agent:
         logger.info("ℹ️  Nenhum agente ativo — mensagem Instagram registrada")
         return
+
+    if not _agent_is_available(agent):
+        away = (agent.get("away_message") or "").strip()
+        if away:
+            await _get_http().post(
+                "https://graph.facebook.com/v19.0/me/messages",
+                params={"access_token": page_token},
+                json={"recipient": {"id": sender_id}, "message": {"text": away}}
+            )
+        return
+
     reply = await _call_openai(agent, jid, text)
     if not reply:
         return
