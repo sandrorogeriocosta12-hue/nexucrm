@@ -134,7 +134,7 @@ async def startup_event():
             logging.getLogger(__name__).warning(f"{_fn.__name__} failed: {_e}")
 
 
-@app.post("/api/admin/init-db", include_in_schema=False)
+@app.api_route("/api/admin/init-db", methods=["GET", "POST"], include_in_schema=False)
 async def admin_init_db(secret: str = ""):
     """Força re-inicialização das tabelas. Protegido por secret env."""
     expected = os.getenv("ADMIN_INIT_SECRET", "nexus_init_2026")
