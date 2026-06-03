@@ -258,6 +258,32 @@
                 </button>
             </div>
 
+            <!-- WhatsApp Health Card -->
+            <div id="waHealthCard" class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 mb-5 hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm font-semibold text-white flex items-center gap-2">
+                        <span id="waHealthDot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+                        WhatsApp
+                        <span id="waHealthLabel" class="text-xs font-normal text-slate-400"></span>
+                    </span>
+                    <span id="waHealthInstance" class="text-[10px] text-slate-600 font-mono"></span>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-slate-800/60 rounded-lg p-3 text-center">
+                        <p class="text-[10px] text-slate-500 mb-1">Uptime</p>
+                        <p class="text-sm font-bold" id="waUptimeVal">—</p>
+                    </div>
+                    <div class="bg-slate-800/60 rounded-lg p-3 text-center">
+                        <p class="text-[10px] text-slate-500 mb-1">Msgs hoje</p>
+                        <p class="text-sm font-bold text-blue-400" id="waMsgsTodayVal">—</p>
+                    </div>
+                    <div class="bg-slate-800/60 rounded-lg p-3 text-center">
+                        <p class="text-[10px] text-slate-500 mb-1">Status</p>
+                        <p class="text-xs font-bold" id="waStateVal">—</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Inteligência Financeira -->
             <div class="mt-8">
                 <div class="flex items-center justify-between mb-4">
@@ -4502,6 +4528,26 @@ async function loadTrialBanner() {
 }
 
 // ─── Init ────────────────────────────────────────────
+// ─── WA Health Card ───────────────────────────────────────────────────────────
+async function loadWaHealth() {
+    try {
+        const h = await apiFetch('/api/inbox/wa-health');
+        if (!h || h.health == null) return;
+        const card = document.getElementById('waHealthCard');
+        if (card) card.classList.remove('hidden');
+        const dotColors = { green: 'bg-green-500', yellow: 'bg-yellow-400', red: 'bg-red-500' };
+        const textColors = { green: 'text-green-400', yellow: 'text-yellow-400', red: 'text-red-400' };
+        document.getElementById('waHealthDot').className   = `w-2.5 h-2.5 rounded-full ${dotColors[h.health] || 'bg-slate-500'}`;
+        document.getElementById('waHealthLabel').textContent = h.health_label || '';
+        document.getElementById('waHealthInstance').textContent = h.instance || '';
+        document.getElementById('waUptimeVal').textContent   = h.uptime_hours > 0 ? `${h.uptime_hours}h` : '—';
+        document.getElementById('waMsgsTodayVal').textContent = h.msgs_today ?? '0';
+        const stateEl = document.getElementById('waStateVal');
+        stateEl.textContent  = h.connected ? 'Conectado' : 'Desconectado';
+        stateEl.className    = `text-xs font-bold ${h.connected ? 'text-green-400' : 'text-red-400'}`;
+    } catch(e) { /* silencioso — WA pode não estar configurado */ }
+}
+
 // ─── Financial Charts ─────────────────────────────────────────────────────────
 let _finCharts = {};
 
@@ -4591,6 +4637,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadMetrics();
     loadTrialBanner();
     loadFinancialCharts();
+    loadWaHealth();
 
     setInterval(() => { checkSystemHealth(); loadLeads(); loadCampaigns(); loadContacts(); loadMetrics(); }, 30000);
 

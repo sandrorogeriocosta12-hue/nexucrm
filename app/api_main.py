@@ -136,11 +136,15 @@ async def startup_event():
         _ensure_quick_replies_table,
         _ensure_kanban_tables,
         _ensure_sales_goals_table,
+        _ensure_wa_resilience_tables,
     ]:
         try:
             _fn()
         except Exception as _e:
             logging.getLogger(__name__).warning(f"{_fn.__name__} failed: {_e}")
+    # Inicia background tasks de resiliência WA
+    asyncio.create_task(_wa_reconnect_daemon())
+    asyncio.create_task(_wa_queue_daemon())
 
 
 @app.api_route("/api/admin/init-db", methods=["GET", "POST"], include_in_schema=False)
@@ -1209,6 +1213,20 @@ async def _run_campaign(campaign_id: str, user_email: str) -> None:
         con2.close()
 
         total = len(jids)
+        # Rate limit por plano: msgs/hora
+        _plan_rate = {"trial": 10, "starter": 30, "pro": 100, "enterprise": 300, "professional": 100}
+        try:
+            p_con = _crm_conn(); p_cur = p_con.cursor()
+            p_cur.execute("SELECT plan FROM nexus.users WHERE email=%s", (user_email,))
+            p_row = p_cur.fetchone(); p_con.close()
+            user_plan = (p_row[0] if p_row else "trial")
+        except Exception:
+            user_plan = "trial"
+        max_per_hour = _plan_rate.get(user_plan, 30)
+        # Delay mínimo entre mensagens baseado no limite/hora
+        min_delay = 3600 / max_per_hour  # segundos
+        logger.info(f"📢 Campanha [{c_name}] rate limit: {max_per_hour}/hora (plano {user_plan}), delay mín={min_delay:.0f}s")
+
         # Atualiza total e muda status para 'running'
         con3 = _crm_conn()
         cur3 = con3.cursor()
@@ -1249,8 +1267,8 @@ async def _run_campaign(campaign_id: str, user_email: str) -> None:
                 )
                 con4.commit(); con4.close()
 
-                # Delay antibanimento: 15-30s aleatório
-                delay = _random.uniform(15, 30)
+                # Delay: respeita rate limit do plano + jitter antibanimento
+                delay = max(min_delay, _random.uniform(15, 30))
                 await asyncio.sleep(delay)
 
         # Finaliza
@@ -2229,6 +2247,221 @@ def _ensure_quick_replies_table():
         cur.execute("CREATE INDEX IF NOT EXISTS quick_replies_user_email_idx ON nexus.quick_replies(user_email)")
     finally:
         con.close()
+
+
+def _ensure_wa_resilience_tables():
+    con = _crm_conn()
+    try:
+        con.autocommit = True
+        cur = con.cursor()
+        cur.execute("CREATE SCHEMA IF NOT EXISTS nexus")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS nexus.connection_logs (
+                id            SERIAL PRIMARY KEY,
+                user_email    VARCHAR(255) NOT NULL,
+                instance_name VARCHAR(255) NOT NULL,
+                status        VARCHAR(50)  NOT NULL,
+                detail        TEXT,
+                attempted_at  TIMESTAMP    DEFAULT NOW()
+            )
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS conn_logs_user_idx ON nexus.connection_logs(user_email, attempted_at DESC)")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS nexus.message_queue (
+                id            SERIAL PRIMARY KEY,
+                user_email    VARCHAR(255) NOT NULL,
+                instance_name VARCHAR(255) NOT NULL,
+                to_jid        VARCHAR(255) NOT NULL,
+                content       TEXT         NOT NULL,
+                media_url     TEXT,
+                attempts      INTEGER      DEFAULT 0,
+                next_retry    TIMESTAMP    DEFAULT NOW(),
+                status        VARCHAR(20)  DEFAULT 'pending',
+                created_at    TIMESTAMP    DEFAULT NOW()
+            )
+        """)
+        cur.execute("CREATE INDEX IF NOT EXISTS msgq_retry_idx ON nexus.message_queue(status, next_retry)")
+        # uptime tracking em whatsapp_instances
+        for col, defn in [
+            ("connected_since", "TIMESTAMP DEFAULT NULL"),
+            ("last_seen",       "TIMESTAMP DEFAULT NULL"),
+            ("msgs_today",      "INTEGER DEFAULT 0"),
+            ("msgs_today_date", "DATE DEFAULT NULL"),
+        ]:
+            try:
+                cur.execute(f"ALTER TABLE nexus.whatsapp_instances ADD COLUMN IF NOT EXISTS {col} {defn}")
+            except Exception:
+                pass
+    finally:
+        con.close()
+
+
+# ─── WA Reconnect Daemon ────────────────────────────────────────────────────────
+
+_wa_reconnect_failures: dict = {}   # instance_name → consecutive_failures count
+
+async def _wa_reconnect_daemon():
+    """Verifica e tenta reconectar instâncias WA desconectadas a cada 5 minutos."""
+    import httpx
+    await asyncio.sleep(30)  # aguarda o servidor estabilizar
+    while True:
+        try:
+            evo_url = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+            evo_key = os.getenv("EVOLUTION_API_KEY", "")
+            con = _crm_conn()
+            cur = con.cursor()
+            cur.execute("SELECT user_email, instance_name FROM nexus.whatsapp_instances")
+            instances = cur.fetchall()
+            now = datetime.utcnow()
+
+            for user_email, instance_name in instances:
+                try:
+                    async with httpx.AsyncClient(timeout=8) as client:
+                        r = await client.get(
+                            f"{evo_url}/instance/connectionstate/{instance_name}",
+                            headers={"apikey": evo_key}
+                        )
+                    if r.status_code != 200:
+                        raise Exception(f"HTTP {r.status_code}")
+                    data  = r.json()
+                    state = (data.get("instance") or {}).get("state") or data.get("connectionState") or "unknown"
+                    connected = state in ("open", "CONNECTED")
+
+                    if connected:
+                        _wa_reconnect_failures[instance_name] = 0
+                        cur.execute("""
+                            UPDATE nexus.whatsapp_instances
+                            SET status='connected', last_seen=NOW(),
+                                connected_since = COALESCE(connected_since, NOW()),
+                                msgs_today = CASE WHEN msgs_today_date = CURRENT_DATE THEN msgs_today ELSE 0 END,
+                                msgs_today_date = CURRENT_DATE
+                            WHERE instance_name = %s
+                        """, (instance_name,))
+                    else:
+                        failures = _wa_reconnect_failures.get(instance_name, 0) + 1
+                        _wa_reconnect_failures[instance_name] = failures
+                        cur.execute(
+                            "INSERT INTO nexus.connection_logs (user_email, instance_name, status, detail) VALUES (%s,%s,%s,%s)",
+                            (user_email, instance_name, "disconnected", f"state={state} failures={failures}")
+                        )
+                        logger.warning(f"⚠️  WA [{instance_name}] desconectado (failures={failures})")
+
+                        if failures <= 3:
+                            # Tenta reconectar
+                            async with httpx.AsyncClient(timeout=8) as client:
+                                rc = await client.post(
+                                    f"{evo_url}/instance/connect/{instance_name}",
+                                    headers={"apikey": evo_key}
+                                )
+                            success = rc.status_code in (200, 201)
+                            cur.execute(
+                                "INSERT INTO nexus.connection_logs (user_email, instance_name, status, detail) VALUES (%s,%s,%s,%s)",
+                                (user_email, instance_name, "reconnect_attempt", f"success={success}")
+                            )
+                        elif failures == 4:
+                            # Notifica usuário por email após 3 tentativas
+                            await _notify_wa_disconnected(user_email, instance_name)
+                            cur.execute(
+                                "INSERT INTO nexus.connection_logs (user_email, instance_name, status, detail) VALUES (%s,%s,%s,%s)",
+                                (user_email, instance_name, "notification_sent", "email_alert")
+                            )
+                except Exception as ex:
+                    logger.debug(f"WA daemon error [{instance_name}]: {ex}")
+
+            con.commit()
+            con.close()
+        except Exception as e:
+            logger.error(f"WA reconnect daemon error: {e}")
+        await asyncio.sleep(300)  # 5 minutos
+
+
+async def _notify_wa_disconnected(user_email: str, instance_name: str):
+    """Envia email alertando que a instância precisa ser reconectada via QR Code."""
+    try:
+        import httpx
+        sg_key = os.getenv("SENDGRID_API_KEY", "")
+        if not sg_key:
+            logger.warning(f"⚠️  SENDGRID não configurado — não foi possível notificar {user_email}")
+            return
+        body = {
+            "personalizations": [{"to": [{"email": user_email}]}],
+            "from": {"email": "no-reply@nexuscrm.tech", "name": "Nexus CRM"},
+            "subject": "⚠️ WhatsApp desconectado — ação necessária",
+            "content": [{"type": "text/html", "value": f"""
+                <p>Olá!</p>
+                <p>Sua instância WhatsApp <b>{instance_name}</b> foi desconectada e não conseguimos reconectar automaticamente.</p>
+                <p><b>Para restaurar o atendimento automático:</b></p>
+                <ol>
+                    <li>Acesse <a href="https://api.nexuscrm.tech">api.nexuscrm.tech</a></li>
+                    <li>Vá em <b>Integrações</b></li>
+                    <li>Clique em <b>Gerar QR Code</b> e escaneie com o celular</li>
+                </ol>
+                <p>Nexus CRM</p>
+            """}],
+        }
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post("https://api.sendgrid.com/v3/mail/send",
+                              headers={"Authorization": f"Bearer {sg_key}", "Content-Type": "application/json"},
+                              json=body)
+        logger.info(f"📧 Notificação WA desconectado enviada para {user_email}")
+    except Exception as e:
+        logger.error(f"Erro ao enviar email: {e}")
+
+
+# ─── WA Message Queue Daemon ────────────────────────────────────────────────────
+
+async def _wa_queue_daemon():
+    """Processa fila de mensagens com retry a cada 2 minutos."""
+    import httpx, re as _re
+    await asyncio.sleep(60)
+    while True:
+        try:
+            evo_url = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+            evo_key = os.getenv("EVOLUTION_API_KEY", "")
+            con = _crm_conn()
+            cur = con.cursor()
+            cur.execute("""
+                SELECT id, user_email, instance_name, to_jid, content, attempts
+                FROM nexus.message_queue
+                WHERE status = 'pending' AND next_retry <= NOW()
+                ORDER BY created_at ASC LIMIT 20
+            """)
+            rows = cur.fetchall()
+            for row in rows:
+                qid, user_email, instance_name, to_jid, content, attempts = row
+                try:
+                    number = _re.sub(r"[^\d]", "", to_jid.split("@")[0] if "@" in to_jid else to_jid)
+                    async with httpx.AsyncClient(timeout=10) as client:
+                        r = await client.post(
+                            f"{evo_url}/message/sendText/{instance_name}",
+                            headers={"apikey": evo_key, "Content-Type": "application/json"},
+                            json={"number": number, "text": content}
+                        )
+                    if r.status_code in (200, 201):
+                        cur.execute("UPDATE nexus.message_queue SET status='sent' WHERE id=%s", (qid,))
+                        logger.info(f"✅ Queue: mensagem {qid} enviada para {number}")
+                    else:
+                        raise Exception(f"HTTP {r.status_code}: {r.text[:100]}")
+                except Exception as ex:
+                    new_attempts = attempts + 1
+                    if new_attempts >= 3:
+                        cur.execute(
+                            "UPDATE nexus.message_queue SET status='failed', attempts=%s WHERE id=%s",
+                            (new_attempts, qid)
+                        )
+                        logger.error(f"❌ Queue: mensagem {qid} descartada após 3 tentativas")
+                    else:
+                        retry_in = 2 ** new_attempts  # 2, 4 minutos
+                        cur.execute("""
+                            UPDATE nexus.message_queue
+                            SET attempts=%s, next_retry=NOW() + interval '%s minutes'
+                            WHERE id=%s
+                        """, (new_attempts, retry_in, qid))
+            con.commit()
+            con.close()
+        except Exception as e:
+            logger.error(f"WA queue daemon error: {e}")
+        await asyncio.sleep(120)  # 2 minutos
 
 
 def _ensure_sales_goals_table():
@@ -3995,6 +4228,17 @@ async def inbox_send(req: SendMessageRequest, current_user: dict = Depends(get_c
                 json={"number": clean_number, "text": req.text}
             )
         if resp.status_code in (200, 201):
+            # Incrementa contador de mensagens do dia
+            try:
+                q_con = _crm_conn(); q_cur = q_con.cursor()
+                q_cur.execute("""
+                    UPDATE nexus.whatsapp_instances
+                    SET msgs_today = CASE WHEN msgs_today_date = CURRENT_DATE THEN msgs_today + 1 ELSE 1 END,
+                        msgs_today_date = CURRENT_DATE, last_seen = NOW()
+                    WHERE instance_name = %s
+                """, (instance,)); q_con.commit(); q_con.close()
+            except Exception:
+                pass
             return {"status": "sent"}
         # Extrai mensagem de erro da Evolution API
         try:
@@ -4003,12 +4247,19 @@ async def inbox_send(req: SendMessageRequest, current_user: dict = Depends(get_c
         except Exception:
             err_msg = resp.text[:200]
         logger.error(f"❌ inbox_send Evolution API {resp.status_code}: {err_msg}")
-        # Erro específico: instância desconectada
+        # Erro de sessão: enfileira para retry
         if "session" in err_msg.lower() or "no sessions" in err_msg.lower() or resp.status_code == 401:
-            raise HTTPException(
-                status_code=503,
-                detail="WHATSAPP_DISCONNECTED"
-            )
+            try:
+                q_con = _crm_conn(); q_cur = q_con.cursor()
+                q_cur.execute("""
+                    INSERT INTO nexus.message_queue (user_email, instance_name, to_jid, content)
+                    VALUES (%s, %s, %s, %s)
+                """, (current_user["email"], instance, req.jid, req.text))
+                q_con.commit(); q_con.close()
+                logger.info(f"📥 Mensagem enfileirada para retry: {req.jid}")
+            except Exception:
+                pass
+            raise HTTPException(status_code=503, detail="WHATSAPP_DISCONNECTED")
         raise HTTPException(status_code=502, detail=f"WhatsApp erro: {err_msg}")
     except HTTPException:
         raise
@@ -4040,6 +4291,64 @@ _PRICE_TO_PLAN = {v: k[0] for k, v in _STRIPE_PRICES.items() if v}
 class QuickReplyCreate(BaseModel):
     title: str
     content: str
+
+
+@app.get("/inbox/wa-health")
+async def inbox_wa_health(current_user: dict = Depends(get_current_user)):
+    """Retorna saúde detalhada da instância WA: uptime, msgs_hoje, estado."""
+    import httpx
+    from datetime import datetime as _dt
+    evo_url = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+    evo_key = os.getenv("EVOLUTION_API_KEY", "")
+    user_email = current_user["email"]
+    try:
+        import psycopg2.extras
+        con = _crm_conn()
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            "SELECT instance_name, status, connected_since, last_seen, msgs_today, msgs_today_date FROM nexus.whatsapp_instances WHERE user_email=%s ORDER BY created_at DESC LIMIT 1",
+            (user_email,)
+        )
+        row = cur.fetchone()
+        con.close()
+    except Exception:
+        row = None
+    if not row:
+        return {"connected": False, "instance": None, "uptime_hours": 0, "msgs_today": 0, "health": "red"}
+
+    instance = row["instance_name"]
+    connected_since = row.get("connected_since")
+    msgs_today = row.get("msgs_today") or 0
+    if row.get("msgs_today_date") and str(row["msgs_today_date"]) != str(_dt.utcnow().date()):
+        msgs_today = 0
+
+    # Verifica estado atual na Evolution
+    connected = False
+    state = "unknown"
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"{evo_url}/instance/connectionstate/{instance}", headers={"apikey": evo_key})
+            if r.status_code == 200:
+                data = r.json()
+                state = (data.get("instance") or {}).get("state") or data.get("connectionState") or "unknown"
+                connected = state in ("open", "CONNECTED")
+    except Exception:
+        pass
+
+    uptime_hours = 0
+    if connected and connected_since:
+        uptime_hours = round((_dt.utcnow() - connected_since).total_seconds() / 3600, 1)
+
+    health = "red" if not connected else ("green" if uptime_hours >= 24 else "yellow")
+    return {
+        "connected":     connected,
+        "instance":      instance,
+        "state":         state,
+        "uptime_hours":  uptime_hours,
+        "msgs_today":    msgs_today,
+        "health":        health,
+        "health_label":  {"red": "Desconectado", "yellow": "Conectado (< 24h)", "green": "Estável (> 24h)"}[health],
+    }
 
 
 @app.get("/inbox/wa-status")
