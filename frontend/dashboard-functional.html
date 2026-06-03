@@ -140,7 +140,10 @@
         <span class="text-lg">🤖</span><span class="text-[9px] font-semibold leading-none">Agentes</span>
     </button>
     <button class="nav-btn w-16 flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-gray-400 hover:bg-slate-700 hover:text-white transition-all" data-tab="inbox" onclick="setActiveNav(this,'inbox')">
-        <span class="text-lg">💬</span>
+        <div class="relative">
+            <span class="text-lg">💬</span>
+            <span id="waSidebarDot" class="w-2 h-2 rounded-full bg-green-500 absolute -bottom-0.5 -right-0.5" title="WhatsApp conectado"></span>
+        </div>
         <span class="text-[9px] font-semibold leading-none">Mensagens</span>
         <span id="inboxBadge" class="hidden absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center"></span>
     </button>
@@ -2697,9 +2700,52 @@ async function sendAgentMessage()  { await sendInlineChat(); }
 let _allChats = [];
 let _openJid  = null;
 let _inboxPollTimer = null;
-let _inboxOffset = 0;
-let _inboxTotal = 0;
-let _inboxLoading = false;
+let _inboxOffset    = 0;
+let _inboxTotal     = 0;
+let _inboxLoading   = false;
+let _waConnected    = true;   // assume conectado — atualizado na primeira verificação
+let _waStatusTimer  = null;
+
+async function _checkWaStatus() {
+    const s = await apiFetch('/api/inbox/wa-status').catch(() => null);
+    const connected = s?.connected ?? true;
+    if (connected !== _waConnected) {
+        _waConnected = connected;
+        _renderWaInboxBanner();
+        // Ajusta frequência do polling
+        if (_inboxPollTimer) clearInterval(_inboxPollTimer);
+        _inboxPollTimer = setInterval(pollInbox, connected ? 3000 : 30000);
+    }
+    // Indicador colorido na sidebar
+    const dot = document.getElementById('waSidebarDot');
+    if (dot) {
+        dot.className = `w-2 h-2 rounded-full flex-shrink-0 ${connected ? 'bg-green-500' : 'bg-red-500'}`;
+        dot.title = connected ? 'WhatsApp conectado' : 'WhatsApp desconectado';
+    }
+    return connected;
+}
+
+function _renderWaInboxBanner() {
+    document.getElementById('waInboxBanner')?.remove();
+    if (_waConnected) return;
+    const sec = document.getElementById('sec-inbox');
+    if (!sec) return;
+    const banner = document.createElement('div');
+    banner.id = 'waInboxBanner';
+    banner.className = 'mb-3 bg-orange-900/30 border border-orange-700/50 rounded-xl px-4 py-3 flex items-center justify-between gap-3';
+    banner.innerHTML = `
+        <div class="flex items-center gap-2 text-sm text-orange-300">
+            <span>⚠️</span>
+            <span>WhatsApp desconectado — novas mensagens não estão sendo recebidas.</span>
+        </div>
+        <button onclick="setActiveNav(document.querySelector('[data-tab=integrations]'),'integrations')"
+            class="flex-shrink-0 bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all whitespace-nowrap">
+            Reconectar →
+        </button>`;
+    const flex = sec.querySelector('.flex.h-full');
+    if (flex) sec.insertBefore(banner, flex);
+    else sec.prepend(banner);
+}
 
 async function loadInbox() {
     _inboxOffset = 0;
@@ -2712,13 +2758,17 @@ async function loadInbox() {
     document.getElementById('inboxTotalChats').textContent = `${_inboxTotal} conversas`;
     renderChatList(_allChats);
     if (_allChats.length > 0 && !_openJid) openChat(_allChats[0]);
-    // Scroll infinito
     const chatList = document.getElementById('chatList');
     chatList.onscroll = () => {
         if (chatList.scrollTop + chatList.clientHeight >= chatList.scrollHeight - 50) loadMoreChats();
     };
     if (_inboxPollTimer) clearInterval(_inboxPollTimer);
-    _inboxPollTimer = setInterval(pollInbox, 3000);
+    // Verifica status WA imediatamente — ajusta frequência do polling
+    const connected = await _checkWaStatus();
+    _inboxPollTimer = setInterval(pollInbox, connected ? 3000 : 30000);
+    // Re-verifica status WA a cada 60s para detectar reconexão automática
+    if (_waStatusTimer) clearInterval(_waStatusTimer);
+    _waStatusTimer = setInterval(_checkWaStatus, 60000);
 }
 
 async function loadMoreChats() {
@@ -2740,10 +2790,8 @@ async function pollInbox() {
     chats.forEach(c => { unread += (c.unread || 0); });
     if (unread > 0) {
         const badge = document.getElementById('inboxBadge');
-        badge.textContent = unread > 9 ? '9+' : unread;
-        badge.classList.remove('hidden');
+        if (badge) { badge.textContent = unread > 9 ? '9+' : unread; badge.classList.remove('hidden'); }
     }
-    // Atualiza apenas os primeiros 30 sem destruir o scroll
     const newJids = new Set(chats.map(c => c.jid));
     _allChats = [...chats, ..._allChats.filter(c => !newJids.has(c.jid))];
     renderChatList(_allChats);

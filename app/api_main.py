@@ -4042,6 +4042,39 @@ class QuickReplyCreate(BaseModel):
     content: str
 
 
+@app.get("/inbox/wa-status")
+async def inbox_wa_status(current_user: dict = Depends(get_current_user)):
+    """Retorna status de conexão da instância WhatsApp do usuário logado."""
+    import httpx
+    evo_url = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
+    evo_key = os.getenv("EVOLUTION_API_KEY", "")
+    user_email = current_user["email"]
+    # Busca nome da instância do usuário
+    instance = None
+    try:
+        con = _crm_conn()
+        cur = con.cursor()
+        cur.execute("SELECT instance_name FROM nexus.whatsapp_instances WHERE user_email = %s ORDER BY created_at DESC LIMIT 1", (user_email,))
+        row = cur.fetchone()
+        con.close()
+        if row:
+            instance = row[0]
+    except Exception:
+        pass
+    if not instance:
+        return {"connected": False, "instance": None, "state": "no_instance"}
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"{evo_url}/instance/connectionstate/{instance}", headers={"apikey": evo_key})
+            if r.status_code == 200:
+                data = r.json()
+                state = (data.get("instance") or {}).get("state") or data.get("connectionState") or "unknown"
+                return {"connected": state in ("open", "CONNECTED"), "instance": instance, "state": state}
+    except Exception:
+        pass
+    return {"connected": False, "instance": instance, "state": "unreachable"}
+
+
 @app.get("/inbox/quick-replies")
 async def list_quick_replies(current_user: dict = Depends(get_current_user)):
     import psycopg2.extras
