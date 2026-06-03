@@ -517,6 +517,56 @@ async def _process_pdf_background(jid: str, pdf_url: str, filename: str) -> None
         logger.debug(f"PDF background error: {e}")
 
 
+async def _transcribe_audio_background(jid: str, audio_url: str) -> None:
+    """Downloads audio from Evolution API and transcribes via Whisper-1, caching in _doc_context_cache."""
+    client = _get_openai()
+    if not client:
+        return
+    try:
+        resp = await _get_http().get(audio_url, follow_redirects=True)
+        if resp.status_code != 200:
+            return
+        audio_bytes = resp.content
+        if len(audio_bytes) < 512:
+            return
+        import io
+        audio_file = io.BytesIO(audio_bytes)
+        audio_file.name = "audio.ogg"
+        result = await client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file,
+            language="pt",
+        )
+        transcript = (result.text or "").strip()
+        if transcript:
+            existing = _doc_context_cache.get(jid, "")
+            _doc_context_cache[jid] = (existing + "\n" if existing else "") + f"[Áudio transcrito: \"{transcript[:2000]}\"]"
+            logger.info(f"🎤 Áudio transcrito para {jid}: {transcript[:60]}...")
+    except Exception as e:
+        logger.warning(f"⚠️  Whisper error para {jid}: {e}")
+
+
+async def _process_docx_background(jid: str, docx_url: str, filename: str) -> None:
+    """Downloads a DOCX and extracts text into _doc_context_cache."""
+    try:
+        resp = await _get_http().get(docx_url, follow_redirects=True)
+        if resp.status_code != 200:
+            return
+        import io
+        try:
+            import docx as python_docx
+            doc = python_docx.Document(io.BytesIO(resp.content))
+            text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())[:2000]
+        except ImportError:
+            logger.debug("python-docx not installed — DOCX parsing skipped")
+            return
+        if text:
+            _doc_context_cache[jid] = f"[{filename}]\n{text}"
+            logger.info(f"📝 DOCX extraído para {jid}: {len(text)} chars")
+    except Exception as e:
+        logger.debug(f"DOCX background error: {e}")
+
+
 def _save_chat_name(jid: str, name: str) -> None:
     """Persists pushName into vexus.Chat.name if currently empty (best-effort)."""
     if not name:
@@ -703,10 +753,11 @@ async def webhook_whatsapp(instance_name: str, request: Request):
         push_name = msg.get("pushName", "")
 
         # Extrai texto e mídia
-        raw_msg  = msg.get("message", {})
-        img_msg  = raw_msg.get("imageMessage")
-        doc_msg  = raw_msg.get("documentMessage")
-        vid_msg  = raw_msg.get("videoMessage")
+        raw_msg   = msg.get("message", {})
+        img_msg   = raw_msg.get("imageMessage")
+        doc_msg   = raw_msg.get("documentMessage")
+        vid_msg   = raw_msg.get("videoMessage")
+        audio_msg = raw_msg.get("audioMessage") or raw_msg.get("pttMessage")
 
         text = (
             raw_msg.get("conversation")
@@ -725,14 +776,26 @@ async def webhook_whatsapp(instance_name: str, request: Request):
                 text = "[Foto recebida]"
             logger.info(f"📸 WA [{instance_name}] imagem de {push_name} ({number}): caption={text[:60]}")
 
-        # Detecta documento PDF: extrai texto em background para injetar no contexto
+        # Detecta documento — diferencia PDF, DOCX e outros
         elif doc_msg:
             doc_caption = doc_msg.get("caption") or doc_msg.get("fileName") or "documento"
-            pdf_url     = doc_msg.get("mediaUrl") or doc_msg.get("url") or ""
-            if pdf_url:
-                asyncio.create_task(_process_pdf_background(jid, pdf_url, doc_caption))
+            doc_url     = doc_msg.get("mediaUrl") or doc_msg.get("url") or ""
+            fname_lower = doc_caption.lower()
+            if doc_url:
+                if fname_lower.endswith(".pdf"):
+                    asyncio.create_task(_process_pdf_background(jid, doc_url, doc_caption))
+                elif fname_lower.endswith(".docx") or fname_lower.endswith(".doc"):
+                    asyncio.create_task(_process_docx_background(jid, doc_url, doc_caption))
             text = text or f"[Documento recebido: {doc_caption}]"
             logger.info(f"📄 WA [{instance_name}] doc de {push_name} ({number}): {doc_caption}")
+
+        # Detecta áudio/PTT: transcreve via Whisper
+        elif audio_msg:
+            audio_url_media = audio_msg.get("mediaUrl") or audio_msg.get("url") or ""
+            if audio_url_media:
+                asyncio.create_task(_transcribe_audio_background(jid, audio_url_media))
+            text = "[Áudio recebido — transcrevendo...]"
+            logger.info(f"🎤 WA [{instance_name}] áudio de {push_name} ({number})")
 
         elif vid_msg:
             text = (vid_msg.get("caption") or text or "[Vídeo recebido]").strip()

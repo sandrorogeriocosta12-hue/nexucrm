@@ -1393,13 +1393,20 @@ def _ensure_contacts_table():
 
 
 @app.get("/contacts")
-async def get_contacts(current_user: dict = Depends(get_current_user)):
+async def get_contacts(sort: str = "recent", current_user: dict = Depends(get_current_user)):
+    """sort: recent | oldest | az"""
     import psycopg2.extras
+    order_map = {
+        "recent":  "created_at DESC",
+        "oldest":  "created_at ASC",
+        "az":      "LOWER(name) ASC",
+    }
+    order = order_map.get(sort, "created_at DESC")
     con = _contacts_conn()
     try:
         cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(
-            "SELECT * FROM nexus.contacts WHERE user_email = %s ORDER BY created_at DESC",
+            f"SELECT * FROM nexus.contacts WHERE user_email = %s ORDER BY {order}",
             (current_user["email"],)
         )
         return [dict(r) for r in cur.fetchall()]
@@ -1494,6 +1501,127 @@ async def delete_contact(contact_id: str, current_user: dict = Depends(get_curre
     finally:
         con.close()
     return {"deleted": contact_id}
+
+
+@app.get("/contacts/export")
+async def export_contacts_csv(current_user: dict = Depends(get_current_user)):
+    """Exporta contatos em CSV."""
+    import csv, io
+    from fastapi.responses import StreamingResponse
+    con = _contacts_conn()
+    try:
+        cur = con.cursor()
+        cur.execute(
+            "SELECT name, email, phone, company, title, source, created_at FROM nexus.contacts WHERE user_email = %s ORDER BY name",
+            (current_user["email"],)
+        )
+        rows = cur.fetchall()
+    finally:
+        con.close()
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["Nome", "Email", "Telefone", "Empresa", "Cargo", "Origem", "Criado em"])
+    for r in rows:
+        writer.writerow([r[0] or "", r[1] or "", r[2] or "", r[3] or "", r[4] or "", r[5] or "", str(r[6] or "")])
+    buf.seek(0)
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=contatos.csv"},
+    )
+
+
+@app.post("/contacts/import-csv")
+async def import_contacts_csv(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    """Importa contatos de CSV com colunas: nome, telefone (obrigatório), email, empresa, cargo."""
+    import csv, io, re
+    user_email = current_user["email"]
+    content = await file.read()
+    text = content.decode("utf-8-sig", errors="replace")
+    reader = csv.DictReader(io.StringIO(text))
+
+    def _clean_phone(p: str) -> str:
+        digits = re.sub(r"\D", "", p or "")
+        if not digits:
+            return ""
+        if len(digits) < 10:
+            return ""
+        if not digits.startswith("55") and len(digits) <= 13:
+            digits = "55" + digits
+        return digits
+
+    imported = updated = rejected = 0
+    errors: list[str] = []
+    con = _crm_conn()
+    cur = con.cursor()
+
+    for i, row in enumerate(reader, start=2):
+        name  = (row.get("nome") or row.get("name") or row.get("Nome") or "").strip()
+        phone = _clean_phone(row.get("telefone") or row.get("phone") or row.get("Telefone") or "")
+        email = (row.get("email") or row.get("Email") or "").strip().lower()
+        company = (row.get("empresa") or row.get("company") or row.get("Empresa") or "").strip()
+        title   = (row.get("cargo") or row.get("title") or row.get("Cargo") or "").strip()
+
+        if not phone:
+            errors.append(f"Linha {i}: telefone inválido")
+            rejected += 1
+            continue
+        if not name:
+            name = phone
+
+        contact_id = f"csv_{phone}"
+        cur.execute("SELECT id FROM nexus.contacts WHERE user_email = %s AND (id = %s OR phone = %s)", (user_email, contact_id, phone))
+        existing = cur.fetchone()
+        if existing:
+            cur.execute(
+                "UPDATE nexus.contacts SET name=%s, email=%s, company=%s, title=%s WHERE id=%s AND user_email=%s",
+                (name, email, company, title, existing[0], user_email)
+            )
+            updated += 1
+        else:
+            cur.execute(
+                "INSERT INTO nexus.contacts (id, user_email, name, phone, email, company, title, source) VALUES (%s,%s,%s,%s,%s,%s,%s,'csv') ON CONFLICT (id) DO NOTHING",
+                (contact_id, user_email, name, phone, email, company, title)
+            )
+            imported += 1
+
+    con.commit()
+    con.close()
+    return {"imported": imported, "updated": updated, "rejected": rejected, "errors": errors[:20]}
+
+
+@app.get("/crm/deals/export")
+async def export_deals_csv(current_user: dict = Depends(get_current_user)):
+    """Exporta deals do pipeline em CSV."""
+    import csv, io
+    from fastapi.responses import StreamingResponse
+    import psycopg2.extras
+    user_email = current_user["email"]
+    con = _crm_conn()
+    try:
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT d.name, ps.name AS stage, d.value, d.status, d.probability, d.close_date,
+                   d.assigned_to, d.created_at, d.updated_at
+            FROM nexus.deals d
+            JOIN nexus.pipeline_stages ps ON ps.id = d.stage_id
+            WHERE d.user_email = %s ORDER BY d.updated_at DESC
+        """, (user_email,))
+        rows = cur.fetchall()
+    finally:
+        con.close()
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["Deal", "Estágio", "Valor", "Status", "Probabilidade", "Prev. Fechamento", "Responsável", "Criado", "Atualizado"])
+    for r in rows:
+        writer.writerow([r["name"], r["stage"], r["value"], r["status"], r["probability"] or "",
+                         str(r["close_date"] or ""), r["assigned_to"] or "", str(r["created_at"] or ""), str(r["updated_at"] or "")])
+    buf.seek(0)
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=pipeline.csv"},
+    )
 
 
 # ===== Proposals Routes =====
@@ -3096,6 +3224,109 @@ async def get_analytics_summary(current_user: dict = Depends(get_current_user)):
     return await get_metrics(current_user)
 
 
+@app.get("/metrics/financial")
+async def get_financial_metrics(current_user: dict = Depends(get_current_user)):
+    """Retorna métricas financeiras: receita por mês, ticket médio, ganhos vs perdidos, forecast."""
+    import psycopg2.extras
+    user_email = current_user["email"]
+    con = _crm_conn()
+    try:
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # Receita por mês (últimos 6 meses) — deals com status 'won'
+        cur.execute("""
+            SELECT
+                TO_CHAR(DATE_TRUNC('month', updated_at), 'YYYY-MM') AS month,
+                SUM(value)::float                                    AS revenue,
+                COUNT(*)                                             AS won_count
+            FROM nexus.deals
+            WHERE user_email = %s AND status = 'won'
+              AND updated_at >= NOW() - INTERVAL '6 months'
+            GROUP BY 1 ORDER BY 1
+        """, (user_email,))
+        monthly = [dict(r) for r in cur.fetchall()]
+
+        # Deals perdidos por mês
+        cur.execute("""
+            SELECT TO_CHAR(DATE_TRUNC('month', updated_at), 'YYYY-MM') AS month, COUNT(*) AS lost_count
+            FROM nexus.deals
+            WHERE user_email = %s AND status = 'lost'
+              AND updated_at >= NOW() - INTERVAL '6 months'
+            GROUP BY 1 ORDER BY 1
+        """, (user_email,))
+        lost_map = {r["month"]: r["lost_count"] for r in cur.fetchall()}
+
+        # Totais gerais
+        cur.execute("""
+            SELECT
+                COALESCE(SUM(CASE WHEN status='won' THEN value ELSE 0 END), 0)::float  AS total_revenue,
+                COALESCE(COUNT(CASE WHEN status='won' THEN 1 END), 0)                  AS total_won,
+                COALESCE(COUNT(CASE WHEN status='lost' THEN 1 END), 0)                 AS total_lost,
+                COALESCE(SUM(CASE WHEN status='open' THEN value ELSE 0 END), 0)::float AS forecast
+            FROM nexus.deals WHERE user_email = %s
+        """, (user_email,))
+        totals = dict(cur.fetchone())
+
+        avg_ticket = (totals["total_revenue"] / totals["total_won"]) if totals["total_won"] > 0 else 0
+
+        months_merged = []
+        all_months = sorted(set(list({r["month"] for r in monthly}) | set(lost_map.keys())))
+        rev_map = {r["month"]: r for r in monthly}
+        for m in all_months:
+            months_merged.append({
+                "month":     m,
+                "revenue":   rev_map.get(m, {}).get("revenue", 0),
+                "won":       rev_map.get(m, {}).get("won_count", 0),
+                "lost":      lost_map.get(m, 0),
+            })
+
+        return {
+            "monthly":       months_merged,
+            "total_revenue": totals["total_revenue"],
+            "total_won":     totals["total_won"],
+            "total_lost":    totals["total_lost"],
+            "forecast":      totals["forecast"],
+            "avg_ticket":    round(avg_ticket, 2),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
+
+
+@app.get("/metrics/funnel")
+async def get_funnel_metrics(pipeline_id: Optional[int] = None, current_user: dict = Depends(get_current_user)):
+    """Retorna contagem e valor de deals por estágio para funil de conversão."""
+    import psycopg2.extras
+    user_email = current_user["email"]
+    con = _crm_conn()
+    try:
+        cur = con.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        pid_filter = "AND ps.pipeline_id = %s" if pipeline_id else ""
+        params = (user_email, pipeline_id, user_email) if pipeline_id else (user_email, user_email)
+        cur.execute(f"""
+            SELECT ps.name AS stage, ps.position,
+                   COUNT(d.id) AS deal_count,
+                   COALESCE(SUM(d.value), 0)::float AS total_value
+            FROM nexus.pipeline_stages ps
+            LEFT JOIN nexus.deals d ON d.stage_id = ps.id AND d.user_email = %s AND d.status = 'open'
+            WHERE ps.user_email = %s {pid_filter}
+            GROUP BY ps.name, ps.position ORDER BY ps.position
+        """, params if not pipeline_id else (user_email, user_email, pipeline_id))
+        stages = [dict(r) for r in cur.fetchall()]
+        # Calcula % de conversão em relação ao estágio anterior
+        for i, s in enumerate(stages):
+            if i == 0:
+                s["pct"] = 100
+            else:
+                prev = stages[i-1]["deal_count"]
+                s["pct"] = round((s["deal_count"] / prev * 100) if prev > 0 else 0, 1)
+        return {"stages": stages}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        con.close()
+
+
 # ===== Inbox Routes =====
 
 def _evo_conn():
@@ -3216,13 +3447,17 @@ async def inbox_chats(limit: int = 30, offset: int = 0, current_user: dict = Dep
             SELECT
                 c."remoteJid"                                                               AS jid,
                 COALESCE(
-                    NULLIF(c."name",''),
                     NULLIF(co.push_name,''),
                     NULLIF(pn.push_name,''),
+                    NULLIF(CASE WHEN c."name" NOT LIKE '%%@s.whatsapp.net'
+                                 AND c."name" NOT LIKE '%%@lid'
+                                 AND c."name" <> split_part(c."remoteJid",'@',1)
+                            THEN c."name" END, ''),
                     split_part(c."remoteJid",'@',1))                                        AS name,
                 split_part(c."remoteJid",'@',1)                                             AS phone,
                 COALESCE(c."unreadMessages", 0)                                             AS unread,
-                EXTRACT(EPOCH FROM c."updatedAt")::bigint                                   AS last_ts,
+                COALESCE(lm.last_ts,
+                         EXTRACT(EPOCH FROM c."updatedAt")::bigint)                         AS last_ts,
                 co.photo_url,
                 lm.from_me,
                 lm.last_message
@@ -3251,15 +3486,16 @@ async def inbox_chats(limit: int = 30, offset: int = 0, current_user: dict = Dep
             ) pn ON true
             LEFT JOIN LATERAL (
                 SELECT
-                    m."key"->>'fromMe'  AS from_me,
-                    m."message"         AS last_message
+                    m."key"->>'fromMe'            AS from_me,
+                    m."message"                   AS last_message,
+                    m."messageTimestamp"::bigint  AS last_ts
                 FROM vexus."Message" m
                 WHERE m."key"->>'remoteJid' = c."remoteJid"
                   AND m."messageTimestamp" IS NOT NULL
                 ORDER BY m."messageTimestamp" DESC
                 LIMIT 1
             ) lm ON true
-            ORDER BY c."updatedAt" DESC NULLS LAST
+            ORDER BY COALESCE(lm.last_ts, EXTRACT(EPOCH FROM c."updatedAt")::bigint) DESC NULLS LAST
             LIMIT %s OFFSET %s
         """, (_excluded, instance_ids, limit, offset))
         rows = cur.fetchall()
