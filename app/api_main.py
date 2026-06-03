@@ -2376,36 +2376,62 @@ async def _wa_reconnect_daemon():
 
 
 async def _notify_wa_disconnected(user_email: str, instance_name: str):
-    """Envia email alertando que a instância precisa ser reconectada via QR Code."""
-    try:
-        import httpx
-        sg_key = os.getenv("SENDGRID_API_KEY", "")
-        if not sg_key:
-            logger.warning(f"⚠️  SENDGRID não configurado — não foi possível notificar {user_email}")
-            return
-        body = {
-            "personalizations": [{"to": [{"email": user_email}]}],
-            "from": {"email": "no-reply@nexuscrm.tech", "name": "Nexus CRM"},
-            "subject": "⚠️ WhatsApp desconectado — ação necessária",
-            "content": [{"type": "text/html", "value": f"""
-                <p>Olá!</p>
-                <p>Sua instância WhatsApp <b>{instance_name}</b> foi desconectada e não conseguimos reconectar automaticamente.</p>
-                <p><b>Para restaurar o atendimento automático:</b></p>
-                <ol>
-                    <li>Acesse <a href="https://api.nexuscrm.tech">api.nexuscrm.tech</a></li>
-                    <li>Vá em <b>Integrações</b></li>
-                    <li>Clique em <b>Gerar QR Code</b> e escaneie com o celular</li>
-                </ol>
-                <p>Nexus CRM</p>
-            """}],
-        }
-        async with httpx.AsyncClient(timeout=10) as client:
-            await client.post("https://api.sendgrid.com/v3/mail/send",
-                              headers={"Authorization": f"Bearer {sg_key}", "Content-Type": "application/json"},
-                              json=body)
-        logger.info(f"📧 Notificação WA desconectado enviada para {user_email}")
-    except Exception as e:
-        logger.error(f"Erro ao enviar email: {e}")
+    """Envia email alertando que a instância precisa ser reconectada via QR Code.
+    Tenta SendGrid primeiro, cai para SMTP se não configurado."""
+    subject = "⚠️ WhatsApp desconectado — ação necessária"
+    html_body = f"""
+        <p>Olá!</p>
+        <p>Sua instância WhatsApp <b>{instance_name}</b> foi desconectada e não conseguimos reconectar automaticamente após 3 tentativas.</p>
+        <p><b>Para restaurar o atendimento automático:</b></p>
+        <ol>
+            <li>Acesse <a href="https://api.nexuscrm.tech">api.nexuscrm.tech</a></li>
+            <li>Vá em <b>Integrações</b></li>
+            <li>Clique em <b>Gerar QR Code</b> e escaneie com o celular</li>
+        </ol>
+        <p>— Nexus CRM</p>
+    """
+    # 1. Tenta SendGrid
+    sg_key = os.getenv("SENDGRID_API_KEY", "")
+    if sg_key and not sg_key.startswith("seu_"):
+        try:
+            import httpx
+            body = {
+                "personalizations": [{"to": [{"email": user_email}]}],
+                "from": {"email": "no-reply@nexuscrm.tech", "name": "Nexus CRM"},
+                "subject": subject,
+                "content": [{"type": "text/html", "value": html_body}],
+            }
+            async with httpx.AsyncClient(timeout=10) as client:
+                r = await client.post("https://api.sendgrid.com/v3/mail/send",
+                                      headers={"Authorization": f"Bearer {sg_key}", "Content-Type": "application/json"},
+                                      json=body)
+            if r.status_code in (200, 202):
+                logger.info(f"📧 WA alert via SendGrid → {user_email}")
+                return
+        except Exception as e:
+            logger.warning(f"SendGrid failed: {e}")
+    # 2. Fallback SMTP
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_pass = os.getenv("SMTP_PASSWORD", "")
+    if smtp_user and smtp_pass:
+        try:
+            import smtplib, ssl
+            from email.mime.multipart import MIMEMultipart
+            from email.mime.text import MIMEText as _MIMEText
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"]    = f"Nexus CRM <{smtp_user}>"
+            msg["To"]      = user_email
+            msg.attach(_MIMEText(html_body, "html"))
+            ctx = ssl.create_default_context()
+            with smtplib.SMTP(os.getenv("SMTP_HOST", "smtp.gmail.com"), int(os.getenv("SMTP_PORT", "587"))) as srv:
+                srv.ehlo(); srv.starttls(context=ctx); srv.login(smtp_user, smtp_pass)
+                srv.sendmail(smtp_user, user_email, msg.as_string())
+            logger.info(f"📧 WA alert via SMTP → {user_email}")
+        except Exception as e:
+            logger.error(f"SMTP failed: {e}")
+    else:
+        logger.warning(f"⚠️  Sem provedor de email configurado — não foi possível notificar {user_email}")
 
 
 # ─── WA Message Queue Daemon ────────────────────────────────────────────────────
