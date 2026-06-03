@@ -4003,6 +4003,12 @@ async def inbox_send(req: SendMessageRequest, current_user: dict = Depends(get_c
         except Exception:
             err_msg = resp.text[:200]
         logger.error(f"❌ inbox_send Evolution API {resp.status_code}: {err_msg}")
+        # Erro específico: instância desconectada
+        if "session" in err_msg.lower() or "no sessions" in err_msg.lower() or resp.status_code == 401:
+            raise HTTPException(
+                status_code=503,
+                detail="WHATSAPP_DISCONNECTED"
+            )
         raise HTTPException(status_code=502, detail=f"WhatsApp erro: {err_msg}")
     except HTTPException:
         raise
