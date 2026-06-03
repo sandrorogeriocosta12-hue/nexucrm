@@ -537,54 +537,38 @@
                 }
             }
 
-            // Send payment data to backend
+            // Redireciona para checkout real do Stripe
             const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.textContent;
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Processando...';
+            submitBtn.textContent = 'Redirecionando...';
 
             try {
-                const paymentData = {
-                    plan: selectedPlan,
-                    payment_method: selectedPaymentMethod,
-                    email: email,
-                    whatsapp: document.getElementById('contactWhatsapp').value.trim(),
-                    contact_preference_email: document.getElementById('contactPreference').checked,
-                    contact_preference_whatsapp: document.getElementById('contactWhatsappCheck').checked
-                };
+                // Mapeia planos do payment.html para tiers do billing/checkout
+                const tierMap = { starter: 'starter', professional: 'pro', premium: 'enterprise' };
+                const tier = tierMap[selectedPlan] || 'pro';
 
-                // Add payment method specific data
-                if (selectedPaymentMethod === 'card') {
-                    paymentData.card_name = document.getElementById('cardName').value;
-                    paymentData.card_number = document.getElementById('cardNumber').value.replace(/\s/g, '');
-                    paymentData.card_expiry = document.getElementById('cardExpiry').value;
-                    paymentData.card_cvv = document.getElementById('cardCVV').value;
-                } else if (selectedPaymentMethod === 'boleto') {
-                    paymentData.cnpj = document.getElementById('boletoFax').value;
-                    paymentData.company = document.getElementById('boletoCompany').value;
-                }
-
-                const response = await fetch('/api/payment/process', {
+                const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
+                const response = await fetch('/api/billing/checkout', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(paymentData)
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ tier, plan: 'monthly' })
                 });
 
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.detail || data.error || 'Erro ao processar pagamento');
+                    throw new Error(data.detail || 'Erro ao criar sessão de pagamento');
                 }
 
-                // Store user info for dashboard
-                const userEmail = document.getElementById('contactEmail').value;
-                sessionStorage.setItem('user_email', userEmail);
-                localStorage.setItem('user_email', userEmail);
-
-                showSuccess();
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 3000);
+                // Redireciona para o checkout hospedado pelo Stripe
+                if (data.checkout_url) {
+                    window.location.href = data.checkout_url;
+                } else {
+                    throw new Error('URL de checkout não retornada');
+                }
 
             } catch (error) {
                 showError(error.message);
