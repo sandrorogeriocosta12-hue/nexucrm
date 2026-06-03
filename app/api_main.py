@@ -23,6 +23,9 @@ def _cache_get(key: str):
 def _cache_set(key: str, value, ttl: int = 30):
     _cache[key] = {"v": value, "exp": time.time() + ttl}
 
+def _cache_del(key: str):
+    _cache.pop(key, None)
+
 # ── Connection Pools ─────────────────────────────────────────────────────────
 import psycopg2
 from psycopg2 import pool as _pg_pool
@@ -502,6 +505,63 @@ async def get_trial_status(current_user: dict = Depends(get_current_user)):
         "days_left": days_left,
         "is_active": user.get("is_active", True),
     }
+
+
+@app.patch("/me")
+async def update_me(payload: dict, current_user: dict = Depends(get_current_user)):
+    """Atualiza nome, empresa e telefone do usuário."""
+    allowed = {"name", "company", "phone"}
+    fields = {k: v for k, v in payload.items() if k in allowed and v is not None}
+    if not fields:
+        raise HTTPException(status_code=400, detail="Nenhum campo válido")
+    try:
+        import psycopg2
+        from app.db_users import _DB_URL, _SCHEMA
+        con = psycopg2.connect(_DB_URL)
+        cur = con.cursor()
+        set_clause = ", ".join(f"{k} = %s" for k in fields)
+        cur.execute(
+            f"UPDATE {_SCHEMA}.users SET {set_clause} WHERE email = %s",
+            [*fields.values(), current_user["email"]]
+        )
+        con.commit()
+        con.close()
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/me/change-password")
+async def change_password(payload: dict, current_user: dict = Depends(get_current_user)):
+    """Troca a senha do usuário após verificar a senha atual."""
+    current_pw = payload.get("current_password", "")
+    new_pw     = payload.get("new_password", "")
+    if len(new_pw) < 6:
+        raise HTTPException(status_code=400, detail="Mínimo 6 caracteres")
+    user = _get_user(current_user["email"])
+    if not user:
+        raise HTTPException(status_code=404)
+    if not verify_password(current_pw, user["password_hash"]):
+        raise HTTPException(status_code=400, detail="Senha atual incorreta")
+    update_password(current_user["email"], get_password_hash(new_pw))
+    return {"ok": True}
+
+
+@app.post("/billing/cancel")
+async def cancel_subscription(current_user: dict = Depends(get_current_user)):
+    """Cancela assinatura — downgrade para trial."""
+    try:
+        import psycopg2
+        from app.db_users import _DB_URL, _SCHEMA
+        con = psycopg2.connect(_DB_URL)
+        cur = con.cursor()
+        cur.execute(f"UPDATE {_SCHEMA}.users SET plan = 'trial' WHERE email = %s", (current_user["email"],))
+        con.commit()
+        con.close()
+        _cache_del(f"metrics:{current_user['email']}")
+        return {"ok": True, "message": "Assinatura cancelada. Plano revertido para Trial."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/verify-email")
@@ -3205,18 +3265,39 @@ async def get_metrics(current_user: dict = Depends(get_current_user)):
         cur.execute("SELECT COUNT(*) AS n FROM nexus.agents WHERE user_email=%s AND active=TRUE", (email,))
         active_agents = cur.fetchone()["n"]
 
-        # Plano atual
-        cur.execute("SELECT plan FROM nexus.users WHERE email=%s", (email,))
+        # Plano atual + trial_ends_at
+        cur.execute("SELECT plan, trial_ends_at FROM nexus.users WHERE email=%s", (email,))
         row = cur.fetchone()
         plan = row["plan"] if row else "trial"
+        trial_ends_at = _trial_iso(row["trial_ends_at"]) if row else None
+
+        # Instâncias WhatsApp conectadas
+        try:
+            cur.execute("SELECT COUNT(*) AS n FROM nexus.whatsapp_instances WHERE user_email=%s", (email,))
+            wa_count = cur.fetchone()["n"]
+        except Exception:
+            wa_count = 0
+
+        # Mensagens IA no mês atual
+        try:
+            cur.execute("""
+                SELECT COUNT(*) AS n FROM nexus.messages
+                WHERE user_email=%s AND direction='out'
+                  AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW())
+            """, (email,))
+            msgs_out_month = cur.fetchone()["n"]
+        except Exception:
+            msgs_out_month = msgs_out
 
         con.close()
         result = {
-            "contacts":      {"total": total_contacts, "by_source": by_source},
-            "messages":      {"received": msgs_in, "sent": msgs_out, "total": msgs_in + msgs_out, "daily": daily},
-            "pipeline":      {"stages": stages, "total": total_pipeline, "total_value": total_value, "conversion_rate": conv_rate},
-            "agents":        {"active": active_agents},
-            "plan":          plan,
+            "contacts":         {"total": total_contacts, "by_source": by_source},
+            "messages":         {"received": msgs_in, "sent": msgs_out, "total": msgs_in + msgs_out, "daily": daily, "sent_month": msgs_out_month},
+            "pipeline":         {"stages": stages, "total": total_pipeline, "total_value": total_value, "conversion_rate": conv_rate},
+            "agents":           {"active": active_agents},
+            "plan":             plan,
+            "trial_ends_at":    trial_ends_at,
+            "wa_instances":     wa_count,
         }
         _cache_set(f"metrics:{email}", result, ttl=30)
         return result

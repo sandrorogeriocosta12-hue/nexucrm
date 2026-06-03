@@ -1007,13 +1007,18 @@
 
                 <!-- Plan -->
                 <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
-                    <h3 class="text-base font-bold mb-4 text-blue-400 flex items-center gap-2">📦 Plano Atual</h3>
-                    <div class="grid grid-cols-3 gap-4">
+                    <h3 class="text-base font-bold mb-4 text-blue-400 flex items-center gap-2">📦 Minha Assinatura</h3>
+                    <div class="grid grid-cols-3 gap-4 mb-4">
                         <div class="bg-slate-800/60 rounded-lg p-3 text-center"><p class="text-xs text-slate-400 mb-1">Plano</p><p class="font-bold" id="currentPlan">—</p></div>
                         <div class="bg-slate-800/60 rounded-lg p-3 text-center"><p class="text-xs text-slate-400 mb-1">Valor Mensal</p><p class="font-bold text-green-400" id="currentPrice">—</p></div>
-                        <div class="bg-slate-800/60 rounded-lg p-3 text-center"><p class="text-xs text-slate-400 mb-1">Renovação</p><p class="font-bold" id="renewalDate">01/06</p></div>
+                        <div class="bg-slate-800/60 rounded-lg p-3 text-center"><p class="text-xs text-slate-400 mb-1">Renovação / Vencimento</p><p class="font-bold" id="renewalDate">—</p></div>
                     </div>
-                    <button onclick="upgradePlan()" class="mt-4 bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-semibold text-sm transition-all">🔄 Mudar Plano</button>
+                    <!-- Barras de consumo -->
+                    <div class="space-y-3 mb-4" id="usageBars"></div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="upgradePlan()" class="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-semibold text-sm transition-all">🔄 Mudar Plano</button>
+                        <button onclick="cancelSubscription()" id="cancelSubBtn" class="hidden bg-slate-700 hover:bg-red-800 border border-red-700/40 text-red-400 px-5 py-2 rounded-lg font-semibold text-sm transition-all">❌ Cancelar Assinatura</button>
+                    </div>
                 </div>
 
                 <!-- Integrations -->
@@ -3241,32 +3246,86 @@ function loadUserSettings() {
     }
 }
 
+const _PLAN_META = {
+    trial:        { name: '⏳ Trial',      price: 'Gratuito (15 dias)', limits: { contacts: 500, msgs: 1000, wa: 1 } },
+    starter:      { name: '🥉 Starter',    price: 'R$ 997/mês',        limits: { contacts: 2000, msgs: 5000, wa: 2 } },
+    pro:          { name: '🥈 Pro',         price: 'R$ 1.997/mês',      limits: { contacts: 10000, msgs: 20000, wa: 5 } },
+    enterprise:   { name: '🥇 Enterprise', price: 'R$ 3.997/mês',      limits: { contacts: 999999, msgs: 999999, wa: 20 } },
+    professional: { name: '✅ Pro',         price: 'R$ 1.997/mês',      limits: { contacts: 10000, msgs: 20000, wa: 5 } },
+};
+
 async function loadPlanInfo() {
-    const planMeta = {
-        trial:        { name: '⏳ Trial',      price: 'Gratuito (15 dias)' },
-        starter:      { name: '🥉 Starter',    price: 'R$ 997/mês' },
-        pro:          { name: '🥈 Pro',         price: 'R$ 1.997/mês' },
-        enterprise:   { name: '🥇 Enterprise', price: 'R$ 3.997/mês' },
-        professional: { name: '✅ Pro',         price: 'R$ 1.997/mês' },
-    };
     try {
         const m = await apiFetch('/api/metrics');
         const plan = m?.plan || 'trial';
-        const meta = planMeta[plan] || { name: plan.toUpperCase(), price: '—' };
-        document.getElementById('currentPlan').textContent = meta.name;
+        const meta = _PLAN_META[plan] || { name: plan.toUpperCase(), price: '—', limits: { contacts: 500, msgs: 1000, wa: 1 } };
+        document.getElementById('currentPlan').textContent  = meta.name;
         document.getElementById('currentPrice').textContent = meta.price;
+
+        // Data de vencimento/renovação a partir de trial_ends_at
+        const trialEnds = m?.trial_ends_at;
+        if (trialEnds) {
+            const d = new Date(trialEnds);
+            document.getElementById('renewalDate').textContent = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+        } else {
+            document.getElementById('renewalDate').textContent = '—';
+        }
+
+        // Barras de consumo
+        const contacts  = m?.contacts?.total || 0;
+        const msgs      = m?.messages?.sent_month || 0;
+        const wa        = m?.wa_instances || 0;
+        const L = meta.limits;
+        const isPaid = ['starter','pro','enterprise','professional'].includes(plan);
+
+        document.getElementById('usageBars').innerHTML = [
+            { label: 'Contatos',           used: contacts, limit: L.contacts },
+            { label: 'Mensagens IA / mês', used: msgs,     limit: L.msgs     },
+            { label: 'Instâncias WhatsApp', used: wa,      limit: L.wa       },
+        ].map(({ label, used, limit }) => {
+            const pct  = Math.min(Math.round((used / limit) * 100), 100);
+            const over = pct >= 90;
+            const limitStr = limit >= 999999 ? '∞' : limit.toLocaleString('pt-BR');
+            const color = over ? 'bg-red-500' : pct >= 70 ? 'bg-yellow-500' : 'bg-blue-500';
+            return `<div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-400">${label}</span>
+                    <span class="${over ? 'text-red-400' : 'text-slate-400'}">${used.toLocaleString('pt-BR')} / ${limitStr}</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2">
+                    <div class="${color} h-2 rounded-full transition-all" style="width:${pct}%"></div>
+                </div>
+            </div>`;
+        }).join('');
+
+        // Mostra botão cancelar só para planos pagos
+        const cancelBtn = document.getElementById('cancelSubBtn');
+        if (cancelBtn) cancelBtn.classList.toggle('hidden', !isPaid);
+
     } catch(e) {
-        document.getElementById('currentPlan').textContent = '⏳ Trial';
+        document.getElementById('currentPlan').textContent  = '⏳ Trial';
         document.getElementById('currentPrice').textContent = 'Gratuito (15 dias)';
     }
 }
 
-function saveAccountSettings() {
-    const name = document.getElementById('settingName').value;
-    const email = document.getElementById('settingEmail').value;
-    if (!name || !email) { showToast('Preencha Nome e Email', true); return; }
-    localStorage.setItem('userAccount', JSON.stringify({ name, email, company: document.getElementById('settingCompany').value, phone: document.getElementById('settingPhone').value }));
-    showToast('✅ Dados salvos!');
+async function cancelSubscription() {
+    if (!confirm('Cancelar assinatura? Seu plano voltará para Trial.')) return;
+    try {
+        await apiFetch('/api/billing/cancel', { method: 'POST' });
+        showNotification && showNotification('Assinatura cancelada. Plano revertido para Trial.');
+        loadPlanInfo();
+    } catch(e) { showNotification && showNotification('Erro ao cancelar: ' + e.message, true); }
+}
+
+async function saveAccountSettings() {
+    const name    = document.getElementById('settingName').value.trim();
+    const company = document.getElementById('settingCompany').value.trim();
+    const phone   = document.getElementById('settingPhone').value.trim();
+    if (!name) { showNotification && showNotification('Nome é obrigatório', true); return; }
+    try {
+        await apiFetch('/api/me', { method: 'PATCH', body: JSON.stringify({ name, company, phone }) });
+        showNotification && showNotification('✅ Dados salvos!');
+    } catch(e) { showNotification && showNotification('Erro ao salvar: ' + e.message, true); }
 }
 
 function savePreferences() {
@@ -3278,15 +3337,20 @@ function savePreferences() {
     showToast('✅ Preferências salvas!');
 }
 
-function changePassword() {
+async function changePassword() {
     const cur = document.getElementById('currentPassword').value;
-    const nw = document.getElementById('newPassword').value;
-    const cf = document.getElementById('confirmPassword').value;
-    if (!cur || !nw || !cf) { showToast('Preencha todos os campos', true); return; }
-    if (nw !== cf) { showToast('As senhas não coincidem', true); return; }
-    if (nw.length < 6) { showToast('Mínimo 6 caracteres', true); return; }
-    ['currentPassword','newPassword','confirmPassword'].forEach(id => document.getElementById(id).value = '');
-    showToast('🔐 Senha alterada!');
+    const nw  = document.getElementById('newPassword').value;
+    const cf  = document.getElementById('confirmPassword').value;
+    if (!cur || !nw || !cf) { showNotification && showNotification('Preencha todos os campos', true); return; }
+    if (nw !== cf)          { showNotification && showNotification('As senhas não coincidem', true); return; }
+    if (nw.length < 6)      { showNotification && showNotification('Mínimo 6 caracteres', true); return; }
+    try {
+        await apiFetch('/api/me/change-password', { method: 'POST', body: JSON.stringify({ current_password: cur, new_password: nw }) });
+        ['currentPassword','newPassword','confirmPassword'].forEach(id => document.getElementById(id).value = '');
+        showNotification && showNotification('🔐 Senha alterada com sucesso!');
+    } catch(e) {
+        showNotification && showNotification(e.message || 'Erro ao alterar senha', true);
+    }
 }
 
 function upgradePlan() { showToast('Redirecionando para planos...'); setTimeout(() => window.location.href = '/payment', 800); }
