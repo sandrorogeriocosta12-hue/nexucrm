@@ -53,6 +53,11 @@ class _PooledConn:
         self._conn = conn
     def __getattr__(self, name):
         return getattr(self._conn, name)
+    def __setattr__(self, name, value):
+        if name in ("_pool", "_conn"):
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self._conn, name, value)
     def close(self):
         try:
             self._conn.rollback()
