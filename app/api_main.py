@@ -3908,25 +3908,42 @@ async def inbox_send(req: SendMessageRequest, current_user: dict = Depends(get_c
     import httpx
     evo_url = os.getenv("EVOLUTION_API_URL", "http://localhost:3000")
     evo_key = os.getenv("EVOLUTION_API_KEY", "vexus_evolution_key_change_me")
+    user_email = current_user["email"]
 
-    # Busca a primeira instância conectada (open) dinamicamente
+    # 1. Busca instância do usuário logado em nexus.whatsapp_instances
     instance = None
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            r = await client.get(f"{evo_url}/instance/fetchInstances", headers={"apikey": evo_key})
-            if r.status_code == 200:
-                insts = r.json()
-                if not isinstance(insts, list):
-                    insts = [insts]
-                for inst in insts:
-                    if inst.get("connectionStatus") == "open":
-                        instance = inst.get("name")
-                        break
+        con = _crm_conn()
+        cur = con.cursor()
+        cur.execute(
+            "SELECT instance_name FROM nexus.whatsapp_instances WHERE user_email = %s ORDER BY created_at DESC LIMIT 1",
+            (user_email,)
+        )
+        row = cur.fetchone()
+        con.close()
+        if row:
+            instance = row[0]
     except Exception:
         pass
 
+    # 2. Fallback: qualquer instância aberta na Evolution API
     if not instance:
-        raise HTTPException(status_code=503, detail="Nenhuma instância WhatsApp ativa. Conecte um número em Integrações.")
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                r = await client.get(f"{evo_url}/instance/fetchInstances", headers={"apikey": evo_key})
+                if r.status_code == 200:
+                    insts = r.json()
+                    if not isinstance(insts, list):
+                        insts = [insts]
+                    for inst in insts:
+                        if inst.get("connectionStatus") == "open":
+                            instance = inst.get("name")
+                            break
+        except Exception:
+            pass
+
+    if not instance:
+        raise HTTPException(status_code=503, detail="Nenhuma instância WhatsApp encontrada. Conecte um número em Integrações → WhatsApp.")
 
     try:
         # @lid = protocolo multi-device do WhatsApp, precisamos do número real
@@ -3963,15 +3980,30 @@ async def inbox_send(req: SendMessageRequest, current_user: dict = Depends(get_c
         else:
             recipient = req.number
 
+        # Garante formato correto do número (sem @s.whatsapp.net, sem @lid)
+        clean_number = recipient.split("@")[0] if "@" in recipient else recipient
+        # Remove caracteres não numéricos exceto +
+        import re as _re
+        clean_number = _re.sub(r"[^\d]", "", clean_number)
+
+        logger.info(f"📤 inbox_send: instance={instance} number={clean_number} text={req.text[:40]}")
+
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(
                 f"{evo_url}/message/sendText/{instance}",
                 headers={"apikey": evo_key, "Content-Type": "application/json"},
-                json={"number": recipient, "text": req.text}
+                json={"number": clean_number, "text": req.text}
             )
         if resp.status_code in (200, 201):
             return {"status": "sent"}
-        raise HTTPException(status_code=502, detail=f"Evolution API: {resp.text[:200]}")
+        # Extrai mensagem de erro da Evolution API
+        try:
+            err_body = resp.json()
+            err_msg  = err_body.get("message") or err_body.get("error") or resp.text[:200]
+        except Exception:
+            err_msg = resp.text[:200]
+        logger.error(f"❌ inbox_send Evolution API {resp.status_code}: {err_msg}")
+        raise HTTPException(status_code=502, detail=f"WhatsApp erro: {err_msg}")
     except HTTPException:
         raise
     except Exception as e:
